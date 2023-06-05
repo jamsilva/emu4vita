@@ -171,7 +171,7 @@ static void TouchToButtons(uint32_t *buttons)
             for (k = 0; k < option->n_maps; k++)
             {
                 if ((x >= maps[k].sx) && (x <= maps[k].dx) && (y >= maps[k].sy) && (y <= maps[k].dy))
-                    *buttons |= maps->map_key;
+                    *buttons |= maps[k].map_key;
             }
         }
     }
