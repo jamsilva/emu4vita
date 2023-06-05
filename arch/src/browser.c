@@ -44,12 +44,6 @@
 
 #define CORE_TITLE_COLOR SPRING_GREEN
 
-InstructionsEntry browser_instructions_entries[] = {
-    {{STR_BUTTON_CANCEL, NULL}, STR_BACK},
-    {{STR_BUTTON_ENTER, NULL}, STR_ENTER},
-    {{0}, NULL},
-};
-
 CoreEntry nes_entries[] = {
     {"FCEUmm", "fceumm"},
     {"Nestopia", "nestopia"},

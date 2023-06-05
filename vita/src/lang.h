@@ -37,7 +37,6 @@
 
 #define STR_MAIN_TITLE APP_NAME_STR " v" APP_VER_STR
 
-#define STR_BATTERY   "电量"
 #define STR_ABOUT     "关于"
 
 #define STR_PARENT_DIRECTORY  "上层目录"

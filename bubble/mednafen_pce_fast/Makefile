@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Mednafen PCE Fast
 SFO_TITLE_ID     := MPCEFAST1
 
 APP_NAME         := Mednafen\ PCE\ Fast
+APP_NAME_EXT     := 
 APP_DIR_NAME     := MednafenPCEFast
 CORE_FILE_NAME   := mednafen_pce_fast
 

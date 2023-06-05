@@ -4,6 +4,7 @@ SFO_TITLE_NAME   :=Gambatte
 SFO_TITLE_ID     := GAMEBATTE
 
 APP_NAME         := Gambatte
+APP_NAME_EXT     := 
 APP_DIR_NAME     := Gambatte
 CORE_FILE_NAME   := gambatte
 

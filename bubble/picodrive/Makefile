@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := PicoDrive
 SFO_TITLE_ID     := PRCODRIVE
 
 APP_NAME         := PicoDrive
+APP_NAME_EXT     := 
 APP_DIR_NAME     := PicoDrive
 CORE_FILE_NAME   := picodrive
 

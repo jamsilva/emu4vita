@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := gpSP
 SFO_TITLE_ID     := GPSP00001
 
 APP_NAME         := gpSP
+APP_NAME_EXT     := 
 APP_DIR_NAME     := gpSP
 CORE_FILE_NAME   := gpsp
 

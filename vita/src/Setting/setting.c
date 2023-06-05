@@ -500,6 +500,7 @@ static void drawCommon()
         view_sx += view_width;
     }
 
+    sx = view_dx - MENU_TAB_VIEW_PADDING_L;
     if (!is_vitatv_model)
     {
         uint32_t color;
@@ -513,10 +514,9 @@ static void drawCommon()
         int percent = scePowerGetBatteryLifePercent();
         char battery_string[24];
         snprintf(battery_string, sizeof(battery_string), "%d%%", percent);
-        view_width = GUI_GetTextWidth(battery_string) + MENU_TAB_VIEW_PADDING_L * 2;
-        sx = view_dx - view_width + MENU_TAB_VIEW_PADDING_L;
-        GUI_DrawText(sx, sy, color, battery_string);
-        view_dx -= view_width;
+        int battery_x = sx - GUI_GetTextWidth(battery_string);
+        GUI_DrawText(battery_x, sy, color, battery_string);
+        sx = battery_x - MENU_TAB_VIEW_PADDING_L;
     }
 
     // time
@@ -524,9 +524,8 @@ static void drawCommon()
     sceRtcGetCurrentClock(&time, 0);
     char time_string[16];
     GetTimeString(time_string, time_format, &time);
-    view_width = GUI_GetTextWidth(time_string) + MENU_TAB_VIEW_PADDING_L * 2;
-    sx = view_dx - view_width + MENU_TAB_VIEW_PADDING_L;
-    GUI_DrawText(sx, sy, GUI_DEFALUT_TEXT_COLOR, time_string);
+    int time_x = sx - GUI_GetTextWidth(time_string);
+    GUI_DrawText(time_x, sy, GUI_DEFALUT_TEXT_COLOR, time_string);
 
     GUI_DrawFillRectangle(menu_tab_view_sx, menu_tab_view_dy, menu_tab_view_width, MENU_TAB_LINEVIEW_HEIGHT, MENU_ITEMVIEW_COLOR_BG_FOCUS);
 }

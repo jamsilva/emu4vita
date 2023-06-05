@@ -7,7 +7,7 @@ SFO_APP_VER    := 01.03
 APP_NAME_STR := Emu4Vita\ Arch
 APP_VER_STR  := 1.03
 APP_DIR_NAME := Emu4VitaArch
-BUILD_DATE   := $(shell date +"%Y.%m.%d")
+BUILD_DATE   := $(shell date +"%Y-%m-%d")
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR  := $(dir $(MAKEFILE_PATH))
@@ -72,6 +72,7 @@ LIBS := \
 
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
+	-DAPP_NAME_EXT_STR=\"$(APP_NAME_EXT)\" \
 	-DAPP_VER_STR=\"$(APP_VER_STR)\" \
 	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \
 	-DBUILD_DATE=\"$(BUILD_DATE)\"

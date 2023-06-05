@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Genesis Plus GX
 SFO_TITLE_ID     := GENESIS01
 
 APP_NAME         := Genesis\ Plus\ GX
+APP_NAME_EXT     := 
 APP_DIR_NAME     := GenesisPlusGX
 CORE_FILE_NAME   := genesis_plus_gx
 

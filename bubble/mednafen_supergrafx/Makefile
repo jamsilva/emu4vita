@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Mednafen PCE SuperGrafx
 SFO_TITLE_ID     := MPCESG001
 
 APP_NAME         := Mednafen\ PCE\ SuperGrafx
+APP_NAME_EXT     := 
 APP_DIR_NAME     := MednafenPCESuperGrafx
 CORE_FILE_NAME   := mednafen_supergrafx
 

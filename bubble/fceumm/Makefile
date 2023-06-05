@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := FCEUmm
 SFO_TITLE_ID     := FCEUMM001
 
 APP_NAME         := FCEUmm
+APP_NAME_EXT     := 
 APP_DIR_NAME     := FCEUmm
 CORE_FILE_NAME   := fceumm
 

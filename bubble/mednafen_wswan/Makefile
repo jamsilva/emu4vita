@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Mednafen Wswan
 SFO_TITLE_ID     := WSWAN0001
 
 APP_NAME         := Mednafen\ WonderSwan
+APP_NAME_EXT     := 
 APP_DIR_NAME     := MednafenWswan
 CORE_FILE_NAME   := mednafen_wswan
 

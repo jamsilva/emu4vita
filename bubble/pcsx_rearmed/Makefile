@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := PCSX ReARMed
 SFO_TITLE_ID     := EMUPCSX01
 
 APP_NAME         := PCSX\ ReARMed
+APP_NAME_EXT     := 
 APP_DIR_NAME     := PCSXReARMed
 CORE_FILE_NAME   := pcsx_rearmed
 

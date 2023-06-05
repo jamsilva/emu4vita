@@ -3,7 +3,8 @@ TARGET = FBA-Lite
 SFO_TITLE_NAME   := FBA Lite
 SFO_TITLE_ID     := FBALITE01
 
-APP_NAME         := FBA\ Lite\ \(v0.2.97.44\)
+APP_NAME         := FBA\ Lite
+APP_NAME_EXT     := 0.2.97.44
 APP_DIR_NAME     := FBA-Lite
 CORE_FILE_NAME   := fba_lite
 
@@ -25,8 +26,5 @@ CORE_ARGS :=
 CORE_DEFINES := \
 	-DARC_BUILD \
 	-DFBA_BUILD
-
-override BETA_BUILD   := 1
-override BETA_VER     := 7.1
 
 include $(VITA_DIR)/Makefile.common

@@ -4,6 +4,7 @@ SFO_TITLE_NAME   :=OpenBOR
 SFO_TITLE_ID     := OPENBOR01
 
 APP_NAME         := OpenBOR
+APP_NAME_EXT     := 
 APP_DIR_NAME     := OpenBOR
 CORE_FILE_NAME   := openbor
 

@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Snes9x 2005
 SFO_TITLE_ID     := SNEX9X005
 
 APP_NAME         := Snes9x\ 2005
+APP_NAME_EXT     := 
 APP_DIR_NAME     := Snes9x2005
 CORE_FILE_NAME   := snes9x2005
 

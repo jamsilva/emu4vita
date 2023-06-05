@@ -167,7 +167,7 @@ void GUI_DrawTopStatusBar(char *title)
 
         int percent = scePowerGetBatteryLifePercent();
         char battery_string[24];
-        snprintf(battery_string, sizeof(battery_string), "%s: %d%%", STR_BATTERY, percent);
+        snprintf(battery_string, sizeof(battery_string), "%d%%", percent);
         float battery_x = sx - GUI_GetTextWidth(battery_string);
         GUI_DrawText(battery_x, sy, color, battery_string);
         sx = battery_x - STATUS_BAR_PADDING_L;

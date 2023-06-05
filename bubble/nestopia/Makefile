@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Nestopia
 SFO_TITLE_ID     := NESTOPIA1
 
 APP_NAME         := Nestopia
+APP_NAME_EXT     := 
 APP_DIR_NAME     := Nestopia
 CORE_FILE_NAME   := nestopia
 

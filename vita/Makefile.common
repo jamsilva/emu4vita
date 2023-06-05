@@ -7,9 +7,10 @@ BETA_VER     := 0
 DEBUG        := 1
 BUILD_DATE   := $(shell date +"%Y.%m.%d")
 
-APP_NAME_STR := $(APP_NAME)
-APP_VER_STR  := $(APP_VER)
-VPK_VER_STR  := $(APP_VER)
+APP_NAME_STR     := $(APP_NAME)
+APP_NAME_EXT_STR := $(APP_NAME_EXT)
+APP_VER_STR      := $(APP_VER)
+VPK_VER_STR      := $(APP_VER)
 
 ifeq ($(BETA_BUILD), 1)
 	APP_VER_STR := $(APP_VER_STR)\ beta$(BETA_VER)
@@ -149,6 +150,7 @@ SCE_LIBC_SIZE := 20*1024*1024
 
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
+	-DAPP_NAME_EXT_STR=\"$(APP_NAME_EXT_STR)\" \
 	-DAPP_VER_STR=\"$(APP_VER_STR)\" \
 	-DAPP_TITLEID=\"$(SFO_TITLE_ID)\" \
 	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \

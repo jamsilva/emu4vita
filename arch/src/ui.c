@@ -46,9 +46,6 @@ float MAIN_FREE_DRAW_SX, MAIN_FREE_DRAW_DX, MAIN_FREE_DRAW_SY, MAIN_FREE_DRAW_DY
 
 static float status_bar_width, status_bar_height;
 
-extern InstructionsEntry browser_instructions_entries[];
-extern int about_open;
-
 static void initUiDrawInfo()
 {
     status_bar_width = SCREEN_WIDTH;
@@ -62,20 +59,6 @@ static void initUiDrawInfo()
     MAIN_FREE_DRAW_DX = MAIN_FREE_DRAW_SX + MAIN_FREE_DRAW_WIDTH;
     MAIN_FREE_DRAW_SY = MAIN_PADDING + status_bar_height + MAIN_FREE_DRAW_PADDING_T;
     MAIN_FREE_DRAW_DY = SCREEN_HEIGHT - MAIN_PADDING - status_bar_height - MAIN_FREE_DRAW_PADDING_T;
-}
-
-static void initButtonStr()
-{
-    if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
-    {
-        strcpy(STR_BUTTON_ENTER, STR_BUTTON_CIRCLE);
-        strcpy(STR_BUTTON_CANCEL, STR_BUTTON_CROSS);
-    }
-    else
-    {
-        strcpy(STR_BUTTON_ENTER, STR_BUTTON_CROSS);
-        strcpy(STR_BUTTON_CANCEL, STR_BUTTON_CIRCLE);
-    }
 }
 
 static int InitImagesThreadCallback(SceSize args, void *argp)
@@ -119,7 +102,6 @@ void initUi()
     initImagesThread();
     initIconsThread();
     initUiFonts();
-    initButtonStr();
     initDrawInfo();
     initBrowser();
 }
@@ -155,7 +137,7 @@ static void drawTopStatusBar(char *title)
 
         int percent = scePowerGetBatteryLifePercent();
         char battery_string[24];
-        snprintf(battery_string, sizeof(battery_string), "%s: %d%%", STR_BATTERY, percent);
+        snprintf(battery_string, sizeof(battery_string), "%d%%", percent);
         float battery_x = sx - UiGetTextWidth(battery_string);
         UiDrawText(battery_x, sy, color, battery_string);
         sx = battery_x - STATUS_BAR_PADDING_L;
@@ -177,7 +159,7 @@ static void drawTopStatusBar(char *title)
     UiDrawText(date_time_x, sy, DEFALUT_FONT_COLOR, string);
 }
 
-static void drawBottomStatusBar(InstructionsEntry *entries)
+static void drawBottomStatusBar()
 {
     float view_sx = 0;
     float view_sy = SCREEN_HEIGHT - status_bar_height;
@@ -186,17 +168,7 @@ static void drawBottomStatusBar(InstructionsEntry *entries)
 
     float sx = view_sx + STATUS_BAR_PADDING_L;
     float sy = view_sy + STATUS_BAR_PADDING_T;
-    int i, j;
-    for (i = 0; entries[i].instruction; i++)
-    {
-        for (j = 0; entries[i].buttons[j]; j++)
-        {
-            sx += UiDrawText(sx, sy, AZURE, entries[i].buttons[j]);
-        }
-        sx += UiDrawText(sx, sy, AZURE, ":");
-        sx += UiDrawText(sx, sy, WHITE, entries[i].instruction);
-        sx += STATUS_BAR_PADDING_L;
-    }
+    UiDrawTextf(sx, sy, WHITE, "Built on  %s by Yizhigai", BUILD_DATE);
 }
 
 void drawScrollBar(float sx, float sy, float full_height, int max_lines, int list_len, int top_pos)
@@ -247,7 +219,7 @@ static void drawMain()
 
     drawBrowser();
     drawTopStatusBar(MAIN_TITLE);
-    drawBottomStatusBar(browser_instructions_entries);
+    drawBottomStatusBar();
 }
 
 static void controlMain()

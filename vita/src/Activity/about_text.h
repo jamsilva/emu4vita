@@ -4,7 +4,7 @@
 #include "config.h"
 
 char *about_texts[] = {
-    APP_NAME_STR,
+    APP_NAME_STR " " APP_NAME_EXT_STR,
     " * 作者: 一直改 (百度psvita破解吧)",
     " * 版本: " APP_VER_STR "    日期: " BUILD_DATE,
     "",

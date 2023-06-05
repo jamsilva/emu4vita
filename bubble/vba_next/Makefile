@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := VBA Next
 SFO_TITLE_ID     := VBANEXT01
 
 APP_NAME         := VBA\ Next
+APP_NAME_EXT     := 
 APP_DIR_NAME     := VBANext
 CORE_FILE_NAME   := vba_next
 

@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := Mednafen NeoPop
 SFO_TITLE_ID     := NGP000001
 
 APP_NAME         := Mednafen\ NeoPop
+APP_NAME_EXT     := 
 APP_DIR_NAME     := MednafenNgp
 CORE_FILE_NAME   := mednafen_ngp
 

@@ -4,6 +4,7 @@ SFO_TITLE_NAME   := mame2003 plus
 SFO_TITLE_ID     := MAME2003P
 
 APP_NAME         := mame2003\ plus
+APP_NAME_EXT     := 
 APP_DIR_NAME     := mame2003-plus
 CORE_FILE_NAME   := mame2003_plus
 
