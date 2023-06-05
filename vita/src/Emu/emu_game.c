@@ -86,20 +86,26 @@ static int Emu_SaveSrm()
         return fd;
 
     char *buf = (char *)data;
-    while (1)
-    {
-        int write_size = sceIoWrite(fd, buf, TRANSFER_SIZE);
-        if (write_size < 0)
-        {
+	int64_t nremaining = size;
+	int64_t nmemb = TRANSFER_SIZE;
+
+	while (nremaining > 0)
+	{
+		if (nremaining < TRANSFER_SIZE)
+			nmemb = nremaining;
+        else
+            nmemb = TRANSFER_SIZE;
+
+		int nwrite = sceIoWrite(fd, buf, nmemb);
+		if (nwrite < 0)
+		{
             sceIoClose(fd);
             return -1;
-        }
+		}
 
-        if (write_size == 0)
-            break;
-
-        buf += write_size;
-    }
+		buf += nwrite;
+		nremaining -= nwrite;
+	}
     sceIoClose(fd);
 
     return 0;
@@ -138,21 +144,29 @@ static int Emu_LoadSrm()
     sceIoLseek(fd, 0, SCE_SEEK_SET);
 
     char *buf = (char *)src_data;
-    while (1)
-    {
-        int read_size = sceIoRead(fd, buf, TRANSFER_SIZE);
-        if (read_size < 0)
-        {
+	int64_t nremaining = src_size;
+	int64_t nmemb = TRANSFER_SIZE;
+
+	while (nremaining > 0)
+	{
+		if (nremaining < TRANSFER_SIZE)
+			nmemb = nremaining;
+        else
+            nmemb = TRANSFER_SIZE;
+
+		int nread = sceIoRead(fd, buf, nmemb);
+		if (nread < 0)
+		{
             free(src_data);
             sceIoClose(fd);
             return -1;
-        }
+		}
+		if (nread == 0)
+			break;
 
-        if (read_size == 0)
-            break;
-
-        buf += read_size;
-    }
+		buf += nread;
+		nremaining -= nread;
+	}
     sceIoClose(fd);
 
     memcpy(src_data, dst_data, src_size);
@@ -200,22 +214,30 @@ static int loadGameFromMemory(const char *path)
     sceIoLseek(fd, 0, SCE_SEEK_SET);
 
     char *buf = (char *)game_rom_data;
-    while (1)
-    {
-        int read = sceIoRead(fd, buf, TRANSFER_SIZE);
-        if (read < 0)
-        {
+	int64_t nremaining = size;
+	int64_t nmemb = TRANSFER_SIZE;
+
+	while (nremaining > 0)
+	{
+		if (nremaining < TRANSFER_SIZE)
+			nmemb = nremaining;
+        else
+            nmemb = TRANSFER_SIZE;
+
+		int nread = sceIoRead(fd, buf, nmemb);
+		if (nread < 0)
+		{
             free(game_rom_data);
             game_rom_data = NULL;
             sceIoClose(fd);
             return -1;
-        }
+		}
+		if (nread == 0)
+			break;
 
-        if (read == 0)
-            break;
-
-        buf += read;
-    }
+		buf += nread;
+		nremaining -= nread;
+	}
     sceIoClose(fd);
 
     struct retro_game_info game_info;
@@ -315,16 +337,11 @@ void Emu_UnloadGame()
 
     if (game_loaded)
     {
-        printf("Emu_SaveSrm...\n");
         Emu_SaveSrm();
-        printf("retro_unload_game...\n");
         retro_unload_game();
-        printf("retro_deinit...\n");
         retro_deinit();
         game_loaded = 0;
-        printf("Emu_DeinitAudio...\n");
         Emu_DeinitAudio();
-        printf("Emu_DeinitVideo...\n");
         Emu_DeinitVideo();
         Emu_DeinitInput();
     }
