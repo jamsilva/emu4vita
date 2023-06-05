@@ -3,4 +3,5 @@ build
 releases
 cores/*
 arch/cores
+**/param.sfo
 **/eboot.bin
