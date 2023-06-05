@@ -1,0 +1,7 @@
+../libretro/deps/7zip/Bra86.o: ../libretro/deps/7zip/Bra86.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/Bra.h ../libretro/deps/7zip/7zTypes.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/Bra.h:
+../libretro/deps/7zip/7zTypes.h:

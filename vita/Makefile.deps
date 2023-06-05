@@ -1,0 +1,140 @@
+TARGET = libretro
+
+DEBUG ?= 0
+
+ROOT_DIR                   := .
+LIBRETRO_DIR               := $(ROOT_DIR)/../libretro
+LIBRETRO_COMM_DIR          := $(LIBRETRO_DIR)/libretro-common
+LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
+DEPS_DIR                   := $(LIBRETRO_DIR)/deps
+BUILD_DIR                  := $(ROOT_DIR)/../build/libretro
+
+INCDIRS := \
+	-I$(LIBRETRO_COMM_DIR) \
+	-I$(LIBRETRO_COMM_INCLUDE_DIR) \
+	-I$(DEPS_DIR) \
+	-I$(DEPS_DIR)/7zip
+
+COMM_C := \
+	libretro-common/string/stdstring.c \
+	libretro-common/encodings/encoding_utf.c \
+	libretro-common/encodings/encoding_crc32.c \
+	libretro-common/compat/fopen_utf8.c \
+	libretro-common/compat/compat_strl.c \
+	libretro-common/compat/compat_snprintf.c \
+	libretro-common/compat/compat_strcasestr.c \
+	libretro-common/compat/compat_posix_string.c \
+	libretro-common/file/file_path.c \
+	libretro-common/file/file_path_io.c \
+	libretro-common/streams/file_stream.c \
+	libretro-common/streams/file_stream_transforms.c \
+	libretro-common/streams/memory_stream.c \
+	libretro-common/lists/string_list.c \
+	libretro-common/lists/file_list.c \
+	libretro-common/lists/dir_list.c \
+	libretro-common/file/retro_dirent.c \
+	libretro-common/memmap/memalign.c \
+	libretro-common/vfs/vfs_implementation.c \
+	libretro-common/time/rtime.c
+
+COMM_C += \
+	libretro-common/streams/interface_stream.c \
+	libretro-common/streams/rzip_stream.c \
+	libretro-common/streams/stdin_stream.c \
+	libretro-common/streams/trans_stream.c \
+	libretro-common/streams/trans_stream_pipe.c \
+	libretro-common/streams/trans_stream_zlib.c \
+
+COMM_C += \
+	libretro-common/features/features_cpu.c \
+	libretro-common/file/config_file.c \
+	libretro-common/file/config_file_userdata.c \
+	libretro-common/rthreads/rthreads.c
+
+COMM_C += \
+	libretro-common/utils/md5.c
+
+COMM_OBJS := $(COMM_C:.c=.o)
+COMM_OBJS := $(addprefix $(BUILD_DIR)/, $(COMM_OBJS))
+
+7ZIP_C += \
+	deps/7zip/7zArcIn.c \
+	deps/7zip/7zBuf.c \
+	deps/7zip/7zCrc.c \
+	deps/7zip/7zCrcOpt.c \
+	deps/7zip/7zDec.c \
+	deps/7zip/CpuArch.c \
+	deps/7zip/Delta.c \
+	deps/7zip/LzFind.c \
+	deps/7zip/LzmaDec.c \
+	deps/7zip/Lzma2Dec.c \
+	deps/7zip/LzmaEnc.c \
+	deps/7zip/Bra.c \
+	deps/7zip/Bra86.c \
+	deps/7zip/BraIA64.c \
+	deps/7zip/Bcj2.c \
+	deps/7zip/7zFile.c \
+	deps/7zip/7zStream.c
+
+DEPS_OBJS := $(7ZIP_C:.c=.o)
+DEPS_OBJS := $(addprefix $(BUILD_DIR)/, $(DEPS_OBJS))
+
+OBJS := $(COMM_OBJS) $(DEPS_OBJS)
+
+DEFINES := \
+	-DRARCH_INTERNAL \
+	-DRARCH_CONSOLE \
+	-DHAVE_NEON \
+	-DHAVE_THREADS \
+	-DHAVE_7ZIP \
+	-D_7ZIP_ST \
+	-DHAVE_ZLIB \
+	-DHAVE_COMPRESSION
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+
+ASFLAGS := $(CFLAGS)
+LDFLAGS := -Wl,-q
+
+CFLAGS   += -O3 -Wall -ffast-math $(DEFINES)
+CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
+
+TARGET_PATH := $(ROOT_DIR)/deps/lib/$(TARGET).a
+
+all: $(TARGET_PATH)
+
+$(TARGET_PATH): $(OBJS)
+	$(AR) -rc $@ $^
+
+$(BUILD_DIR)/%.o: $(LIBRETRO_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c -o $@ $< $(CXXFLAGS) $(INCDIRS)
+
+$(BUILD_DIR)/%.o: $(LIBRETRO_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(CFLAGS) $(INCDIRS)
+
+$(BUILD_DIR)/%.o: $(LIBRETRO_DIR)/%.S
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS) $(INCDIRS)
+
+$(BUILD_DIR)/%.o: $(LIBRETRO_DIR)/%.s
+	@mkdir -p $(dir $@)
+	$(CC) -c -o $@ $< $(ASFLAGS) $(INCDIRS)
+
+clean: 
+	rm -rf $(BUILD_DIR) $(TARGET_PATH)
+
+.PHONY: clean all
+	

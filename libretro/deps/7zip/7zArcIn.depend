@@ -1,0 +1,12 @@
+../libretro/deps/7zip/7zArcIn.o: ../libretro/deps/7zip/7zArcIn.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/7z.h ../libretro/deps/7zip/7zTypes.h \
+ ../libretro/deps/7zip/7zBuf.h ../libretro/deps/7zip/7zCrc.h \
+ ../libretro/deps/7zip/CpuArch.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/7z.h:
+../libretro/deps/7zip/7zTypes.h:
+../libretro/deps/7zip/7zBuf.h:
+../libretro/deps/7zip/7zCrc.h:
+../libretro/deps/7zip/CpuArch.h:

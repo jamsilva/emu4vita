@@ -1,0 +1,6 @@
+.vscode
+arch/.vscode
+vita/.vscode
+build
+releases
+cores

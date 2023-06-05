@@ -1,0 +1,259 @@
+SFO_APP_VER  := 01.00
+APP_VER      := 1.00
+
+BETA_BUILD   := 0
+BETA_VER     := 0
+
+DEBUG        := 1
+BUILD_DATE   := $(shell date +"%Y.%m.%d")
+
+APP_NAME_STR := $(APP_NAME)
+APP_VER_STR  := $(APP_VER)
+VPK_VER_STR  := $(APP_VER)
+
+ifeq ($(BETA_BUILD), 1)
+	APP_VER_STR := $(APP_VER_STR)\ beta$(BETA_VER)
+	VPK_VER_STR := $(VPK_VER_STR)_beta$(BETA_VER)
+endif
+
+APP_PKG_DIR                := $(ROOT_DIR)/pkg
+BUILD_DIR                  := $(VITA_DIR)/../build
+
+VITA_SRC_DIR               := $(VITA_DIR)/src
+VITA_DEPS_DIR              := $(VITA_DIR)/deps
+VITA_INCLUDE_DIR           := $(VITA_DEPS_DIR)/include
+VITA_LIB_DIR               := $(VITA_DEPS_DIR)/lib
+VITA_PKG_DIR               := $(VITA_DIR)/pkg
+VITA_BUILD_DIR             := $(BUILD_DIR)/$(CORE_FILE_NAME)
+
+LIBRETRO_DIR               := $(VITA_DIR)/../libretro
+LIBRETRO_COMM_DIR          := $(LIBRETRO_DIR)/libretro-common
+LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
+LIBRETRO_DEPS_DIR          := $(LIBRETRO_DIR)/deps
+
+RELEASES_DIR               := $(ROOT_DIR)/../../releases
+
+VPK_NAME                   := $(TARGET)_v$(VPK_VER_STR).vpk
+DEFAULT_VPK_PATH           := $(VITA_BUILD_DIR)/$(VPK_NAME)
+DEFAULT_EBOOT_PATH         := $(APP_PKG_DIR)/eboot.bin
+SFO_BUILD_PATH             := $(APP_PKG_DIR)/sce_sys/param.sfo
+
+CLEAN_FILES                := $(VPK_BUILD_PATH) $(DEFAULT_EBOOT_PATH) $(SFO_BUILD_PATH)
+
+ifeq ($(main_build), 1)
+	MAIN_BUILD_DIR := $(ROOT_DIR)/../../releases/Emu4Vita_v$(VPK_VER_STR)
+	VPK_BUILD_PATH := $(MAIN_BUILD_DIR)/$(VPK_NAME)
+	CLEAN_FILES    += $(VPK_BUILD_PATH)
+else
+	VPK_BUILD_PATH := $(DEFAULT_VPK_PATH)
+endif
+
+ifeq ($(arch_build), 1)
+	ARCH_CORES_DIR   := $(ROOT_DIR)/../../arch/cores
+	EBOOT_BUILD_PATH := $(ARCH_CORES_DIR)/$(CORE_FILE_NAME).self
+	CLEAN_FILES      += $(EBOOT_BUILD_PATH)
+else
+	EBOOT_BUILD_PATH := $(DEFAULT_EBOOT_PATH)
+endif
+
+INCDIRS := \
+	-I$(VITA_SRC_DIR) \
+	-I$(VITA_INCLUDE_DIR) \
+	-I$(LIBRETRO_COMM_INCLUDE_DIR)
+
+LINKS := \
+	-L$(VITA_LIB_DIR)
+
+SRC_C += \
+	Activity/about.c \
+	Activity/browser.c
+
+SRC_C += \
+	Emu/emu_audio.c \
+	Emu/emu_game.c \
+	Emu/emu_input.c \
+	Emu/emu_state.c \
+	Emu/emu_video.c
+
+SRC_C += \
+	Gui/gui_ctrl.c \
+	Gui/gui_init.c \
+	Gui/gui_lib.c \
+	Gui/gui_shader.c \
+	Gui/gui.c
+
+SRC_C += \
+	List/config_list.c \
+	List/file_list.c \
+	List/option_list.c \
+	List/overlay_list.c \
+	List/text_list.c
+
+SRC_C += \
+	Retro/retro_environ.c \
+	Retro/retro_option.c \
+	Retro/retro.c
+
+SRC_C += \
+	Setting/setting_overlay.c \
+	Setting/setting_state.c \
+	Setting/setting.c
+
+SRC_C += \
+	boot.c \
+	config_text.c \
+	config.c \
+	file.c \
+	init.c \
+	log_scr.c \
+	main.c \
+	sbrk.c \
+	strnatcmp.c \
+	utils.c
+
+OBJS := $(SRC_C:.c=.o)
+OBJS := $(addprefix $(VITA_BUILD_DIR)/, $(OBJS))
+
+LIBS := \
+	$(CORE_MAKEFILE_DIR)/$(CORE_FILE_NAME)_libretro_vita.a \
+	-lretro \
+	-lvitashaders \
+	-lvita2d \
+	-lvita2d_ext \
+	-lfreetype \
+	-lpng \
+	-ljpeg \
+	-lspeexdsp \
+	-lpthread \
+	-lz \
+	-lm \
+	-lc \
+	-lScePgf_stub \
+	-lSceDisplay_stub \
+	-lSceGxm_stub \
+	-lSceCtrl_stub \
+	-lSceTouch_stub \
+	-lScePower_stub \
+	-lSceAudio_stub \
+	-lSceRtc_stub \
+	-lSceCommonDialog_stub \
+	-lSceSysmodule_stub \
+	-lSceAppUtil_stub \
+	-lSceAppMgr_stub \
+	-lSceShellSvc_stub \
+	-lSceMotion_stub \
+	-lSceHid_stub \
+	-lSceFiber_stub
+
+SCE_LIBC_SIZE := 20*1024*1024
+
+DEFINES := \
+	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
+	-DAPP_VER_STR=\"$(APP_VER_STR)\" \
+	-DAPP_TITLEID=\"$(SFO_TITLE_ID)\" \
+	-DAPP_DIR_NAME=\"$(APP_DIR_NAME)\" \
+	-DBUILD_DATE=\"$(BUILD_DATE)\" \
+	-DCORE_SOFTWARE=\"$(CORE_SOFTWARE)\"
+
+#DEFINES += -DSCE_LIBC_SIZE=$(SCE_LIBC_SIZE)
+
+DEFINES += $(CORE_DEFINES)
+
+ifeq ($(WANT_DISPLAY_ROTATE), 1)
+	DEFINES += -DWANT_DISPLAY_ROTATE
+endif
+
+ifeq ($(DEBUG), 1)
+	DEFINES += -DDEBUG
+endif
+
+CORE_ARGS += platform=vita EXTERNAL_ZLIB=1
+
+WARNINGS := \
+	-Wall \
+	-Wno-unused-variable \
+	-Wno-unused-but-set-variable \
+	-Wno-format-truncation
+
+FLAGS    := $(WARNINGS) $(INCDIRS) $(DEFINES)
+
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard
+CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+
+ASFLAGS  := $(CFLAGS)
+LDFLAGS  := -Wl,-q
+
+CFLAGS   += -O3 -ffast-math $(FLAGS)
+CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS  := -Wl,-q $(LINKS)
+
+PREFIX  := arm-vita-eabi
+CC      := $(PREFIX)-gcc
+CXX     := $(PREFIX)-g++
+AS      := $(PREFIX)-as
+AR      := $(PREFIX)-ar
+OBJCOPY := $(PREFIX)-objcopy
+STRIP   := $(PREFIX)-strip
+NM      := $(PREFIX)-nm
+LD      := $(CXX)
+
+all: clean_files create_dirs build-deps build-core build-vita
+
+clean_files:
+	@rm -rf $(VPK_BUILD_PATH) $(EBOOT_BUILD_PATH) $(SFO_BUILD_PATH) $(VITA_BUILD_DIR)/$(TARGET).velf $(VITA_BUILD_DIR)/$(TARGET).elf
+
+create_dirs:
+	@mkdir -p $(VITA_BUILD_DIR)
+
+build-deps:
+	cd $(VITA_DIR) && make -f Makefile.deps
+
+build-core:
+	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) $(CORE_ARGS)
+
+build-self: clean_files create_dirs build-deps build-core $(EBOOT_BUILD_PATH)
+
+build-vita: $(EBOOT_BUILD_PATH) $(SFO_BUILD_PATH)
+	@rm -rf $(VPK_BUILD_PATH)
+	@mkdir -p $(dir $(VPK_BUILD_PATH))
+	cd $(VITA_PKG_DIR) && zip -r $(VPK_BUILD_PATH) ./*
+	cd $(APP_PKG_DIR) && zip -r $(VPK_BUILD_PATH) ./*
+
+$(SFO_BUILD_PATH):
+	@mkdir -p $(dir $@)
+	vita-mksfoex -s APP_VER="$(SFO_APP_VER)" \
+		-s TITLE_ID="$(SFO_TITLE_ID)" "$(SFO_TITLE_NAME)" \
+		-d ATTRIBUTE2=12 $@
+
+$(EBOOT_BUILD_PATH): $(VITA_BUILD_DIR)/$(TARGET).velf
+	@mkdir -p $(dir $@)
+	vita-make-fself -c -a 0x2800000000000001 $< $@
+
+$(VITA_BUILD_DIR)/$(TARGET).velf: $(VITA_BUILD_DIR)/$(TARGET).elf
+	$(STRIP) -g $<
+	vita-elf-create $< $@
+
+$(VITA_BUILD_DIR)/$(TARGET).elf: $(OBJS)
+	@mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(VITA_BUILD_DIR)/%.o: $(VITA_SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(CXXFLAGS) $< -o $@
+
+$(VITA_BUILD_DIR)/%.o: $(VITA_SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(CFLAGS) $< -o $@
+
+clean-deps:
+	cd $(VITA_DIR) && make -f Makefile.deps clean
+
+clean-core:
+	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)
+	
+clean-vita:
+	rm -rf $(VITA_BUILD_DIR) $(CLEAN_FILES)
+
+clean: clean-vita
+
+clean-all: clean-vita clean-deps clean-core

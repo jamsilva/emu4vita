@@ -1,0 +1,6 @@
+../libretro/deps/7zip/7zStream.o: ../libretro/deps/7zip/7zStream.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/7zTypes.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/7zTypes.h:

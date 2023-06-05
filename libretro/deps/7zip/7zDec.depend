@@ -1,0 +1,18 @@
+../libretro/deps/7zip/7zDec.o: ../libretro/deps/7zip/7zDec.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/7z.h ../libretro/deps/7zip/7zTypes.h \
+ ../libretro/deps/7zip/7zCrc.h ../libretro/deps/7zip/Bcj2.h \
+ ../libretro/deps/7zip/Bra.h ../libretro/deps/7zip/CpuArch.h \
+ ../libretro/deps/7zip/Delta.h ../libretro/deps/7zip/LzmaDec.h \
+ ../libretro/deps/7zip/Lzma2Dec.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/7z.h:
+../libretro/deps/7zip/7zTypes.h:
+../libretro/deps/7zip/7zCrc.h:
+../libretro/deps/7zip/Bcj2.h:
+../libretro/deps/7zip/Bra.h:
+../libretro/deps/7zip/CpuArch.h:
+../libretro/deps/7zip/Delta.h:
+../libretro/deps/7zip/LzmaDec.h:
+../libretro/deps/7zip/Lzma2Dec.h:

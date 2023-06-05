@@ -1,0 +1,7 @@
+../libretro/deps/7zip/Delta.o: ../libretro/deps/7zip/Delta.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/Delta.h ../libretro/deps/7zip/7zTypes.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/Delta.h:
+../libretro/deps/7zip/7zTypes.h:

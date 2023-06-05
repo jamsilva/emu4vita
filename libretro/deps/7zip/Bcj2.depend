@@ -1,0 +1,9 @@
+../libretro/deps/7zip/Bcj2.o: ../libretro/deps/7zip/Bcj2.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/Bcj2.h ../libretro/deps/7zip/7zTypes.h \
+ ../libretro/deps/7zip/CpuArch.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/Bcj2.h:
+../libretro/deps/7zip/7zTypes.h:
+../libretro/deps/7zip/CpuArch.h:

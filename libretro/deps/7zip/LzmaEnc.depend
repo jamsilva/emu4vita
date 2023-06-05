@@ -1,0 +1,9 @@
+../libretro/deps/7zip/LzmaEnc.o: ../libretro/deps/7zip/LzmaEnc.c \
+ ../libretro/deps/7zip/Precomp.h ../libretro/deps/7zip/Compiler.h \
+ ../libretro/deps/7zip/LzmaEnc.h ../libretro/deps/7zip/7zTypes.h \
+ ../libretro/deps/7zip/LzFind.h
+../libretro/deps/7zip/Precomp.h:
+../libretro/deps/7zip/Compiler.h:
+../libretro/deps/7zip/LzmaEnc.h:
+../libretro/deps/7zip/7zTypes.h:
+../libretro/deps/7zip/LzFind.h:
