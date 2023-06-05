@@ -1,6 +1,6 @@
 .vscode
-arch/.vscode
-vita/.vscode
 build
 releases
-cores
+cores/*
+arch/cores
+**/eboot.bin

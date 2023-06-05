@@ -192,7 +192,6 @@ int ResetControlConfig()
     control_config.turbo_delay = 5;
 #if defined(WSC_BUILD)
     graphics_config.display_rotate = 0;
-    vitaVideoSetVideoNeedRefresh(1);
 #endif
 
     return 0;
@@ -222,8 +221,6 @@ int ResetVControlConfig()
     control_config.back_touch_pad = 0;
     control_config.turbo_delay = 5;
     graphics_config.display_rotate = 3;
-
-    vitaVideoSetVideoNeedRefresh(1);
 
     return 0;
 }

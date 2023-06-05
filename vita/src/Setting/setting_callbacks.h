@@ -113,6 +113,10 @@ static int resetControlConfigCallback()
     ResetControlConfig();
     Setting_RefreshCtrlMenu();
     control_option_changed = 1;
+#if defined(WSC_BUILD)
+    if (Emu_IsGameLoaded())
+        Emu_RequestRefreshVideo();
+#endif
     return 0;
 }
 
