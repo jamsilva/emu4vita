@@ -48,7 +48,7 @@ int ResetGraphicsConfig()
     memset(&graphics_config, 0, sizeof(GraphicsConfig));
     graphics_config.version = GRAPHICS_CONFIG_VERSION;
     graphics_config.display_size = TYPE_DISPLAY_SIZE_FULL;
-    graphics_config.aspect_ratio = TYPE_DISPLAY_RATIO_BY_GAME_RESOLUTION;
+    graphics_config.aspect_ratio = TYPE_DISPLAY_RATIO_DEFAULT;
     graphics_config.display_rotate = 0;
     graphics_config.graphics_filtering = 0;
     graphics_config.graphics_smooth = 0;
