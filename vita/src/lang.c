@@ -210,11 +210,11 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Full",
 
     // DISPLAY_RATIO_DEFAULT
-    "By real",
-    // DISPLAY_RATIO_GAME_RESOLUTION
-    "Game resolution",
-    // DISPLAY_RATIO_DEV_SCREEN
-    "Device screen",
+    "Default",
+    // DISPLAY_RATIO_BY_GAME_RESOLUTION
+    "By game resolution",
+    // DISPLAY_RATIO_BY_DEV_SCREEN
+    "By device screen",
     // DISPLAY_RATIO_8_7
     "8:7",
     // DISPLAY_RATIO_4_3
@@ -520,10 +520,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
 
     // DISPLAY_RATIO_DEFAULT
     "默认",
-    // DISPLAY_RATIO_GAME_RESOLUTION
-    "游戏分辨率",
-    // DISPLAY_RATIO_DEV_SCREEN
-    "设备屏幕",
+    // DISPLAY_RATIO_BY_GAME_RESOLUTION
+    "由游戏分辨率",
+    // DISPLAY_RATIO_BY_DEV_SCREEN
+    "由设备屏幕",
     // DISPLAY_RATIO_8_7
     "8:7",
     // DISPLAY_RATIO_4_3

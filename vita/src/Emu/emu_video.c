@@ -71,7 +71,7 @@ void Emu_MakeVideoBaseWH(uint32_t *res_width, uint32_t *res_height)
     uint32_t base_width = core_system_av_info.geometry.base_width;
     uint32_t base_height = core_system_av_info.geometry.base_height;
 
-    if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_GAME_RESOLUTION)
+    if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_BY_GAME_RESOLUTION)
     {
         *res_width = base_width;
         *res_height = base_height;
@@ -84,7 +84,7 @@ void Emu_MakeVideoBaseWH(uint32_t *res_width, uint32_t *res_height)
     {
         aspect_ratio = core_system_av_info.geometry.aspect_ratio;
     }
-    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_DEV_SCREEN)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_BY_DEV_SCREEN)
     {
         aspect_ratio = (float)GUI_SCREEN_WIDTH / (float)GUI_SCREEN_HEIGHT;
     }

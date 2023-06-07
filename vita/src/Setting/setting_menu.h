@@ -32,9 +32,9 @@ static int display_size_values[] = {
 };
 
 static int display_ratio_values[] = {
-    DISPLAY_RATIO_GAME_RESOLUTION,
+    DISPLAY_RATIO_BY_GAME_RESOLUTION,
     DISPLAY_RATIO_DEFAULT,
-    DISPLAY_RATIO_DEV_SCREEN,
+    DISPLAY_RATIO_BY_DEV_SCREEN,
     DISPLAY_RATIO_8_7,
     DISPLAY_RATIO_4_3,
     DISPLAY_RATIO_3_2,
