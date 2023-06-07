@@ -33,9 +33,6 @@ static float game_run_speed = 1.0f;
 static double game_cur_fps = 0;
 static void *game_rom_data = NULL;
 
-static uint64_t micros_per_frame = 0;
-static uint64_t last_frame_micros = 0;
-
 int Emu_IsGameRun()
 {
     return game_run;
@@ -65,7 +62,7 @@ void Emu_SetRunSpeed(float speed)
 {
     game_run_speed = speed;
     game_cur_fps = core_system_av_info.timing.fps * (double)speed;
-    micros_per_frame = 1000000.0f / game_cur_fps;
+    Emu_SetMicrosPerFrame(1000000.0f / game_cur_fps);
 }
 
 static int Emu_LoadSrm()
@@ -445,28 +442,11 @@ static void checkRequestsEvents()
     request_event_type = REQUEST_EVENT_TYPE_NONE;
 }
 
-static void checkFrameDelay()
-{
-    uint64_t cur_micros = sceKernelGetProcessTimeWide();
-    uint64_t interval_micros = cur_micros - last_frame_micros;
-    if (interval_micros < micros_per_frame)
-    {
-        uint64_t delay_micros = micros_per_frame - interval_micros;
-        sceKernelDelayThread(delay_micros);
-        last_frame_micros = cur_micros + delay_micros;
-    }
-    else
-    {
-        last_frame_micros = cur_micros;
-    }
-}
-
 void Emu_RunGame()
 {
     Emu_PollInput();
     retro_run();
     checkRequestsEvents();
-    checkFrameDelay();
 }
 
 void Emu_SpeedUpGame()

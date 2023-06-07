@@ -36,6 +36,14 @@ static float video_fps = 0.0f;
 static uint64_t last_fps_micros = 0;
 static uint64_t show_player_micros = 0;
 
+static uint64_t micros_per_frame = 0;
+static uint64_t last_frame_micros = 0;
+
+void Emu_SetMicrosPerFrame(uint64_t micros)
+{
+    micros_per_frame = micros;
+}
+
 void Emu_PauseVideo()
 {
     video_pause = 1;
@@ -551,6 +559,23 @@ static void drawHeadMemInfo()
     GUI_DrawTextf( 0, GUI_GetFontSize(), COLOR_WHITE, "%s/%s", free_string, total_string);
 }
 */
+
+static void checkFrameDelay()
+{
+    uint64_t cur_micros = sceKernelGetProcessTimeWide();
+    uint64_t interval_micros = cur_micros - last_frame_micros;
+    if (interval_micros < micros_per_frame)
+    {
+        uint64_t delay_micros = micros_per_frame - interval_micros;
+        sceKernelDelayThread(delay_micros);
+        last_frame_micros = cur_micros + delay_micros;
+    }
+    else
+    {
+        last_frame_micros = cur_micros;
+    }
+}
+
 static void displayVideo()
 {
     GUI_StartDrawing();
@@ -581,6 +606,7 @@ static void displayVideo()
 
     // drawHeadMemInfo();
 
+    checkFrameDelay();
     GUI_EndDrawing();
 }
 

@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "Gui/gui.h"
 
+void Emu_SetMicrosPerFrame(uint64_t micros);
+
 void Emu_PauseVideo();
 void Emu_ResumeVideo();
 void Emu_RequestRefreshVideo();
