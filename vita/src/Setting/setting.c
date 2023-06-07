@@ -137,6 +137,9 @@ int Setting_SetCoreMenu(OptionList *list)
     {
         item = &(menu->items[i]);
 
+        // Disable use lang
+        item->lang = LANG_DISABLE;
+
         // Get visible pointer to option list entry for set item visible or not
         entry->visible = &(item->visible);
 
@@ -456,7 +459,7 @@ static void drawMenu()
 
             if (item->name)
                 GUI_DrawText(sx, sy, COLOR_WHITE, item->name);
-            else
+            else if (item->lang >= 0)
                 GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[item->lang]);
 
             if (item->option)

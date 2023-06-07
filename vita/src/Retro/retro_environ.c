@@ -157,7 +157,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     {
         int value = GetLangValue(app_config.lang);
         *(unsigned *)data = value;
-        // AppLog("case RETRO_ENVIRONMENT_GET_LANGUAGE: \"%u\".\n", value);
+        // AppLog("case RETRO_ENVIRONMENT_GET_LANGUAGE: %u\n", value);
     }
     break;
 

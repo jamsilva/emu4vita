@@ -1,8 +1,13 @@
 #include <string.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #include "lang.h"
 
 char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
+    // ERROR
+    "Error",
 
     /**************  Safe mode  *****************/
     // MESSAGE_SAFE_MODE_0
@@ -312,6 +317,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 };
 
 char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
+    // ERROR
+    "错误",
 
     /**************  Safe mode  *****************/
     // MESSAGE_SAFE_MODE_0
@@ -662,10 +669,15 @@ int GetLangValue(int id)
     int length = N_LANGS;
 
     int i;
-    for (i = 0; i < length && index != id; i++)
+    for (i = 0; i < length; i++)
     {
         if (lang_entries[i].container)
-            index++;
+        {
+            if (index == id)
+                break;
+            else
+                index++;
+        }
     }
     if (id < 0 || id > index || i >= length)
         return 0;

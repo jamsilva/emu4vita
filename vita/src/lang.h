@@ -3,6 +3,9 @@
 
 enum LanguageContainer
 {
+    // ERROR
+    ERROR,
+
     // Safe mode
     MESSAGE_SAFE_MODE_0,
     MESSAGE_SAFE_MODE_1,
