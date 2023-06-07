@@ -81,10 +81,7 @@ void Setting_RequestRefreshMenu()
 
 static void cleanSettingMenuItem(SettingMenuItem *item)
 {
-    if (item->name)
-        free(item->name);
-
-    if (item->option_type == OPTION_TYPE_STR_ARRAY)
+    if (item->option_type == TYPE_OPTION_STR_ARRAY)
     {
         StrArrayOption *option = (StrArrayOption *)item->option;
         if (option->names)
@@ -97,20 +94,7 @@ static void cleanSettingMenuItem(SettingMenuItem *item)
             }
             free(option->names);
         }
-    }
-    else if (item->option_type == OPTION_TYPE_INT_ARRAY)
-    {
-        IntArrayOption *option = (IntArrayOption *)item->option;
-        if (option->values)
-            free(option->values);
-        if (option->format)
-            free(option->format);
-    }
-    else if (item->option_type == OPTION_TYPE_INT_STEP)
-    {
-        IntStepOption *option = (IntStepOption *)item->option;
-        if (option->format)
-            free(option->format);
+        option->n_names = 0;
     }
 }
 
@@ -123,7 +107,7 @@ int Setting_SetCoreMenu(OptionList *list)
     int i, j;
 
     // Free old menu items
-    menu = &menu_list[CORE_MENU_INDEX];
+    menu = &menu_list[INDEX_MENU_CORE];
     if (menu->items)
     {
         for (i = 0; i < menu->n_items; i++)
@@ -171,7 +155,7 @@ int Setting_SetCoreMenu(OptionList *list)
         option = (StrArrayOption *)calloc(1, sizeof(StrArrayOption));
         if (!option)
             continue;
-        item->option_type = OPTION_TYPE_STR_ARRAY;
+        item->option_type = TYPE_OPTION_STR_ARRAY;
         item->option = option;
 
         // Update callback
@@ -206,10 +190,11 @@ int Setting_SetCoreMenu(OptionList *list)
 
     // The last one is reset config
     item = &(menu->items[n_items - 1]);
-    item->name = (char *)malloc(strlen(STR_RESET_CONFIGS) + 1);
+    char *name = cur_lang[RESET_CONFIGS];
+    item->name = (char *)malloc(strlen(name) + 1);
     if (item->name)
-        strcpy(item->name, STR_RESET_CONFIGS);
-    item->option_type = OPTION_TYPE_CALLBACK;
+        strcpy(item->name, name);
+    item->option_type = TYPE_OPTION_CALLBACK;
     item->option = resetCoreConfigCallback;
     item->visible = 1;
 
@@ -223,9 +208,9 @@ int Setting_SetOverlayOption(OverlayList *list)
     if (!names)
         return -1;
 
-    names[0] = (char *)malloc(strlen(STR_NONE) + 1);
+    names[0] = (char *)malloc(strlen(cur_lang[NONE]) + 1);
     if (names[0])
-        strcpy(names[0], STR_NONE);
+        strcpy(names[0], cur_lang[NONE]);
 
     OverlayListEntry *entry = list->head;
     int i;
@@ -243,6 +228,55 @@ int Setting_SetOverlayOption(OverlayList *list)
     overlay_select_option.n_names = n_names;
 
     return 0;
+}
+
+int Setting_SetLangOption()
+{
+    SetCurrentLang(app_config.lang);
+
+    int n_names = 0;
+    int langs_len = GetLangsLength();
+    int i;
+
+    for (i = 0; i < langs_len; i++)
+    {
+        if (lang_entries[i].container)
+            n_names++;
+    }
+
+    char **names = (char **)calloc(n_names, sizeof(char *));
+    if (!names)
+        return -1;
+
+    int index = 0;
+    for (i = 0; i < langs_len; i++)
+    {
+        if (lang_entries[i].container)
+        {
+            names[index] = lang_entries[i].name;
+            index++;
+        }
+    }
+
+    lang_option.names = names;
+    lang_option.n_names = n_names;
+
+    return 0;
+}
+
+void Setting_UpdataLangOption()
+{
+    SetCurrentLang(app_config.lang);
+    Setting_RefreshCtrlMenu();
+
+    if (overlay_select_option.names)
+    {
+        if (overlay_select_option.names[0])
+            free(overlay_select_option.names[0]);
+        overlay_select_option.names[0] = (char *)malloc(strlen(cur_lang[NONE]) + 1);
+        if (overlay_select_option.names[0])
+            strcpy(overlay_select_option.names[0], cur_lang[NONE]);
+    }
 }
 
 static void refreshMenuVisiblePosData()
@@ -364,7 +398,7 @@ static void drawOption()
         if (i == option_focus_pos)
             GUI_DrawFillRectangle(item_sx, item_sy, option_itemview_width, option_itemview_height, COLOR_ALPHA(COLOR_AZURE, 0xBF));
 
-        GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, item->name);
+        GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, cur_lang[item->lang]);
         GUI_DrawEmptyRectangle(mark_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, mark_width, mark_width, 1.0f, COLOR_GREEN);
         if (item->selected)
             GUI_DrawFillRectangle(mark_sx + 1, item_sy + OPTION_ITEMVIEW_PADDING_T + 1, mark_width - 2, mark_width - 2, COLOR_ALPHA(COLOR_ORANGE, 0xBF));
@@ -422,42 +456,55 @@ static void drawMenu()
 
             if (item->name)
                 GUI_DrawText(sx, sy, COLOR_WHITE, item->name);
+            else
+                GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[item->lang]);
 
-            if (option_type == OPTION_TYPE_STR_ARRAY) // Option string array
+            if (item->option)
             {
-                StrArrayOption *option = (StrArrayOption *)item->option;
-                int value = *(option->value);
-                const char *name = option->names[value];
-                GUI_DrawText(dx - GUI_GetTextWidth(name), sy, COLOR_GREEN, name);
-            }
-            else if (option_type == OPTION_TYPE_INT_ARRAY) // Option int array
-            {
-                IntArrayOption *option = (IntArrayOption *)item->option;
-                int value = *(option->value);
-                const int key = option->values[value];
-                char value_str[256];
-                snprintf(value_str, 256, option->format, key);
-                GUI_DrawText(dx - GUI_GetTextWidth(value_str), sy, COLOR_GREEN, value_str);
-            }
-            else if (option_type == OPTION_TYPE_INT_STEP) // Option int step
-            {
-                IntStepOption *option = (IntStepOption *)item->option;
-                int value = *(option->value);
-                char value_str[256];
-                snprintf(value_str, 256, option->format, value);
-                GUI_DrawText(dx - GUI_GetTextWidth(value_str), sy, COLOR_GREEN, value_str);
-            }
-            else if (option_type == OPTION_TYPE_KEY_MAP) // Option key map
-            {
-                OptionMenu *option = (OptionMenu *)item->option;
-                int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
-                uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
-                uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
-                int turbo_text_width = GUI_GetTextWidth(STR_TURBO);
-                int turbo_sx = dx - turbo_text_width;
-                GUI_DrawFillRectangle(turbo_sx, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
-                GUI_DrawText(turbo_sx, sy, text_color, STR_TURBO);
-                GUI_DrawText(turbo_sx - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, option->name);
+                if (option_type == TYPE_OPTION_STR_ARRAY) // Option string array
+                {
+                    StrArrayOption *option = (StrArrayOption *)item->option;
+                    int value = *(option->value);
+                    const char *name = option->names[value];
+                    GUI_DrawText(dx - GUI_GetTextWidth(name), sy, COLOR_GREEN, name);
+                }
+                else if (option_type == TYPE_OPTION_STR_INDEXS) // Option string indexs
+                {
+                    StrIndexsOption *option = (StrIndexsOption *)item->option;
+                    int value = *(option->value);
+                    const char *name = cur_lang[option->langs[value]];
+                    GUI_DrawText(dx - GUI_GetTextWidth(name), sy, COLOR_GREEN, name);
+                }
+                else if (option_type == TYPE_OPTION_INT_ARRAY) // Option int array
+                {
+                    IntArrayOption *option = (IntArrayOption *)item->option;
+                    int value = *(option->value);
+                    const int key = option->values[value];
+                    char value_str[256];
+                    snprintf(value_str, 256, option->format, key);
+                    GUI_DrawText(dx - GUI_GetTextWidth(value_str), sy, COLOR_GREEN, value_str);
+                }
+                else if (option_type == TYPE_OPTION_INT_STEP) // Option int step
+                {
+                    IntStepOption *option = (IntStepOption *)item->option;
+                    int value = *(option->value);
+                    char value_str[256];
+                    snprintf(value_str, 256, option->format, value);
+                    GUI_DrawText(dx - GUI_GetTextWidth(value_str), sy, COLOR_GREEN, value_str);
+                }
+                else if (option_type == TYPE_OPTION_KEY_MAP) // Option key map
+                {
+                    OptionMenu *option = (OptionMenu *)item->option;
+                    int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
+                    uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
+                    uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
+                    char *turbo_str = cur_lang[TURBO];
+                    int turbo_text_width = GUI_GetTextWidth(turbo_str);
+                    int turbo_sx = dx - turbo_text_width;
+                    GUI_DrawFillRectangle(turbo_sx, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
+                    GUI_DrawText(turbo_sx, sy, text_color, turbo_str);
+                    GUI_DrawText(turbo_sx - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, option->name);
+                }
             }
 
             GUI_DisableClipping();
@@ -490,13 +537,14 @@ static void drawCommon()
         if (!menu_list[i].visible)
             continue;
 
-        view_width = GUI_GetTextWidth(menu_list[i].name) + MENU_TAB_VIEW_PADDING_L * 2;
+        char *name = cur_lang[menu_list[i].lang];
+        view_width = GUI_GetTextWidth(name) + MENU_TAB_VIEW_PADDING_L * 2;
         sx = view_sx + MENU_TAB_VIEW_PADDING_L;
 
         if (i == menu_list_focus_pos)
             GUI_DrawFillRectangle(view_sx, view_sy, view_width, menu_tab_view_height, MENU_ITEMVIEW_COLOR_BG_FOCUS);
 
-        GUI_DrawText(sx, sy, COLOR_WHITE, menu_list[i].name);
+        GUI_DrawText(sx, sy, COLOR_WHITE, name);
         view_sx += view_width;
     }
 
@@ -640,107 +688,132 @@ static void ctrlMenu()
         moveMenuPos(MOVE_TYPE_DOWN);
     }
 
-    if (option_type == OPTION_TYPE_CALLBACK)
-    {
-        int (*callback)() = (int (*)())item->option;
-        if (released_pad[PAD_ENTER])
-        {
-            if (callback)
-                callback();
-        }
-    }
-    else if (option_type == OPTION_TYPE_STR_ARRAY)
-    {
-        StrArrayOption *option = (StrArrayOption *)item->option;
-        if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
-        {
-            if (*(option->value) < option->n_names - 1)
-                (*(option->value))++;
-            else
-                *(option->value) = 0;
-            if (option->update)
-                option->update(option);
-        }
-        else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
-        {
-            if (*(option->value) > 0)
-                (*(option->value))--;
-            else
-                *(option->value) = option->n_names - 1;
-            if (option->update)
-                option->update(option);
-        }
-    }
-    else if (option_type == OPTION_TYPE_INT_ARRAY)
-    {
-        IntArrayOption *option = (IntArrayOption *)item->option;
-        if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
-        {
-            if (*(option->value) < option->n_values - 1)
-                (*(option->value))++;
-            else
-                *(option->value) = 0;
-            if (option->update)
-                option->update(option);
-        }
-        else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
-        {
-            if (*(option->value) > 0)
-                (*(option->value))--;
-            else
-                *(option->value) = option->n_values - 1;
-            if (option->update)
-                option->update(option);
-        }
-    }
-    else if (option_type == OPTION_TYPE_INT_STEP)
-    {
-        IntStepOption *option = (IntStepOption *)item->option;
-        if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
-        {
-            if (*(option->value) < option->max)
-                (*(option->value))++;
-            else
-                *(option->value) = option->min;
-            if (option->update)
-                option->update(option);
-        }
-        else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
-        {
-            if (*(option->value) > option->min)
-                (*(option->value))--;
-            else
-                *(option->value) = option->max;
-            if (option->update)
-                option->update(option);
-        }
-    }
-    else if (option_type == OPTION_TYPE_KEY_MAP)
-    {
-        OptionMenu *option = (OptionMenu *)item->option;
-        if (released_pad[PAD_ENTER])
-        {
-            option_menu = option;
-            option_top_pos = 0;
-            option_focus_pos = 0;
-            if (option->open)
-                option->open(option);
-            option_open = 1;
-        }
-        else if (released_pad[PAD_SQUARE])
-        {
-            uint32_t *set_key = (uint32_t *)(option->userdata);
-            if (*set_key & TURBO_KEY_BITMASK)
-                *set_key &= ~TURBO_KEY_BITMASK;
-            else
-                *set_key |= TURBO_KEY_BITMASK;
-            control_option_changed = 1;
-        }
-    }
-
     if (released_pad[PAD_CANCEL])
     {
         GUI_CloseDialog(&setting_dialog);
+    }
+
+    if (item->option)
+    {
+        if (option_type == TYPE_OPTION_CALLBACK)
+        {
+            int (*callback)() = (int (*)())item->option;
+            if (released_pad[PAD_ENTER])
+            {
+                if (callback)
+                    callback();
+            }
+        }
+        else if (option_type == TYPE_OPTION_STR_ARRAY)
+        {
+            StrArrayOption *option = (StrArrayOption *)item->option;
+            if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
+            {
+                if (*(option->value) < option->n_names - 1)
+                    (*(option->value))++;
+                else
+                    *(option->value) = 0;
+                if (option->update)
+                    option->update(option);
+            }
+            else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
+            {
+                if (*(option->value) > 0)
+                    (*(option->value))--;
+                else
+                    *(option->value) = option->n_names - 1;
+                if (option->update)
+                    option->update(option);
+            }
+        }
+        else if (option_type == TYPE_OPTION_STR_INDEXS)
+        {
+            StrIndexsOption *option = (StrIndexsOption *)item->option;
+            if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
+            {
+                if (*(option->value) < option->n_langs - 1)
+                    (*(option->value))++;
+                else
+                    *(option->value) = 0;
+                if (option->update)
+                    option->update(option);
+            }
+            else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
+            {
+                if (*(option->value) > 0)
+                    (*(option->value))--;
+                else
+                    *(option->value) = option->n_langs - 1;
+                if (option->update)
+                    option->update(option);
+            }
+        }
+        else if (option_type == TYPE_OPTION_INT_ARRAY)
+        {
+            IntArrayOption *option = (IntArrayOption *)item->option;
+            if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
+            {
+                if (*(option->value) < option->n_values - 1)
+                    (*(option->value))++;
+                else
+                    *(option->value) = 0;
+                if (option->update)
+                    option->update(option);
+            }
+            else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
+            {
+                if (*(option->value) > 0)
+                    (*(option->value))--;
+                else
+                    *(option->value) = option->n_values - 1;
+                if (option->update)
+                    option->update(option);
+            }
+        }
+        else if (option_type == TYPE_OPTION_INT_STEP)
+        {
+            IntStepOption *option = (IntStepOption *)item->option;
+            if (released_pad[PAD_RIGHT] || released_pad[PAD_LEFT_ANALOG_RIGHT])
+            {
+                if (*(option->value) < option->max)
+                    (*(option->value))++;
+                else
+                    *(option->value) = option->min;
+                if (option->update)
+                    option->update(option);
+            }
+            else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
+            {
+                if (*(option->value) > option->min)
+                    (*(option->value))--;
+                else
+                    *(option->value) = option->max;
+                if (option->update)
+                    option->update(option);
+            }
+        }
+        else if (option_type == TYPE_OPTION_KEY_MAP)
+        {
+            OptionMenu *option = (OptionMenu *)item->option;
+            if (released_pad[PAD_ENTER])
+            {
+                option_menu = option;
+                option_top_pos = 0;
+                option_focus_pos = 0;
+                if (option->open)
+                    option->open(option);
+                option_open = 1;
+            }
+            else if (released_pad[PAD_SQUARE])
+            {
+                uint32_t *set_key = (uint32_t *)(option->userdata);
+                if (*set_key & TURBO_KEY_BITMASK)
+                    *set_key &= ~TURBO_KEY_BITMASK;
+                else
+                    *set_key |= TURBO_KEY_BITMASK;
+                control_option_changed = 1;
+            }
+        }
     }
 }
 
@@ -756,14 +829,14 @@ static void DialogCtrl()
 
 void Setting_RefreshCtrlMenu()
 {
-    SettingMenu *menu = &(menu_list[CONTROL_MENU_INDEX]);
+    SettingMenu *menu = &(menu_list[INDEX_MENU_CONTROL]);
     SettingMenuItem *menu_item;
 
     int i, j;
     for (i = 0; i < menu->n_items; i++)
     {
         menu_item = &(menu->items[i]);
-        if (menu_item->option_type != OPTION_TYPE_KEY_MAP)
+        if (menu_item->option_type != TYPE_OPTION_KEY_MAP)
             continue;
 
         OptionMenu *option = (OptionMenu *)(menu_item->option);
@@ -774,7 +847,7 @@ void Setting_RefreshCtrlMenu()
         text[0] = '\0';
         if (!enabled)
         {
-            strcpy(text, STR_DISABLE);
+            strcpy(text, cur_lang[DISABLE]);
             continue;
         }
 
@@ -788,7 +861,7 @@ void Setting_RefreshCtrlMenu()
             {
                 if (n_maped > 0)
                     strcat(text, "+");
-                strcat(text, option_item->name);
+                strcat(text, cur_lang[option_item->lang]);
                 n_maped++;
             }
         }
@@ -800,18 +873,18 @@ static int DialogOpen()
     Setting_WaitOverlayInitEnd();
 
     if (Emu_IsGameLoaded())
-        setting_config_type = CONFIG_TYPE_GAME;
+        setting_config_type = TYPE_CONFIG_GAME;
     else
-        setting_config_type = CONFIG_TYPE_MAIN;
+        setting_config_type = TYPE_CONFIG_MAIN;
 
     if (CurrentPathIsFile())
     {
         Setting_InitState();
-        menu_list[STATE_MENU_INDEX].visible = 1;
+        menu_list[INDEX_MENU_STATE].visible = 1;
     }
     else
     {
-        menu_list[STATE_MENU_INDEX].visible = 0;
+        menu_list[INDEX_MENU_STATE].visible = 0;
         if (menu_list_focus_pos == 1)
         {
             menu_list_focus_pos = 0;
@@ -824,12 +897,12 @@ static int DialogOpen()
         if (Emu_IsGameLoaded())
         {
             // 程序菜单 (菜单 可见/隐藏)
-            menu_list[APP_MENU_INDEX].visible = 0;
+            menu_list[INDEX_MENU_APP].visible = 0;
             // 核心菜单 (菜单 可见/隐藏)
-            if (menu_list[CORE_MENU_INDEX].items)
-                menu_list[CORE_MENU_INDEX].visible = 1;
+            if (menu_list[INDEX_MENU_CORE].items)
+                menu_list[INDEX_MENU_CORE].visible = 1;
             else
-                menu_list[CORE_MENU_INDEX].visible = 0;
+                menu_list[INDEX_MENU_CORE].visible = 0;
             // 主菜单 (子选项 可见/隐藏)
             main_menu_items[0].visible = 1; // 继续游戏
             main_menu_items[1].visible = 1; // 重置游戏
@@ -841,12 +914,12 @@ static int DialogOpen()
         else
         {
             // 程序菜单 (菜单 可见/隐藏)
-            menu_list[APP_MENU_INDEX].visible = 1;
+            menu_list[INDEX_MENU_APP].visible = 1;
             // 核心菜单 (菜单 可见/隐藏)
-            if (menu_list[CORE_MENU_INDEX].items && core_menu_for_main_enabled)
-                menu_list[CORE_MENU_INDEX].visible = 1;
+            if (menu_list[INDEX_MENU_CORE].items && core_menu_for_main_enabled)
+                menu_list[INDEX_MENU_CORE].visible = 1;
             else
-                menu_list[CORE_MENU_INDEX].visible = 0;
+                menu_list[INDEX_MENU_CORE].visible = 0;
             // 主菜单 (子选项 可见/隐藏)
             main_menu_items[0].visible = 0;
             main_menu_items[1].visible = 0;
@@ -902,8 +975,9 @@ static int DialogClose()
 
 int Setting_Init()
 {
-    if (menu_list[CORE_MENU_INDEX].items)
+    if (menu_list[INDEX_MENU_CORE].items)
         core_menu_for_main_enabled = 1;
+    Setting_SetLangOption();
     Setting_InitOverlay();
     refreshSettingLayout();
     return 0;

@@ -71,7 +71,7 @@ void Emu_MakeVideoBaseWH(uint32_t *res_width, uint32_t *res_height)
     uint32_t base_width = core_system_av_info.geometry.base_width;
     uint32_t base_height = core_system_av_info.geometry.base_height;
 
-    if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_BY_REAL)
+    if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_GAME_RESOLUTION)
     {
         *res_width = base_width;
         *res_height = base_height;
@@ -80,27 +80,27 @@ void Emu_MakeVideoBaseWH(uint32_t *res_width, uint32_t *res_height)
 
     float aspect_ratio = 0;
 
-    if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_BY_INFO)
+    if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_DEFAULT)
     {
         aspect_ratio = core_system_av_info.geometry.aspect_ratio;
     }
-    else if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_BY_DEV)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_DEV_SCREEN)
     {
         aspect_ratio = (float)GUI_SCREEN_WIDTH / (float)GUI_SCREEN_HEIGHT;
     }
-    else if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_8_7)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_8_7)
     {
         aspect_ratio = 8.f / 7.f;
     }
-    else if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_4_3)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_4_3)
     {
         aspect_ratio = 4.f / 3.f;
     }
-    else if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_3_2)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_3_2)
     {
         aspect_ratio = 3.f / 2.f;
     }
-    else if (graphics_config.aspect_ratio == EMU_ASPECT_RATIO_16_9)
+    else if (graphics_config.aspect_ratio == TYPE_DISPLAY_RATIO_16_9)
     {
         aspect_ratio = 16.f / 9.f;
     }
@@ -136,17 +136,17 @@ void Emu_MakeVideoDisplayWH(uint32_t *res_width, uint32_t *res_height, int rotat
 
     aspect_ratio = (float)base_width / (float)base_height;
 
-    if (graphics_config.display_size == EMU_DISPLAY_SIZE_2X)
+    if (graphics_config.display_size == TYPE_DISPLAY_SIZE_2X)
     { // 2倍大小
         new_width = base_width * 2;
         new_height = base_height * 2;
     }
-    else if (graphics_config.display_size == EMU_DISPLAY_SIZE_3X)
+    else if (graphics_config.display_size == TYPE_DISPLAY_SIZE_3X)
     { // 3倍大小
         new_width = base_width * 3;
         new_height = base_height * 3;
     }
-    else if (graphics_config.display_size == EMU_DISPLAY_SIZE_FULL)
+    else if (graphics_config.display_size == TYPE_DISPLAY_SIZE_FULL)
     { // 铺满屏幕
         new_height = GUI_SCREEN_HEIGHT;
         new_width = new_height * aspect_ratio;
@@ -255,7 +255,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     *height = conver_height;
     *size = conver_size;
 
-    // APP_LOG("conver_width: %d, conver_height: %d\n", conver_width, conver_height);
+    // AppLog("conver_width: %d, conver_height: %d\n", conver_width, conver_height);
 
 END:
     if (rendert_tex)
@@ -309,7 +309,7 @@ static int creatVideoTexture()
 
     if (!video_texture)
     {
-        APP_LOG("[VIDEO] create video texture failed\n");
+        AppLog("[VIDEO] create video texture failed\n");
         return -1;
     }
     return 0;
@@ -344,7 +344,7 @@ static int creatOverlayTexture()
     }
     if (!overlay_texture)
     {
-        APP_LOG("[VIDEO] create overlay texture failed\n");
+        AppLog("[VIDEO] create overlay texture failed\n");
         return -1;
     }
     return 0;
@@ -476,7 +476,7 @@ void Emu_DrawVideo()
 
 int Emu_InitVideo()
 {
-    APP_LOG("[VIDEO] video init...\n");
+    AppLog("[VIDEO] video init...\n");
 
     video_okay = 0;
     video_pause = 1;
@@ -495,17 +495,17 @@ int Emu_InitVideo()
     if (control_config.map_port != 0)
         Emu_ReshowCtrlPlayer();
 
-    APP_LOG("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
-    APP_LOG("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
-    APP_LOG("[VIDEO] fps: %.2f\n", core_system_av_info.timing.fps);
-    APP_LOG("[VIDEO] video init done\n");
+    AppLog("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
+    AppLog("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
+    AppLog("[VIDEO] fps: %.2f\n", core_system_av_info.timing.fps);
+    AppLog("[VIDEO] video init done\n");
 
     return 0;
 }
 
 int Emu_DeinitVideo()
 {
-    APP_LOG("[VIDEO] video deinit...\n");
+    AppLog("[VIDEO] video deinit...\n");
 
     video_okay = 0;
     video_pause = 1;
@@ -524,7 +524,7 @@ int Emu_DeinitVideo()
 
     GUI_SetVblankWait(1);
 
-    APP_LOG("[VIDEO] video deinit done\n");
+    AppLog("[VIDEO] video deinit done\n");
     return 0;
 }
 
@@ -574,7 +574,7 @@ static void displayVideo()
     {
         uint64_t cur_micros = sceKernelGetProcessTimeWide();
         if (cur_micros < show_player_micros)
-            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetFontSize(), COLOR_WHITE, "%s: %dP", STR_HOST_CONTROL, control_config.map_port + 1);
+            GUI_DrawTextf(0.0f, GUI_SCREEN_HEIGHT - GUI_GetFontSize(), COLOR_WHITE, "%s: %dP", cur_lang[CTRL_PLAYER], control_config.map_port + 1);
         else
             show_player_micros = 0;
     }

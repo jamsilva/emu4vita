@@ -8,13 +8,13 @@
 
 typedef struct
 {
-    char *button;
-    char *instruction;
+    int button;
+    int instruction;
 } GUI_ButtonInstruction;
 
 typedef struct GUI_Activity
 {
-    char *title;                                // Title
+    int title;                                // Title
     GUI_ButtonInstruction *button_instructions; // Button instructions
     int (*init)();                              // Init callback
     int (*exit)();                              // Exit callback
@@ -74,11 +74,14 @@ typedef struct GUI_Dialog
 #define GUI_SCROLLBAR_TRACK_COLOR COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
 #define GUI_SCROLLBAR_THUMB_COLOR COLOR_ALPHA(COLOR_LITEGRAY, 0x8F)
 
+#define BUTTON_ENTER -1
+#define BUTTON_CANCEL -2
+#define APP_TITLE -3
+#define LANG_DISABLE -1000
+
 // Free draw
 extern float ACTIVITY_FREE_DRAW_WIDTH, ACTIVITY_FREE_DRAW_HEIGHT;
 extern float ACTIVITY_FREE_DRAW_SX, ACTIVITY_FREE_DRAW_SY, ACTIVITY_FREE_DRAW_DX, ACTIVITY_FREE_DRAW_DY;
-
-extern char STR_BUTTON_ENTER[4], STR_BUTTON_CANCEL[4];
 
 void GUI_RefreshLayout();
 void GUI_GetEnterButton();

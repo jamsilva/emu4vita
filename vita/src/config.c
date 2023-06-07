@@ -29,7 +29,7 @@ OverlayList setting_overlay_list = {0};
 
 void MakeConfigPath(char *path, char *config_name, int type)
 {
-    if (type == CONFIG_TYPE_GAME)
+    if (type == TYPE_CONFIG_GAME)
     {
         char name[MAX_NAME_LENGTH];
         MakeCurrentFileName(name);
@@ -43,38 +43,12 @@ void MakeConfigPath(char *path, char *config_name, int type)
     }
 }
 
-int ResetAppConfig()
-{
-    memset(&app_config, 0, sizeof(AppConfig));
-    app_config.version = APP_CONFIG_VERSION;
-    app_config.preview_path = PREVIEW_PATH_AUTO;
-    app_config.preview_style = PREVIEW_FILL_PRESERVE;
-    app_config.app_log = 1;
-    app_config.core_log = 0;
-#if defined(FBA_BUILD)
-    app_config.loading_log = 1;
-#else
-    app_config.loading_log = 0;
-#endif
-
-    return 0;
-}
-
-int ResetMiscConfig()
-{
-    memset(&misc_config, 0, sizeof(MiscConfig));
-    misc_config.version = MISC_CONFIG_VERSION;
-    misc_config.auto_save_load = 1;
-
-    return 0;
-}
-
 int ResetGraphicsConfig()
 {
     memset(&graphics_config, 0, sizeof(GraphicsConfig));
     graphics_config.version = GRAPHICS_CONFIG_VERSION;
-    graphics_config.display_size = EMU_DISPLAY_SIZE_FULL;
-    graphics_config.aspect_ratio = EMU_ASPECT_RATIO_BY_REAL;
+    graphics_config.display_size = TYPE_DISPLAY_SIZE_FULL;
+    graphics_config.aspect_ratio = TYPE_DISPLAY_RATIO_GAME_RESOLUTION;
     graphics_config.display_rotate = 0;
     graphics_config.graphics_filtering = 0;
     graphics_config.graphics_smooth = 0;
@@ -226,44 +200,29 @@ int ResetVControlConfig()
 }
 #endif
 
-int LoadAppConfig(int type)
+int ResetMiscConfig()
 {
-    AppConfig config;
-    memset(&config, 0, sizeof(AppConfig));
-
-    char path[MAX_PATH_LENGTH];
-    MakeConfigPath(path, APP_CONFIG_NAME, type);
-
-    int ret = ReadFile(path, &config, sizeof(AppConfig));
-    if (ret < 0 || ret != sizeof(AppConfig) || config.version != APP_CONFIG_VERSION)
-    {
-        if (type == CONFIG_TYPE_MAIN)
-            ResetAppConfig();
-        return -1;
-    }
-
-    memcpy(&app_config, &config, sizeof(AppConfig));
+    memset(&misc_config, 0, sizeof(MiscConfig));
+    misc_config.version = MISC_CONFIG_VERSION;
+    misc_config.auto_save_load = 1;
 
     return 0;
 }
 
-int LoadMiscConfig(int type)
+int ResetAppConfig()
 {
-    MiscConfig config;
-    memset(&config, 0, sizeof(MiscConfig));
-
-    char path[MAX_PATH_LENGTH];
-    MakeConfigPath(path, MISC_CONFIG_NAME, type);
-
-    int ret = ReadFile(path, &config, sizeof(MiscConfig));
-    if (ret < 0 || ret != sizeof(MiscConfig) || config.version != MISC_CONFIG_VERSION)
-    {
-        if (type == CONFIG_TYPE_MAIN)
-            ResetMiscConfig();
-        return -1;
-    }
-
-    memcpy(&misc_config, &config, sizeof(MiscConfig));
+    memset(&app_config, 0, sizeof(AppConfig));
+    app_config.version = APP_CONFIG_VERSION;
+    app_config.preview_path = TYPE_PREVIEW_PATH_AUTO;
+    app_config.preview_style = TYPE_PREVIEW_STYLE_PRESERVE_FULL;
+    app_config.app_log = 1;
+    app_config.core_log = 0;
+#if defined(FBA_BUILD)
+    app_config.print_log = 1;
+#else
+    app_config.print_log = 0;
+#endif
+    app_config.lang = 1;
 
     return 0;
 }
@@ -281,7 +240,7 @@ int LoadGraphicsConfig(int type)
     int ret = ReadFile(path, &config, sizeof(GraphicsConfig));
     if (ret < 0 || ret != sizeof(GraphicsConfig) || config.version != GRAPHICS_CONFIG_VERSION)
     {
-        if (type == CONFIG_TYPE_MAIN)
+        if (type == TYPE_CONFIG_MAIN)
             ResetGraphicsConfig();
         return -1;
     }
@@ -305,7 +264,7 @@ int LoadControlConfig(int type)
     int ret = ReadFile(path, &config, sizeof(ControlConfig));
     if (ret < 0 || ret != sizeof(ControlConfig) || config.version != CONTROL_CONFIG_VERSION)
     {
-        if (type == CONFIG_TYPE_MAIN)
+        if (type == TYPE_CONFIG_MAIN)
             ResetControlConfig();
         return -1;
     }
@@ -315,28 +274,46 @@ int LoadControlConfig(int type)
     return 0;
 }
 
-int SaveAppConfig(int type)
+int LoadMiscConfig(int type)
 {
-    char path[MAX_PATH_LENGTH];
-    MakeConfigPath(path, APP_CONFIG_NAME, type);
+    MiscConfig config;
+    memset(&config, 0, sizeof(MiscConfig));
 
-    char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
-    CreateFolder(parent_path);
-
-    return WriteFile(path, &app_config, sizeof(AppConfig));
-}
-
-int SaveMiscConfig(int type)
-{
     char path[MAX_PATH_LENGTH];
     MakeConfigPath(path, MISC_CONFIG_NAME, type);
 
-    char parent_path[MAX_PATH_LENGTH];
-    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
-    CreateFolder(parent_path);
+    int ret = ReadFile(path, &config, sizeof(MiscConfig));
+    if (ret < 0 || ret != sizeof(MiscConfig) || config.version != MISC_CONFIG_VERSION)
+    {
+        if (type == TYPE_CONFIG_MAIN)
+            ResetMiscConfig();
+        return -1;
+    }
 
-    return WriteFile(path, &misc_config, sizeof(MiscConfig));
+    memcpy(&misc_config, &config, sizeof(MiscConfig));
+
+    return 0;
+}
+
+int LoadAppConfig(int type)
+{
+    AppConfig config;
+    memset(&config, 0, sizeof(AppConfig));
+
+    char path[MAX_PATH_LENGTH];
+    MakeConfigPath(path, APP_CONFIG_NAME, type);
+
+    int ret = ReadFile(path, &config, sizeof(AppConfig));
+    if (ret < 0 || ret != sizeof(AppConfig) || config.version != APP_CONFIG_VERSION)
+    {
+        if (type == TYPE_CONFIG_MAIN)
+            ResetAppConfig();
+        return -1;
+    }
+
+    memcpy(&app_config, &config, sizeof(AppConfig));
+
+    return 0;
 }
 
 int SaveGraphicsConfig(int type)
@@ -361,6 +338,30 @@ int SaveControlConfig(int type)
     CreateFolder(parent_path);
 
     return WriteFile(path, &control_config, sizeof(ControlConfig));
+}
+
+int SaveMiscConfig(int type)
+{
+    char path[MAX_PATH_LENGTH];
+    MakeConfigPath(path, MISC_CONFIG_NAME, type);
+
+    char parent_path[MAX_PATH_LENGTH];
+    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    CreateFolder(parent_path);
+
+    return WriteFile(path, &misc_config, sizeof(MiscConfig));
+}
+
+int SaveAppConfig(int type)
+{
+    char path[MAX_PATH_LENGTH];
+    MakeConfigPath(path, APP_CONFIG_NAME, type);
+
+    char parent_path[MAX_PATH_LENGTH];
+    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    CreateFolder(parent_path);
+
+    return WriteFile(path, &app_config, sizeof(AppConfig));
 }
 
 int ResetCoreConfig()

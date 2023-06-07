@@ -90,7 +90,14 @@ static int resetGraphicsConfigCallback()
     return 0;
 }
 
-static void graphicsOptionChangedCallback(StrArrayOption *option)
+static void graphicsOptionChangedCallback(StrIndexsOption *option)
+{
+    graphics_option_changed = 1;
+    if (Emu_IsGameLoaded())
+        Emu_RequestRefreshVideo();
+}
+
+static void graphicsOptionChangedCallback2(StrArrayOption *option)
 {
     graphics_option_changed = 1;
     if (Emu_IsGameLoaded())
@@ -132,7 +139,12 @@ static int resetVControlConfigCallback()
 }
 #endif
 
-static void controlOptionChangedCallback(StrArrayOption *option)
+static void controlOptionChangedCallback(StrIndexsOption *option)
+{
+    control_option_changed = 1;
+}
+
+static void controlOptionChangedCallback2(StrArrayOption *option)
 {
     control_option_changed = 1;
 }
@@ -212,7 +224,7 @@ static int resetMiscConfigCallback()
     return 0;
 }
 
-static void miscOptionChangedCallback(StrArrayOption *option)
+static void miscOptionChangedCallback(StrIndexsOption *option)
 {
     misc_option_changed = 1;
 }
@@ -228,22 +240,29 @@ static void appMenuExitCallback(SettingMenu *menu)
     }
 }
 
+static void appOptionChangedCallback(StrIndexsOption *option)
+{
+    app_option_changed = 1;
+}
+
 static int resetAppConfigCallback()
 {
     ResetAppConfig();
+    Setting_UpdataLangOption();
     Browser_RequestRefreshPreview(1);
     app_option_changed = 1;
     return 0;
 }
 
-static void updatePreviewCallback(StrArrayOption *option)
+static void updatePreviewCallback(StrIndexsOption *option)
 {
     Browser_RequestRefreshPreview(1);
     app_option_changed = 1;
 }
 
-static void appOptionChangedCallback(StrArrayOption *option)
+static void updateLangCallback(StrArrayOption *option)
 {
+    Setting_UpdataLangOption();
     app_option_changed = 1;
 }
 

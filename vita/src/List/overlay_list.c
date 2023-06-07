@@ -207,7 +207,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
     // Ignore comments #1
     if (head[0] == '#')
     {
-        // APP_LOG("IGNORE %s\n", line);
+        // AppLog("IGNORE %s\n", line);
         goto END;
     }
 
@@ -215,7 +215,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
     const char *p = strchr(head, '#');
     if (p)
     {
-        // APP_LOG("IGNORE %s\n", p);
+        // AppLog("IGNORE %s\n", p);
         tail = p;
     }
 
@@ -241,7 +241,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
     strncpy(key, head, len);
     key[len] = '\0';
     TrimString(key);
-    // APP_LOG("KEY: %s\n", key);
+    // AppLog("KEY: %s\n", key);
 
     head = p + 1;
     while (*head == ' ' || *head == '\t')
@@ -268,7 +268,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
         goto END;
     strncpy(value, head, len);
     value[len] = '\0';
-    // APP_LOG("VALUE: %s\n", value);
+    // AppLog("VALUE: %s\n", value);
 
     res = OVERLAY_TEXT_TYPE_NAME_VALUE;
 
@@ -312,7 +312,7 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
     do
     {
         res = ConfigGetLine(p, size, &line);
-        // APP_LOG("ConfigGetLine: line = %s\n", line);
+        // AppLog("ConfigGetLine: line = %s\n", line);
         if (res > 0)
         {
             type = readLine(line, &name, &value);

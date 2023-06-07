@@ -38,7 +38,7 @@ float ACTIVITY_FREE_DRAW_WIDTH, ACTIVITY_FREE_DRAW_HEIGHT;
 float ACTIVITY_FREE_DRAW_SX, ACTIVITY_FREE_DRAW_SY, ACTIVITY_FREE_DRAW_DX, ACTIVITY_FREE_DRAW_DY;
 
 // Button
-char STR_BUTTON_ENTER[4], STR_BUTTON_CANCEL[4];
+int BUTTON_ENTER_INDEX = BUTTON_CIRCLE, BUTTON_CANCEL_INDEX = BUTTON_CROSS;
 
 void GUI_RefreshLayout()
 {
@@ -57,13 +57,13 @@ void GUI_GetEnterButton()
 {
     if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
     {
-        strcpy(STR_BUTTON_ENTER, STR_BUTTON_CIRCLE);
-        strcpy(STR_BUTTON_CANCEL, STR_BUTTON_CROSS);
+        BUTTON_ENTER_INDEX = BUTTON_CIRCLE;
+        BUTTON_CANCEL_INDEX = BUTTON_CROSS;
     }
     else
     {
-        strcpy(STR_BUTTON_ENTER, STR_BUTTON_CROSS);
-        strcpy(STR_BUTTON_CANCEL, STR_BUTTON_CIRCLE);
+        BUTTON_ENTER_INDEX = BUTTON_CROSS;
+        BUTTON_CANCEL_INDEX = BUTTON_CIRCLE;
     }
 }
 
@@ -142,6 +142,20 @@ int GUI_CloseDialog(GUI_Dialog *dialog)
     return 0;
 }
 
+static char *getLangStr(int index)
+{
+    if (index >= 0)
+        return cur_lang[index];
+    else if (index == BUTTON_ENTER)
+        return cur_lang[BUTTON_ENTER_INDEX];
+    else if (index == BUTTON_CANCEL)
+        return cur_lang[BUTTON_CANCEL_INDEX];
+    else if (index == APP_TITLE)
+        return (APP_NAME_STR " v" APP_VER_STR);
+    else
+        return NULL;
+}
+
 void GUI_DrawTopStatusBar(char *title)
 {
     float view_sx = 0;
@@ -199,10 +213,10 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     float sx = view_sx + STATUS_BAR_PADDING_L;
     float sy = view_sy + STATUS_BAR_PADDING_T;
     int i;
-    for (i = 0; instructions[i].button; i++)
+    for (i = 0; instructions[i].button != LANG_DISABLE; i++)
     {
-        sx += GUI_DrawTextf(sx, sy, COLOR_AZURE, "%s:", instructions[i].button);
-        sx += GUI_DrawText(sx, sy, COLOR_WHITE, instructions[i].instruction);
+        sx += GUI_DrawTextf(sx, sy, COLOR_AZURE, "%s:", getLangStr(instructions[i].button));
+        sx += GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[instructions[i].instruction]);
         sx += STATUS_BAR_PADDING_L;
     }
 }
@@ -269,11 +283,11 @@ void GUI_DisplaySafeMode()
     {
         int x = 30, y = 30;
         GUI_StartDrawing();
-        GUI_DrawText(x, y, COLOR_WHITE, STR_SAFE_MODE_PRINT_0);
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_0]);
         y += GUI_GetFontSize();
-        GUI_DrawText(x, y, COLOR_WHITE, STR_SAFE_MODE_PRINT_1);
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_1]);
         y += GUI_GetFontSize() * 2;
-        GUI_DrawText(x, y, COLOR_WHITE, STR_SAFE_MODE_PRINT_2);
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_2]);
         GUI_EndDrawing();
 
         SceCtrlData pad;
@@ -314,7 +328,7 @@ static void drawActivity()
 
     if (!current_activity->nostatusbar)
     {
-        GUI_DrawTopStatusBar(current_activity->title);
+        GUI_DrawTopStatusBar(getLangStr(current_activity->title));
         GUI_DrawBottomStatusBar(current_activity->button_instructions);
     }
 }

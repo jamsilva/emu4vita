@@ -21,7 +21,7 @@ static int suspend_locked = 0, oled_off_locked = 0, oled_dimming_locked = 0;
 
 static int psbutton_event_enabled = 1;
 
-int APP_LOG(char *text, ...)
+int AppLog(char *text, ...)
 {
     if (!app_config.app_log)
         return 0;

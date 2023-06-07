@@ -112,11 +112,11 @@ int AppInit(int argc, char *const argv[])
     sceIoRemove(CORE_LOG_PATH);
     CreateFolder(APP_DATA_DIR);
 
-    LoadAppConfig(CONFIG_TYPE_MAIN);
+    LoadAppConfig(TYPE_CONFIG_MAIN);
 
     BootCheckParams(argc, argv);
 
-    APP_LOG("[INIT] Init app...\n");
+    AppLog("[INIT] Init app...\n");
 
     scePowerSetArmClockFrequency(444);
     scePowerSetBusClockFrequency(222);
@@ -141,21 +141,21 @@ int AppInit(int argc, char *const argv[])
 
     if (checkSafeMode())
     {
-        APP_LOG("[INIT] It's in safe mode, please change to unsafe mode for use this app!\n");
-        APP_LOG("[INIT] Init app failed\n");
+        AppLog("[INIT] It's in safe mode, please change to unsafe mode for use this app!\n");
+        AppLog("[INIT] Init app failed\n");
         GUI_DisplaySafeMode();
         AppDeinit();
         sceKernelExitProcess(0);
     }
 
-    LoadControlConfig(CONFIG_TYPE_MAIN);
-    LoadMiscConfig(CONFIG_TYPE_MAIN);
-    LoadGraphicsConfig(CONFIG_TYPE_MAIN);
+    LoadControlConfig(TYPE_CONFIG_MAIN);
+    LoadMiscConfig(TYPE_CONFIG_MAIN);
+    LoadGraphicsConfig(TYPE_CONFIG_MAIN);
 
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);
 
-    APP_LOG("[INIT] Init app done\n");
+    AppLog("[INIT] Init app done\n");
 
     if (exec_boot_mode == BOOT_MODE_GAME)
         BootLoadGame();

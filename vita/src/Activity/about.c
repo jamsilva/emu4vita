@@ -13,12 +13,12 @@ static void ActivityDraw();
 static void ActivityCtrl();
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {STR_BUTTON_CANCEL, STR_BACK_TO_BROWSER},
-    {NULL, NULL},
+    {BUTTON_CANCEL, BACK_TO_BROWSER},
+    {LANG_DISABLE, LANG_DISABLE},
 };
 
 GUI_Activity about_activity = {
-    STR_ABOUT,           // Title
+    ABOUT,               // Title
     button_instructions, // Button instructions
     ActivityInit,        // Init callback
     NULL,                // Exit callback

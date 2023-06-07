@@ -15,7 +15,6 @@
 #include "utils.h"
 #include "file.h"
 #include "config.h"
-#include "lang.h"
 
 extern bool Retro_EnvironmentCallback(unsigned int cmd, void *data);
 extern size_t Retro_AudioSampleBatchCallback(const int16_t *data, size_t frames);
@@ -29,7 +28,6 @@ char core_system_dir[MAX_PATH_LENGTH];
 struct retro_system_info core_system_info;
 struct retro_system_av_info core_system_av_info;
 
-unsigned core_option_language = RETRO_LANGUAGE_CHINESE_SIMPLIFIED;
 static unsigned int core_device = RETRO_DEVICE_JOYPAD;
 
 int MakeCoreAssetsDirPath(char *path)
@@ -108,7 +106,7 @@ static int creatValidFileExts()
 
     if (!exts)
         return -1;
-    APP_LOG("[RETRO] Valid extensions: %s\n", exts);
+    AppLog("[RETRO] Valid extensions: %s\n", exts);
 
     exts_len = strlen(exts);
     if (exts_len == 0)
@@ -120,7 +118,7 @@ static int creatValidFileExts()
         if (exts[i] == '|')
             n_exts++;
     }
-    // APP_LOG("n_exts: %d\n", n_exts);
+    // AppLog("n_exts: %d\n", n_exts);
 
     if (file_valid_exts)
         freeValidFileExts();
@@ -148,7 +146,7 @@ static int creatValidFileExts()
     file_valid_exts[n_exts] = NULL;
 
     // for (i = 0; i < n_exts; i++)
-    //     APP_LOG("exts[%d]: %s\n", i, file_valid_exts[i]);
+    //     AppLog("exts[%d]: %s\n", i, file_valid_exts[i]);
 
     return ret;
 }
@@ -171,7 +169,7 @@ void Retro_SetControllerPortDevices()
 
 int Retro_InitLib()
 {
-    APP_LOG("[RETRO] Retro init lib...\n");
+    AppLog("[RETRO] Retro init lib...\n");
 
     pthread_init();
     rtime_init();
@@ -180,7 +178,6 @@ int Retro_InitLib()
     MakeCoreSystemDirPath(core_system_dir);
 
     core_options_update_display_callback = NULL;
-    core_option_language = RETRO_LANGUAGE_CHINESE_SIMPLIFIED;
     core_device = RETRO_DEVICE_JOYPAD;
 
     setRetroCallbacks();
@@ -191,19 +188,19 @@ int Retro_InitLib()
     CopyInternalSystemDir();
 #endif
 
-    APP_LOG("[RETRO] Retro init lib done\n");
+    AppLog("[RETRO] Retro init lib done\n");
 
     return 0;
 }
 
 int Retro_DeinitLib()
 {
-    APP_LOG("[RETRO] Retro deinit lib...\n");
+    AppLog("[RETRO] Retro deinit lib...\n");
 
     rtime_deinit();
     pthread_terminate();
 
-    APP_LOG("[RETRO] Retro deinit lib done\n");
+    AppLog("[RETRO] Retro deinit lib done\n");
 
     return 0;
 }

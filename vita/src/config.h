@@ -65,7 +65,7 @@
 
 enum ExtCtrlButtons
 {
-    // SCE_CTRL_PSBUTTON = SCE_CTRL_INTERCEPTED is 17, we have 30 bitmask for set
+    /* SCE_CTRL_PSBUTTON = SCE_CTRL_INTERCEPTED is 17, we have 30 bitmask for set */
     EXT_CTRL_LEFT_ANLOG_UP = SCE_CTRL_INTERCEPTED << 1,     // 18
     EXT_CTRL_LEFT_ANLOG_RIGHT = SCE_CTRL_INTERCEPTED << 2,  // 19
     EXT_CTRL_LEFT_ANLOG_DOWN = SCE_CTRL_INTERCEPTED << 3,   // 20
@@ -76,54 +76,43 @@ enum ExtCtrlButtons
     EXT_CTRL_RIGHT_ANLOG_LEFT = SCE_CTRL_INTERCEPTED << 8,  // 25
 };
 
-enum EmuDisplaySize
+enum TypeDisplaySize
 {
-    EMU_DISPLAY_SIZE_1X,
-    EMU_DISPLAY_SIZE_2X,
-    EMU_DISPLAY_SIZE_3X,
-    EMU_DISPLAY_SIZE_FULL,
+    TYPE_DISPLAY_SIZE_1X,
+    TYPE_DISPLAY_SIZE_2X,
+    TYPE_DISPLAY_SIZE_3X,
+    TYPE_DISPLAY_SIZE_FULL,
 };
 
-enum EmuDisplayRatio
+enum TypeDisplayRatio
 {
-    EMU_ASPECT_RATIO_BY_REAL,
-    EMU_ASPECT_RATIO_BY_INFO,
-    EMU_ASPECT_RATIO_BY_DEV,
-    EMU_ASPECT_RATIO_8_7,
-    EMU_ASPECT_RATIO_4_3,
-    EMU_ASPECT_RATIO_3_2,
-    EMU_ASPECT_RATIO_16_9,
+    TYPE_DISPLAY_RATIO_DEFAULT,
+    TYPE_DISPLAY_RATIO_GAME_RESOLUTION,
+    TYPE_DISPLAY_RATIO_DEV_SCREEN,
+    TYPE_DISPLAY_RATIO_8_7,
+    TYPE_DISPLAY_RATIO_4_3,
+    TYPE_DISPLAY_RATIO_3_2,
+    TYPE_DISPLAY_RATIO_16_9,
 };
 
-enum PreviewPathType
+enum TypePreviewPath
 {
-    PREVIEW_PATH_AUTO,
-    PREVIEW_PATH_DEFAULT,
-    PREVIEW_PATH_SAVESTATE,
+    TYPE_PREVIEW_PATH_AUTO,
+    TYPE_PREVIEW_PATH_DEFAULT,
+    TYPE_PREVIEW_PATH_SAVESTATE,
 };
 
-enum PreviewStyle
+enum TypePreviewStyle
 {
-    PREVIEW_FILL_PRESERVE,
-    PREVIEW_FILL_FULL,
+    TYPE_PREVIEW_STYLE_PRESERVE_FULL,
+    TYPE_PREVIEW_STYLE_STRETCH_FULL,
 };
 
-enum ConfigType
+enum TypeConfig
 {
-    CONFIG_TYPE_MAIN,
-    CONFIG_TYPE_GAME,
+    TYPE_CONFIG_MAIN,
+    TYPE_CONFIG_GAME,
 };
-
-typedef struct
-{
-    uint32_t version;       // 0x00
-    uint32_t preview_path;  // 0x04
-    uint32_t preview_style; // 0x08
-    uint32_t app_log;       // 0x0C
-    uint32_t core_log;      // 0x10
-    uint32_t loading_log;   // 0x14
-    char reserved[0x50];    // 0x18
-} AppConfig;                // 0x68
 
 typedef struct
 {
@@ -177,6 +166,18 @@ typedef struct
     char reserved[0x54];     // 0x14
 } MiscConfig;                // 0x68
 
+typedef struct
+{
+    uint32_t version;       // 0x00
+    uint32_t preview_path;  // 0x04
+    uint32_t preview_style; // 0x08
+    uint32_t app_log;       // 0x0C
+    uint32_t core_log;      // 0x10
+    uint32_t print_log;     // 0x14
+    uint32_t lang;          // 0x18
+    char reserved[0x4C];    // 0x1C
+} AppConfig;                // 0x68
+
 extern AppConfig app_config;
 extern GraphicsConfig graphics_config;
 extern ControlConfig control_config;
@@ -191,23 +192,23 @@ extern OverlayList setting_overlay_list;
 
 void MakeConfigPath(char *path, char *config_name, int type);
 
-int ResetAppConfig();
-int ResetMiscConfig();
 int ResetGraphicsConfig();
 int ResetControlConfig();
 #if defined(WSC_BUILD)
 int ResetVControlConfig();
 #endif
+int ResetMiscConfig();
+int ResetAppConfig();
 
-int LoadAppConfig(int type);
-int LoadMiscConfig(int type);
 int LoadGraphicsConfig(int type);
 int LoadControlConfig(int type);
+int LoadMiscConfig(int type);
+int LoadAppConfig(int type);
 
-int SaveAppConfig(int type);
-int SaveMiscConfig(int type);
 int SaveGraphicsConfig(int type);
 int SaveControlConfig(int type);
+int SaveMiscConfig(int type);
+int SaveAppConfig(int type);
 
 int ResetCoreConfig();
 int LoadCoreConfig(int type);

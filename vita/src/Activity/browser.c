@@ -24,16 +24,16 @@ static void ActivityDraw();
 static void ActivityCtrl();
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {STR_BUTTON_CANCEL, STR_PARENT_DIRECTORY},
-    {STR_BUTTON_ENTER, STR_OPEN},
-    {STR_BUTTON_PSBUTTON, STR_EMU_OPTIONS},
-    {STR_BUTTON_SELECT, STR_ABOUT},
-    {STR_BUTTON_START, STR_CHANGE_DIRECTORY},
-    {NULL, NULL},
+    {BUTTON_CANCEL, PARENT_DIRECTORY},
+    {BUTTON_ENTER, OPEN},
+    {BUTTON_PSBUTTON, EMU_SETTING},
+    {BUTTON_SELECT, ABOUT},
+    {BUTTON_START, CHANGE_DIRECTORY},
+    {LANG_DISABLE, LANG_DISABLE},
 };
 
 GUI_Activity browser_activity = {
-    STR_MAIN_TITLE,      // Title
+    APP_TITLE,           // Title
     button_instructions, // Button instructions
     ActivityInit,        // Init callback
     ActivityExit,        // Exit callback
@@ -228,18 +228,18 @@ static void refreshPreview()
     if (!CurrentPathIsFile())
         return;
 
-    if (app_config.preview_path == PREVIEW_PATH_AUTO)
+    if (app_config.preview_path == TYPE_PREVIEW_PATH_AUTO)
     {
         if (misc_config.auto_save_load)
             preview_tex = Emu_GetStateScreenshotTexture(-1);
         if (!preview_tex)
             preview_tex = GetDefaultPreviewTexture();
     }
-    else if (app_config.preview_path == PREVIEW_PATH_DEFAULT)
+    else if (app_config.preview_path == TYPE_PREVIEW_PATH_DEFAULT)
     {
         preview_tex = GetDefaultPreviewTexture();
     }
-    else if (app_config.preview_path == PREVIEW_PATH_SAVESTATE)
+    else if (app_config.preview_path == TYPE_PREVIEW_PATH_SAVESTATE)
     {
         preview_tex = Emu_GetStateScreenshotTexture(-1);
     }
@@ -253,7 +253,7 @@ static void refreshPreview()
     int max_height = preview_view_height - PREVIEW_VIEW_PADDING * 2;
     int width = max_width;
     int height = max_height;
-    if (app_config.preview_style == PREVIEW_FILL_PRESERVE)
+    if (app_config.preview_style == TYPE_PREVIEW_STYLE_PRESERVE_FULL)
     {
         float ratio = (float)tex_width / (float)tex_height;
         height = width / ratio;

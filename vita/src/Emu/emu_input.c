@@ -103,7 +103,7 @@ static void changeMapPortUp()
         control_config.map_port++;
     else
         control_config.map_port = 0;
-    SaveControlConfig(CONFIG_TYPE_GAME);
+    SaveControlConfig(TYPE_CONFIG_GAME);
     Emu_ReshowCtrlPlayer();
 }
 
@@ -113,7 +113,7 @@ static void changeMapPortDown()
         control_config.map_port--;
     else
         control_config.map_port = N_CTRL_PORTS - 1;
-    SaveControlConfig(CONFIG_TYPE_GAME);
+    SaveControlConfig(TYPE_CONFIG_GAME);
     Emu_ReshowCtrlPlayer();
 }
 

@@ -8,19 +8,15 @@
 #include "setting_state.h"
 #include "setting_overlay.h"
 
-enum SettingMenuItemTypes
+enum TypeSettingOption
 {
-    OPTION_TYPE_NONE,
-    OPTION_TYPE_CALLBACK,
-    OPTION_TYPE_MENU,
-    OPTION_TYPE_STR,
-    OPTION_TYPE_STR_ARRAY,
-    OPTION_TYPE_INT,
-    OPTION_TYPE_INT_ARRAY,
-    OPTION_TYPE_INT_STEP,
-    OPTION_TYPE_CALLBACK_VOID,
-    OPTION_TYPE_CHECK_BOX,
-    OPTION_TYPE_KEY_MAP,
+    TYPE_OPTION_NONE,
+    TYPE_OPTION_CALLBACK,
+    TYPE_OPTION_STR_ARRAY,
+    TYPE_OPTION_STR_INDEXS,
+    TYPE_OPTION_INT_ARRAY,
+    TYPE_OPTION_INT_STEP,
+    TYPE_OPTION_KEY_MAP,
 };
 
 typedef struct StrArrayOption
@@ -31,6 +27,15 @@ typedef struct StrArrayOption
     void (*update)(struct StrArrayOption *option);
     void *userdata;
 } StrArrayOption;
+
+typedef struct StrIndexsOption
+{
+    uint32_t *value;
+    int *langs;
+    int n_langs;
+    void (*update)(struct StrIndexsOption *option);
+    void *userdata;
+} StrIndexsOption;
 
 typedef struct IntArrayOption
 {
@@ -55,7 +60,7 @@ typedef struct IntStepOption
 
 typedef struct
 {
-    char *name;
+    int lang;
     void *userdata;
     int selected;
 } OptionMenuItem;
@@ -72,6 +77,7 @@ typedef struct OptionMenu
 
 typedef struct SettingMenuItem
 {
+    int lang;
     char *name;
     int visible;
     int option_type;
@@ -80,7 +86,7 @@ typedef struct SettingMenuItem
 
 typedef struct SettingMenu
 {
-    char *name;
+    int lang;
     int visible;
     SettingMenuItem *items;
     int n_items;
@@ -98,6 +104,8 @@ int Setting_Deinit();
 
 int Setting_SetCoreMenu(OptionList *list);
 int Setting_SetOverlayOption(OverlayList *list);
+int Setting_SetLangOption();
+void Setting_UpdataLangOption();
 
 void Setting_RefreshCtrlMenu();
 void Setting_RequestRefreshMenu();

@@ -140,9 +140,9 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
     Setting_RequestRefreshMenu();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
-        LoadCoreConfig(CONFIG_TYPE_GAME);
+        LoadCoreConfig(TYPE_CONFIG_GAME);
     else
-        LoadCoreConfig(CONFIG_TYPE_MAIN);
+        LoadCoreConfig(TYPE_CONFIG_MAIN);
 
     return 0;
 }
@@ -324,9 +324,9 @@ int Retro_GetOptionListFromOptions(void *options, int type)
     Setting_RequestRefreshMenu();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
-        LoadCoreConfig(CONFIG_TYPE_GAME);
+        LoadCoreConfig(TYPE_CONFIG_GAME);
     else
-        LoadCoreConfig(CONFIG_TYPE_MAIN);
+        LoadCoreConfig(TYPE_CONFIG_MAIN);
 
     return 0;
 }

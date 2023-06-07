@@ -1,148 +1,192 @@
 #ifndef __M_LANG_H__
 #define __M_LANG_H__
 
-#define STR_BUTTON_LEFT                "←"
-#define STR_BUTTON_UP                  "↑"
-#define STR_BUTTON_RIGHT               "→"
-#define STR_BUTTON_DOWN                "↓"
-#define STR_BUTTON_CROSS               "X" //"×"
-#define STR_BUTTON_CIRCLE              "○"
-#define STR_BUTTON_SQUARE              "□"
-#define STR_BUTTON_TRIANGLE            "△"
-#define STR_BUTTON_L                   "L"
-#define STR_BUTTON_R                   "R"
-#define STR_BUTTON_L2                  "L2"
-#define STR_BUTTON_R2                  "R2"
-#define STR_BUTTON_L3                  "L3"
-#define STR_BUTTON_R3                  "R3"
-#define STR_BUTTON_SELECT              "Select"
-#define STR_BUTTON_START               "Start"
-#define STR_BUTTON_PSBUTTON            "Home"
-#define STR_BUTTON_LEFT_ANALOG         "左摇杆"
-#define STR_BUTTON_LEFT_ANALOG_LEFT    "左摇杆←"
-#define STR_BUTTON_LEFT_ANALOG_UP      "左摇杆↑"
-#define STR_BUTTON_LEFT_ANALOG_RIGHT   "左摇杆→"
-#define STR_BUTTON_LEFT_ANALOG_DOWN    "左摇杆↓"
-#define STR_BUTTON_RIGHT_ANALOG        "右摇杆"
-#define STR_BUTTON_RIGHT_ANALOG_LEFT   "右摇杆←"
-#define STR_BUTTON_RIGHT_ANALOG_UP     "右摇杆↑"
-#define STR_BUTTON_RIGHT_ANALOG_RIGHT  "右摇杆→"
-#define STR_BUTTON_RIGHT_ANALOG_DOWN   "右摇杆↓"
-#define STR_BUTTON_AND                 "+"
-#define STR_BUTTON_OR                  "/"
+enum LanguageContainer
+{
+    // Safe mode
+    MESSAGE_SAFE_MODE_0,
+    MESSAGE_SAFE_MODE_1,
+    MESSAGE_SAFE_MODE_2,
 
-#define STR_SAFE_MODE_PRINT_0    "当前处于安全模式，请先在HENkaku设置里开启启用不安全自制软件，"
-#define STR_SAFE_MODE_PRINT_1    "然后再回来操作。"
-#define STR_SAFE_MODE_PRINT_2    "按任意键退出！"
+    // Button string
+    BUTTON_LEFT,
+    BUTTON_UP,
+    BUTTON_RIGHT,
+    BUTTON_DOWN,
+    BUTTON_CROSS,
+    BUTTON_CIRCLE,
+    BUTTON_SQUARE,
+    BUTTON_TRIANGLE,
+    BUTTON_L,
+    BUTTON_R,
+    BUTTON_L2,
+    BUTTON_R2,
+    BUTTON_L3,
+    BUTTON_R3,
+    BUTTON_SELECT,
+    BUTTON_START,
+    BUTTON_PSBUTTON,
+    BUTTON_LEFT_ANALOG,
+    BUTTON_LEFT_ANALOG_LEFT,
+    BUTTON_LEFT_ANALOG_UP,
+    BUTTON_LEFT_ANALOG_RIGHT,
+    BUTTON_LEFT_ANALOG_DOWN,
+    BUTTON_RIGHT_ANALOG,
+    BUTTON_RIGHT_ANALOG_LEFT,
+    BUTTON_RIGHT_ANALOG_UP,
+    BUTTON_RIGHT_ANALOG_RIGHT,
+    BUTTON_RIGHT_ANALOG_DOWN,
+    BUTTON_AND,
+    BUTTON_OR,
 
-#define STR_MAIN_TITLE APP_NAME_STR " v" APP_VER_STR
+    // Button string 2
+    BUTTON_A,
+    BUTTON_B,
+    BUTTON_C,
+    BUTTON_D,
+    BUTTON_E,
+    BUTTON_F,
+    BUTTON_G,
+    BUTTON_H,
+    BUTTON_X,
+    BUTTON_Y,
+    BUTTON_Z,
 
-#define STR_ABOUT     "关于"
+    BUTTON_X1,
+    BUTTON_X2,
+    BUTTON_X3,
+    BUTTON_X4,
+    BUTTON_Y1,
+    BUTTON_Y2,
+    BUTTON_Y3,
+    BUTTON_Y4,
 
-#define STR_PARENT_DIRECTORY  "上层目录"
-#define STR_OPEN              "打开"
-#define STR_EMU_OPTIONS      "模拟器菜单"
-#define STR_CHANGE_DIRECTORY  "跳转目录"
+    SWICTH_MODE,
+    COIN,
+    SELECT,
+    START,
+    TURBO,
 
-#define STR_BACK_TO_BROWSER   "返回浏览器"
+    // Browser
+    PARENT_DIRECTORY,
+    OPEN,
+    EMU_SETTING,
+    ABOUT,
+    CHANGE_DIRECTORY,
+    BACK_TO_BROWSER,
 
-#define STR_YES       "是"
-#define STR_NO        "否"
-#define STR_DISABLE   "禁用"
-#define STR_DEFAULT   "默认"
-#define STR_ORIGINAL  "原始"
-#define STR_AUTO      "自动"
-#define STR_NONE      "无"
+    // Setting tab
+    TAB_MAIN,
+    TAB_STATE,
+    TAB_GRAPHICS,
+    TAB_CONTROL,
+    TAB_CORE,
+    TAB_MISC,
+    TAB_APP,
 
-#define STR_RESET_CONFIGS  "恢复默认设置"
+    // Menu general
+    YES,
+    NO,
+    DISABLE,
+    DEFAULT,
+    AUTO,
+    NONE,
+    RESET_CONFIGS,
 
-#define STR_MAIN_MENU     "主菜单"
-#define STR_STATES        "即时存档"
-#define STR_GRAPHICS      "图形"
-#define STR_CONTROL       "控制"
-#define STR_CORE          "核心"
-#define STR_MISC          "杂项"
-#define STR_APP           "程序"
+    // Menu main
+    RESUME_GAME,
+    RESET_GAME,
+    EXIT_GAME,
+    EXIT_TO_ARCH,
+    EXIT_APP,
 
-#define STR_RESUME_GAME        "继续游戏"
-#define STR_RESET_GAME         "重置游戏"
-#define STR_EXIT_GAME          "退出游戏"
-#define STR_EXIT_TO_ARCH       "返回前端"
-#define STR_EXIT_APP           "退出程序"
+    // Menu grahics
+    DISPLAY_SIZE,
+    DISPLAY_RATIO,
+    DISPLAY_ROTATE,
+    GRAHICS_FILTERING,
+    GRAHICS_SMOOTH,
+    OVERLAY_SELECT,
+    OVERLAY_MODE,
+    SHOW_FPS,
 
-#define STR_PREVIEW_PATH       "预览图路径"
-#define STR_PREVIEW_STYLE      "预览图样式"
-#define STR_APP_LOG            "程序日志"
-#define STR_CORE_LOG           "核心日志"
-#define STR_LOADING_LOG        "显示日志 (加载游戏时)"
+    DISPLAY_SIZE_1X,
+    DISPLAY_SIZE_2X,
+    DISPLAY_SIZE_3X,
+    DISPLAY_SIZE_FULL,
 
-#define STR_AUTO_SAVE_LOAD         "自动存读档"
-#define STR_DELETE_AUTO_SAVESTATE  "删除自动存档"
-#define STR_SAVE_SCREENSHOT        "保存截图"
-#define STR_SAVE_PREVIEW           "保存截图为预览图"
+    DISPLAY_RATIO_DEFAULT,
+    DISPLAY_RATIO_GAME_RESOLUTION,
+    DISPLAY_RATIO_DEV_SCREEN,
+    DISPLAY_RATIO_8_7,
+    DISPLAY_RATIO_4_3,
+    DISPLAY_RATIO_3_2,
+    DISPLAY_RATIO_16_9,
 
-#define STR_FROM_AUTO_SAVETATE  "从自动存档"
+    ROTATE_90,
+    ROTATE_180,
+    ROTATE_270,
 
-#define STR_DISPLAY_SIZE        "画面尺寸"
-#define STR_DISPLAY_RATIO       "画面比例"
-#define STR_DISPLAY_ROTATE      "画面旋转"
-#define STR_GRAHICS_FILTERING   "图像滤境"
-#define STR_GRAHICS_SMOOTH      "平滑图像"
-#define STR_OVERLAY_SELECT      "遮罩图选择"
-#define STR_OVERLAY_MODE        "遮罩图显示模式"
-#define STR_SHOW_FPS            "显示帧数"
+    SHADER_LCD3X,
+    SHADER_SHARP_SIMPLE,
+    SHADER_SHARP,
+    SHADER_AA,
 
-#define STR_DISPLAY_SIZE_1X     "1倍大小" 
-#define STR_DISPLAY_SIZE_2X     "2倍大小"
-#define STR_DISPLAY_SIZE_3X     "3倍大小"
-#define STR_DISPLAY_SIZE_FULL   "铺满屏幕"
+    OVERLAY_MODE_OVERLAY,
+    OVERLAY_MODE_BACKGROUND,
 
-#define STR_ASPECT_RATIO_BY_REAL   "由游戏分辨率"
-#define STR_ASPECT_RATIO_BY_INFO   "由默认纵横比"
-#define STR_ASPECT_RATIO_BY_DEV    "由屏幕纵横比"
-#define STR_ASPECT_RATIO_8_7       "8:7"
-#define STR_ASPECT_RATIO_4_3       "4:3"
-#define STR_ASPECT_RATIO_3_2       "3:2"
-#define STR_ASPECT_RATIO_16_9      "16:9"
+    // Menu control
+    CTRL_PLAYER,
+    FRONT_TOUCH_TO_PAD,
+    BACK_TOUCH_TO_PAD,
+    TURBO_DELAY,
+    RESET_CTRL_CONFIGS_H,
+    RESET_CTRL_CONFIGS_V,
 
-#define STR_ROTATE_90      "旋转90度"
-#define STR_ROTATE_180     "旋转180度"
-#define STR_ROTATE_270     "旋转270度"
+    FOLLOW_DPAD,
 
-#define STR_SHADER_LCD3X        "LCD3x"
-#define STR_SHADER_SHARP_SIMPLE "锐利双线性"
-#define STR_SHADER_SHARP        "锐利双线性+扫描线"
-#define STR_SHADER_AA           "高级AA"
+    // Menu misc
+    AUTO_STATE,
+    DELETE_AUTO_STATE,
+    SAVE_SCREENSHOT,
+    SAVE_PREVIEW,
 
-#define STR_OVERLAY_MODE_FRONT    "覆层模式"
-#define STR_OVERLAY_MODE_BACK     "背景模式"
+    // Menu app
+    PREVIEW_PATH,
+    PREVIEW_STYLE,
+    APP_LOG,
+    CORE_LOG,
+    PRINT_LOG,
+    LANGUAGE,
 
-#define STR_FILL_PRESERVE   "等比铺满"
-#define STR_FILL_FULL       "拉伸铺满"
+    FROM_AUTO_STATE,
 
-#define STR_HOST_CONTROL             "主机控制"
-#define STR_FRONT_TOUCH_TO_PAD       "前触摸补键"
-#define STR_BACK_TOUCH_TO_PAD        "背触摸补键"
-#define STR_TURBO_DELAY              "连发间隔 (帧)"
-#define STR_RESET_OPTIONS_CONTROL_H  "恢复默认设置 (横屏)"
-#define STR_RESET_OPTIONS_CONTROL_V  "恢复默认设置 (竖屏)"
+    PRESERVE_FULL,
+    STRETCH_FULL,
 
-#define STR_FOLLOW_DPAD  "跟随十字键"
+    // Menu state
+    SAVESTATE_EXIST,
+    SAVESTATE_NOEXIST,
 
-#define STR_TURBO  "连发"
+    LOAD,
+    SAVE,
+    DELETE,
+    CANCEL,
 
-#define STR_SWICTH_MODE   "模式切换"
-#define STR_COIN          "投币"
-#define STR_SELECT        "选择"
-#define STR_START         "开始"
+    LANGUAGE_CONTAINER_SIZE,
+};
 
-#define STR_SAVESTATE_EXIST   "已存档"
-#define STR_SAVESTATE_NOEXIST "未存档"
+typedef struct LangEntry
+{
+    char *name;
+    char **container;
+} LangEntry;
 
-#define STR_LOAD     "读取"
-#define STR_SAVE     "保存"
-#define STR_DELETE   "删除"
-#define STR_CANCEL   "取消"
-#define STR_ENTER    "确认"
+extern LangEntry lang_entries[];
+extern char **cur_lang;
+
+int GetLangsLength();
+int GetLangValue(int id);
+int SetCurrentLang(int id);
 
 #endif

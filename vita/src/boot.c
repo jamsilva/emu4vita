@@ -85,7 +85,7 @@ int BootCheckParams(int argc, char *const argv[])
     if (argc < 2)
         goto END;
 
-    APP_LOG("[BOOT] argc: %d\n", argc);
+    AppLog("[BOOT] argc: %d\n", argc);
     bootparam_argc = argc;
     bootparam_argv = (char **)calloc(argc, sizeof(char *));
 
@@ -96,7 +96,7 @@ int BootCheckParams(int argc, char *const argv[])
         bootparam_argv[i - 1] = (char *)malloc(len + 1);
         strcpy(bootparam_argv[i - 1], argv[i]);
         readBootParamString(argv[i]);
-        APP_LOG("[BOOT] argv[%d]: %s\n", i, argv[i]);
+        AppLog("[BOOT] argv[%d]: %s\n", i, argv[i]);
     }
     bootparam_argv[bootparam_argc - 1] = NULL;
 
@@ -106,7 +106,7 @@ END:
         public_assets_dir = (char *)malloc(MAX_PATH_LENGTH);
         strcpy(public_assets_dir, APP_ASSETS_DIR);
     }
-    APP_LOG("[BOOT] Set public assets dir: %s\n", public_assets_dir);
+    AppLog("[BOOT] Set public assets dir: %s\n", public_assets_dir);
 
     return 0;
 }
@@ -128,7 +128,7 @@ int BootReturnToParent()
         app_path = restore_app_path;
     else
         app_path = "app0:eboot.bin";
-    APP_LOG("[BOOT] Return to %s\n", app_path);
+    AppLog("[BOOT] Return to %s\n", app_path);
 
     int ret = BootLoadExec(app_path, bootparam_argv);
 

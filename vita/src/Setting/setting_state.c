@@ -47,15 +47,15 @@ typedef struct
 
 typedef struct
 {
-    char *name;
+    int name;
     int enable;
 } StateMenuItem;
 
 static StateMenuItem state_menu[] = {
-    {STR_LOAD, 1},
-    {STR_SAVE, 1},
-    {STR_DELETE, 1},
-    {STR_CANCEL, 1},
+    {LOAD, 1},
+    {SAVE, 1},
+    {DELETE, 1},
+    {CANCEL, 1},
 };
 #define N_MENU_ITEMS (sizeof(state_menu) / sizeof(StateMenuItem))
 
@@ -305,13 +305,13 @@ void Setting_DrawState()
             GetTimeString(time_string, time_format, &state_list[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
             info_sy -= (GUI_GetFontSize() + STATE_INFO_LINE_SPACE);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, (STR_SAVESTATE_EXIST " %d"), i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[SAVESTATE_EXIST], i);
         }
         else
         {
             // Empty
             GUI_DrawFillRectangle(preview_sx, preview_sy, state_preview_width, state_preview_height, STATE_PREVIEW_COLOR_BG);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, (STR_SAVESTATE_NOEXIST " %d"), i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[SAVESTATE_NOEXIST], i);
         }
 
         // If open menu
@@ -325,7 +325,8 @@ void Setting_DrawState()
                 if (state_menu[j].enable)
                 {
                     uint32_t color = (j == option_focus_pos) ? COLOR_GREEN : COLOR_WHITE;
-                    GUI_DrawTextf(menu_dx - GUI_GetTextWidth(state_menu[j].name), menu_sy, color, state_menu[j].name);
+                    char *name = cur_lang[state_menu[j].name];
+                    GUI_DrawTextf(menu_dx - GUI_GetTextWidth(name), menu_sy, color, name);
                     menu_sy += (GUI_GetFontSize() + MENU_LINE_SPACE);
                 }
             }

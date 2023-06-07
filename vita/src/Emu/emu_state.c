@@ -121,7 +121,7 @@ int Emu_LoadState(int num)
 
     if (header.version != STATES_VERSION)
     {
-        APP_LOG("Emu_LoadState failed: state_version is different from app_version\n");
+        AppLog("Emu_LoadState failed: state_version is different from app_version\n");
         ret = -1;
         goto END;
     }
@@ -129,7 +129,7 @@ int Emu_LoadState(int num)
     size_t serialize_size = retro_serialize_size();
     if (header.state_size != serialize_size)
     {
-        APP_LOG("Emu_LoadState failed: state_size is different from serialize_size\n");
+        AppLog("Emu_LoadState failed: state_size is different from serialize_size\n");
         ret = -1;
         goto END;
     }
@@ -137,16 +137,40 @@ int Emu_LoadState(int num)
     state_buf = malloc(header.state_size);
     if (!state_buf)
     {
-        APP_LOG("Emu_LoadState failed: can't alloc state_buf\n");
+        AppLog("Emu_LoadState failed: can't alloc state_buf\n");
         ret = -1;
         goto END;
     }
+
+    char *buf = (char *)state_buf;
+    int64_t remain = header.state_size;
+    int64_t transfer = TRANSFER_SIZE;
     sceIoLseek(fd, header.state_offset, SCE_SEEK_SET);
-    sceIoRead(fd, state_buf, header.state_size);
+
+    while (remain > 0)
+    {
+        if (remain < TRANSFER_SIZE)
+            transfer = remain;
+        else
+            transfer = TRANSFER_SIZE;
+
+        int read = sceIoRead(fd, buf, transfer);
+        if (read < 0)
+        {
+            AppLog("Emu_LoadState failed: read file failed\n");
+            ret = -1;
+            goto END;
+        }
+        if (read == 0)
+            break;
+
+        buf += read;
+        remain -= read;
+    }
 
     if (!retro_unserialize(state_buf, header.state_size))
     {
-        APP_LOG("Emu_LoadState failed: retro_unserialize failed\n");
+        AppLog("Emu_LoadState failed: retro_unserialize failed\n");
         ret = -1;
         goto END;
     }
@@ -207,7 +231,7 @@ int Emu_SaveState(int num)
     screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, graphics_config.display_rotate);
     if (!screenshot_buf)
     {
-        APP_LOG("Emu_SaveState failed: make screenshot failed!\n");
+        AppLog("Emu_SaveState failed: make screenshot failed!\n");
         ret = -1;
         goto END;
     }
@@ -219,7 +243,7 @@ int Emu_SaveState(int num)
     preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, graphics_config.display_rotate);
     if (!preview_buf)
     {
-        APP_LOG("Emu_SaveState failed: make preview failed!\n");
+        AppLog("Emu_SaveState failed: make preview failed!\n");
         ret = -1;
         goto END;
     }
@@ -228,14 +252,14 @@ int Emu_SaveState(int num)
     state_size = retro_serialize_size();
     if (state_size == 0)
     {
-        APP_LOG("Emu_SaveState failed: retro_serialize_size failed!\n");
+        AppLog("Emu_SaveState failed: retro_serialize_size failed!\n");
         ret = -1;
         goto END;
     }
     state_buf = malloc(state_size);
     if (!state_buf)
     {
-        APP_LOG("Emu_SaveState failed: can't alloc state_buf!\n");
+        AppLog("Emu_SaveState failed: can't alloc state_buf!\n");
         ret = -1;
         goto END;
     }
@@ -272,7 +296,28 @@ int Emu_SaveState(int num)
     sceIoWrite(fd, preview_buf, preview_size);
 
     sceIoLseek(fd, state_offset, SCE_SEEK_SET);
-    sceIoWrite(fd, state_buf, state_size);
+    char *buf = (char *)state_buf;
+    int64_t remain = state_size;
+    int64_t transfer = TRANSFER_SIZE;
+
+    while (remain > 0)
+    {
+        if (remain < TRANSFER_SIZE)
+            transfer = remain;
+        else
+            transfer = TRANSFER_SIZE;
+
+        int written = sceIoWrite(fd, buf, transfer);
+        if (written < 0)
+        {
+            AppLog("Emu_SaveState failed: write file failed\n");
+            ret = -1;
+            goto END;
+        }
+
+        buf += written;
+        remain -= written;
+    }
 
 END:
     if (screenshot_buf)
