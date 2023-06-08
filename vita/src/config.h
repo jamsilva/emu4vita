@@ -174,7 +174,7 @@ typedef struct
     uint32_t app_log;       // 0x0C
     uint32_t core_log;      // 0x10
     uint32_t print_log;     // 0x14
-    uint32_t lang;          // 0x18
+    uint32_t app_lang;      // 0x18
     char reserved[0x4C];    // 0x1C
 } AppConfig;                // 0x68
 

@@ -233,9 +233,9 @@ int Setting_SetOverlayOption(OverlayList *list)
     return 0;
 }
 
-int Setting_SetLangOption()
+int Setting_SetAppLangOption()
 {
-    SetCurrentLang(app_config.lang);
+    SetCurrentLang(app_config.app_lang);
 
     int n_names = 0;
     int langs_len = GetLangsLength();
@@ -261,15 +261,15 @@ int Setting_SetLangOption()
         }
     }
 
-    lang_option.names = names;
-    lang_option.n_names = n_names;
+    app_lang_option.names = names;
+    app_lang_option.n_names = n_names;
 
     return 0;
 }
 
 void Setting_UpdataLangOption()
 {
-    SetCurrentLang(app_config.lang);
+    SetCurrentLang(app_config.app_lang);
     Setting_RefreshCtrlMenu();
 
     if (overlay_select_option.names)
@@ -980,7 +980,7 @@ int Setting_Init()
 {
     if (menu_list[INDEX_MENU_CORE].items)
         core_menu_for_main_enabled = 1;
-    Setting_SetLangOption();
+    Setting_SetAppLangOption();
     Setting_InitOverlay();
     refreshSettingLayout();
     return 0;

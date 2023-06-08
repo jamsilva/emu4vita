@@ -104,7 +104,7 @@ int Setting_Deinit();
 
 int Setting_SetCoreMenu(OptionList *list);
 int Setting_SetOverlayOption(OverlayList *list);
-int Setting_SetLangOption();
+int Setting_SetAppLangOption();
 void Setting_UpdataLangOption();
 
 void Setting_RefreshCtrlMenu();

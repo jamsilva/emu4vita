@@ -32,7 +32,7 @@ static int display_size_values[] = {
 };
 
 static int display_ratio_values[] = {
-    DISPLAY_RATIO_DEFAULT,
+    DEFAULT,
     DISPLAY_RATIO_BY_GAME_RESOLUTION,
     DISPLAY_RATIO_BY_DEV_SCREEN,
     DISPLAY_RATIO_8_7,
@@ -92,19 +92,19 @@ static int preview_style_values[] = {
 };
 
 // 图形 (菜单设置)
-StrIndexsOption display_size_option = {&graphics_config.display_size, display_size_values, sizeof(display_size_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
-StrIndexsOption aspect_ratio_option = {&graphics_config.aspect_ratio, display_ratio_values, sizeof(display_ratio_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
+StrIndexsOption display_size_option = {&graphics_config.display_size, display_size_values, sizeof(display_size_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
+StrIndexsOption aspect_ratio_option = {&graphics_config.aspect_ratio, display_ratio_values, sizeof(display_ratio_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
 #if defined(WANT_DISPLAY_ROTATE)
-StrIndexsOption display_rotate_option = {&graphics_config.display_rotate, display_rotate_values, sizeof(display_rotate_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
+StrIndexsOption display_rotate_option = {&graphics_config.display_rotate, display_rotate_values, sizeof(display_rotate_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
 #endif
-StrIndexsOption graphics_filtering_option = {&graphics_config.graphics_filtering, graphics_values, sizeof(graphics_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
-StrIndexsOption smooth_graphics_option = {&graphics_config.graphics_smooth, no_yes_values, sizeof(no_yes_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
-StrArrayOption overlay_select_option = {&graphics_config.overlay_select, NULL, 0, graphicsOptionChangedCallback2, NULL};
-StrIndexsOption overlay_mode_option = {&graphics_config.overlay_mode, overlay_mode_values, sizeof(overlay_mode_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
-StrIndexsOption show_fps_option = {&graphics_config.show_fps, no_yes_values, sizeof(no_yes_values) / sizeof(char *), graphicsOptionChangedCallback, NULL};
+StrIndexsOption graphics_filtering_option = {&graphics_config.graphics_filtering, graphics_values, sizeof(graphics_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
+StrIndexsOption smooth_graphics_option = {&graphics_config.graphics_smooth, no_yes_values, sizeof(no_yes_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
+StrArrayOption overlay_select_option = {&graphics_config.overlay_select, NULL, 0, graphicsStrArrayOptionChangedCb, NULL};
+StrIndexsOption overlay_mode_option = {&graphics_config.overlay_mode, overlay_mode_values, sizeof(overlay_mode_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
+StrIndexsOption show_fps_option = {&graphics_config.show_fps, no_yes_values, sizeof(no_yes_values) / sizeof(char *), graphicsStrIndexsOptionChangedCb, NULL};
 
 // 控制 (菜单设置)
-StrArrayOption ctrl_player_option = {&control_config.map_port, ctrl_player_values, sizeof(ctrl_player_values) / sizeof(char *), controlOptionChangedCallback2, NULL};
+StrArrayOption ctrl_player_option = {&control_config.map_port, ctrl_player_values, sizeof(ctrl_player_values) / sizeof(char *), controlStrArrayOptionChangedCb, NULL};
 OptionMenu button_left_option = STD_KEY_MAP_OPTION(0, button_left);
 OptionMenu button_up_option = STD_KEY_MAP_OPTION(1, button_up);
 OptionMenu button_right_option = STD_KEY_MAP_OPTION(2, button_right);
@@ -121,11 +121,11 @@ OptionMenu button_l3_option = STD_KEY_MAP_OPTION(12, button_l3);
 OptionMenu button_r3_option = STD_KEY_MAP_OPTION(13, button_r3);
 OptionMenu button_select_option = STD_KEY_MAP_OPTION(14, button_select);
 OptionMenu button_start_option = STD_KEY_MAP_OPTION(15, button_start);
-StrIndexsOption left_analog_option = {&control_config.left_analog, left_analog_values, sizeof(left_analog_values) / sizeof(char *), controlOptionChangedCallback, NULL};
-StrIndexsOption right_analog_option = {&control_config.right_analog, right_analog_values, sizeof(right_analog_values) / sizeof(char *), controlOptionChangedCallback, NULL};
-StrIndexsOption front_touch_pad_option = {&control_config.front_touch_pad, no_yes_values, sizeof(no_yes_values) / sizeof(char *), controlOptionChangedCallback, NULL};
-StrIndexsOption back_touch_pad_option = {&control_config.back_touch_pad, no_yes_values, sizeof(no_yes_values) / sizeof(char *), controlOptionChangedCallback, NULL};
-IntStepOption turbo_delay_option = {&control_config.turbo_delay, 1, 30, 1, "%d", NULL, NULL};
+StrIndexsOption left_analog_option = {&control_config.left_analog, left_analog_values, sizeof(left_analog_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
+StrIndexsOption right_analog_option = {&control_config.right_analog, right_analog_values, sizeof(right_analog_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
+StrIndexsOption front_touch_pad_option = {&control_config.front_touch_pad, no_yes_values, sizeof(no_yes_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
+StrIndexsOption back_touch_pad_option = {&control_config.back_touch_pad, no_yes_values, sizeof(no_yes_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
+IntStepOption turbo_delay_option = {&control_config.turbo_delay, 1, 30, 1, "%d", controlIntStepOptionChangedCb, NULL};
 
 // 杂项 (菜单设置)
 StrIndexsOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_values, sizeof(no_yes_values) / sizeof(char *), miscOptionChangedCallback, NULL};
@@ -133,10 +133,10 @@ StrIndexsOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_val
 // 程序 (菜单设置)
 StrIndexsOption preview_path_option = {&app_config.preview_path, preview_path_values, sizeof(preview_path_values) / sizeof(char *), updatePreviewCallback, NULL};
 StrIndexsOption preview_style_option = {&app_config.preview_style, preview_style_values, sizeof(preview_style_values) / sizeof(char *), updatePreviewCallback, NULL};
-StrIndexsOption app_log_option = {&app_config.app_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appOptionChangedCallback, NULL};
-StrIndexsOption core_log_option = {&app_config.core_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appOptionChangedCallback, NULL};
-StrIndexsOption print_log_option = {&app_config.print_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appOptionChangedCallback, NULL};
-StrArrayOption lang_option = {&app_config.lang, NULL, 0, updateLangCallback, NULL};
+StrIndexsOption app_log_option = {&app_config.app_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appStrIndexsOptionChangedCb, NULL};
+StrIndexsOption core_log_option = {&app_config.core_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appStrIndexsOptionChangedCb, NULL};
+StrIndexsOption print_log_option = {&app_config.print_log, no_yes_values, sizeof(no_yes_values) / sizeof(char *), appStrIndexsOptionChangedCb, NULL};
+StrArrayOption app_lang_option = {&app_config.app_lang, NULL, 0, updateAppLangCallback, NULL};
 
 // 主菜单 (菜单选项)
 static SettingMenuItem main_menu_items[] = {
@@ -184,8 +184,8 @@ SettingMenuItem control_menu_items[] = {
     {BUTTON_START, NULL, 1, TYPE_OPTION_KEY_MAP, &button_start_option},
     {BUTTON_LEFT_ANALOG, NULL, 1, TYPE_OPTION_STR_INDEXS, &left_analog_option},
     {BUTTON_RIGHT_ANALOG, NULL, 1, TYPE_OPTION_STR_INDEXS, &right_analog_option},
-    {FRONT_TOUCH_TO_PAD, NULL, 1, TYPE_OPTION_STR_INDEXS, &front_touch_pad_option},
-    {BACK_TOUCH_TO_PAD, NULL, 1, TYPE_OPTION_STR_INDEXS, &back_touch_pad_option},
+    {FRONT_TOUCH_MAP_CTRL, NULL, 1, TYPE_OPTION_STR_INDEXS, &front_touch_pad_option},
+    {BACK_TOUCH_MAP_CTRL, NULL, 1, TYPE_OPTION_STR_INDEXS, &back_touch_pad_option},
     {TURBO_DELAY, NULL, 1, TYPE_OPTION_INT_STEP, &turbo_delay_option},
 #if defined(WSC_BUILD)
     {RESET_CTRL_CONFIGS_H, NULL, 1, TYPE_OPTION_CALLBACK, resetControlConfigCallback},
@@ -211,7 +211,7 @@ static SettingMenuItem app_menu_items[] = {
     {APP_LOG, NULL, 1, TYPE_OPTION_STR_INDEXS, &app_log_option},
     {CORE_LOG, NULL, 1, TYPE_OPTION_STR_INDEXS, &core_log_option},
     {PRINT_LOG, NULL, 1, TYPE_OPTION_STR_INDEXS, &print_log_option},
-    {LANGUAGE, NULL, 1, TYPE_OPTION_STR_ARRAY, &lang_option},
+    {LANGUAGE, NULL, 1, TYPE_OPTION_STR_ARRAY, &app_lang_option},
     {RESET_CONFIGS, NULL, 1, TYPE_OPTION_CALLBACK, resetAppConfigCallback},
 };
 

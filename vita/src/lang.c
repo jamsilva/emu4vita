@@ -131,17 +131,17 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Browser  *****************/
     // PARENT_DIRECTORY
-    "Parent dir",
+    "parent dir",
     // OPEN
-    "Open",
+    "open",
     // EMU_SETTING
-    "Emu setting",
+    "emu setting",
     // ABOUT
-    "About",
+    "about",
     // CHANGE_DIRECTORY
-    "Change dir",
+    "change dir",
     // BACK_TO_BROWSER
-    "Back",
+    "back",
 
     /**************  Setting tab  *****************/
     // TAB_MAIN
@@ -161,19 +161,19 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Menu general  *****************/
     // YES
-    "Yes",
+    "yes",
     // NO
-    "No",
+    "no",
     // DISABLE
-    "Disable",
+    "disable",
     // DEFAULT
-    "Default",
+    "default",
     // AUTO
-    "Auto",
+    "auto",
     // NONE
-    "None",
+    "none",
     // RESET_CONFIGS
-    "Reset configs",
+    "reset configs",
 
     /**************  Menu main  *****************/
     // RESUME_GAME
@@ -212,14 +212,12 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // DISPLAY_SIZE_3X
     "3X",
     // DISPLAY_SIZE_FULL
-    "Full",
+    "full",
 
-    // DISPLAY_RATIO_DEFAULT
-    "Default",
     // DISPLAY_RATIO_BY_GAME_RESOLUTION
-    "By game resolution",
+    "by game resolution",
     // DISPLAY_RATIO_BY_DEV_SCREEN
-    "By device screen",
+    "by device screen",
     // DISPLAY_RATIO_8_7
     "8:7",
     // DISPLAY_RATIO_4_3
@@ -230,33 +228,33 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "16:9",
 
     // ROTATE_90
-    "Rotate 90",
+    "rotate 90",
     // ROTATE_180
-    "Rotate 180",
+    "rotate 180",
     // ROTATE_270
-    "Rotate 270",
+    "rotate 270",
 
     // SHADER_LCD3X
     "LCD3x",
     // SHADER_SHARP_SIMPLE
-    "Sharp bilinear simple",
+    "sharp bilinear simple",
     // SHADER_SHARP
-    "Sharp bilinear",
+    "sharp bilinear",
     // SHADER_AA
-    "Advanced AA",
+    "advanced AA",
 
     // OVERLAY_MODE_OVERLAY
-    "Overlay",
+    "overlay",
     // OVERLAY_MODE_BACKGROUND
-    "Background",
+    "background",
 
     /**************  Menu control  *****************/
     // CTRL_PLAYER
     "Control player",
-    // FRONT_TOUCH_TO_PAD
-    "Front touch to pad",
-    // BACK_TOUCH_TO_PAD
-    "Back touch to pad",
+    // FRONT_TOUCH_MAP_CTRL
+    "Front touch map control",
+    // BACK_TOUCH_MAP_CTRL
+    "Back touch map control",
     // TURBO_DELAY
     "Turbo delay (frame)",
     // RESET_CTRL_CONFIGS_H
@@ -265,7 +263,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Reset configs (V)",
 
     // FOLLOW_DPAD
-    "Follow DPAD",
+    "follow D-Pad",
 
     /**************  Menu misc  *****************/
     // AUTO_STATE
@@ -289,15 +287,15 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // PRINT_LOG
     "Print log (loading)",
     // LANGUAGE
-    "language",
+    "Language",
 
     // FROM_AUTO_STATE
-    "From auto state",
+    "from auto state",
 
     // PRESERVE_FULL
-    "Preserve full",
+    "preserve full",
     // STRETCH_FULL
-    "Stretch full",
+    "stretch full",
 
     /**************  Menu state  *****************/
     // SAVESTATE_EXIST
@@ -306,13 +304,13 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "None",
 
     // LOAD
-    "Load",
+    "load",
     // SAVE
-    "Save",
+    "save",
     // DELETE
-    "Delete",
+    "delete",
     // CANCEL
-    "Cancel",
+    "cancel",
 
 };
 
@@ -525,8 +523,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // DISPLAY_SIZE_FULL
     "铺满屏幕",
 
-    // DISPLAY_RATIO_DEFAULT
-    "默认",
     // DISPLAY_RATIO_BY_GAME_RESOLUTION
     "由游戏分辨率",
     // DISPLAY_RATIO_BY_DEV_SCREEN
@@ -564,10 +560,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     /**************  Menu control  *****************/
     // CTRL_PLAYER
     "玩家控制",
-    // FRONT_TOUCH_TO_PAD
-    "前触摸补键",
-    // BACK_TOUCH_TO_PAD
-    "背触摸补键",
+    // FRONT_TOUCH_MAP_CTRL
+    "前触摸映射按键",
+    // BACK_TOUCH_MAP_CTRL
+    "背触摸映射按键",
     // TURBO_DELAY
     "连发间隔 (帧)",
     // RESET_CTRL_CONFIGS_H

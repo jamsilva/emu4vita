@@ -222,7 +222,7 @@ int ResetAppConfig()
 #else
     app_config.print_log = 0;
 #endif
-    app_config.lang = 1;
+    app_config.app_lang = 1;
 
     return 0;
 }
