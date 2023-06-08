@@ -66,3 +66,7 @@
 	url  = https://gitee.com/yizhigai/libretro-fceumm
 	path = cores/fceumm
 
+[submodule "cores/gambatte"]
+	url  = https://gitee.com/yizhigai/gambatte-libretro
+	path = cores/gambatte
+
