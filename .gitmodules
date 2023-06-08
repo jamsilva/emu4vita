@@ -70,3 +70,7 @@
 	url  = https://gitee.com/yizhigai/gambatte-libretro
 	path = cores/gambatte
 
+[submodule "cores/genesis_plus_gx"]
+	url  = https://gitee.com/yizhigai/Genesis-Plus-GX
+	path = cores/genesis_plus_gx
+
