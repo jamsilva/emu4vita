@@ -98,3 +98,7 @@
 	url  = https://gitee.com/yizhigai/pcsx_rearmed
 	path = cores/pcsx_rearmed
 
+[submodule "cores/picodrive"]
+	url  = https://gitee.com/yizhigai/picodrive
+	path = cores/picodrive
+
