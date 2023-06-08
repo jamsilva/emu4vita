@@ -128,7 +128,7 @@ StrIndexsOption back_touch_pad_option = {&control_config.back_touch_pad, no_yes_
 IntStepOption turbo_delay_option = {&control_config.turbo_delay, 1, 30, 1, "%d", controlIntStepOptionChangedCb, NULL};
 
 // 杂项 (菜单设置)
-StrIndexsOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_values, sizeof(no_yes_values) / sizeof(char *), miscOptionChangedCallback, NULL};
+StrIndexsOption auto_save_load_option = {&misc_config.auto_save_load, no_yes_values, sizeof(no_yes_values) / sizeof(char *), miscStrIndexsOptionChangedCb, NULL};
 
 // 程序 (菜单设置)
 StrIndexsOption preview_path_option = {&app_config.preview_path, preview_path_values, sizeof(preview_path_values) / sizeof(char *), updatePreviewCallback, NULL};

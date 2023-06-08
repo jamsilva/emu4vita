@@ -63,6 +63,7 @@ typedef struct
 static MenuVisiblePosData menu_visible_pos_data;
 
 static int menu_need_refresh = 1;
+static int option_display_need_refresh = 0;
 static int core_menu_for_main_enabled = 0;
 static int setting_config_type = 0;
 

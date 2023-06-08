@@ -19,47 +19,40 @@ static int core_option_changed = 0;
 static int misc_option_changed = 0;
 
 //----------------- Main menu -----------------//
-
-static int resumeGameCallback()
+static void resumeGameCallback()
 {
     GUI_CloseDialog(&setting_dialog);
-    return 0;
 }
 
-static int resetGameCallback()
+static void resetGameCallback()
 {
     GUI_CloseDialog(&setting_dialog);
     Emu_ResetGame();
-    return 0;
 }
 
-static int exitGameCallback()
+static void exitGameCallback()
 {
     GUI_CloseDialog(&setting_dialog);
     Emu_ExitGame();
     if (exec_boot_mode == BOOT_MODE_GAME)
         BootReturnToParent();
-    return 0;
 }
 
-static int exitToArchCallback()
+static void exitToArchCallback()
 {
     GUI_CloseDialog(&setting_dialog);
     Emu_ExitGame();
     BootReturnToParent();
-    return 0;
 }
 
-static int exitAppCallback()
+static void exitAppCallback()
 {
     GUI_CloseDialog(&setting_dialog);
     Emu_ExitGame();
     AppExit();
-    return 0;
 }
 
 //----------------- State menu -----------------//
-
 static void stateMenuOpenCallback(SettingMenu *menu)
 {
     Setting_InitState();
@@ -71,7 +64,6 @@ static void stateMenuExitCallback(SettingMenu *menu)
 }
 
 //----------------- Graphics menu -----------------//
-
 static void graphicsMenuExitCallback(SettingMenu *menu)
 {
     if (graphics_option_changed)
@@ -79,15 +71,6 @@ static void graphicsMenuExitCallback(SettingMenu *menu)
         graphics_option_changed = 0;
         SaveGraphicsConfig(setting_config_type);
     }
-}
-
-static int resetGraphicsConfigCallback()
-{
-    ResetGraphicsConfig();
-    if (Emu_IsGameLoaded())
-        Emu_RequestRefreshVideo();
-    graphics_option_changed = 1;
-    return 0;
 }
 
 static void graphicsStrIndexsOptionChangedCb(StrIndexsOption *option)
@@ -104,8 +87,15 @@ static void graphicsStrArrayOptionChangedCb(StrArrayOption *option)
         Emu_RequestRefreshVideo();
 }
 
-//----------------- Control menu -----------------//
+static void resetGraphicsConfigCallback()
+{
+    ResetGraphicsConfig();
+    graphics_option_changed = 1;
+    if (Emu_IsGameLoaded())
+        Emu_RequestRefreshVideo();
+}
 
+//----------------- Control menu -----------------//
 static void controlMenuExitCallback(SettingMenu *menu)
 {
     if (control_option_changed)
@@ -114,30 +104,6 @@ static void controlMenuExitCallback(SettingMenu *menu)
         control_option_changed = 0;
     }
 }
-
-static int resetControlConfigCallback()
-{
-    ResetControlConfig();
-    Setting_RefreshCtrlMenu();
-    control_option_changed = 1;
-#if defined(WSC_BUILD)
-    if (Emu_IsGameLoaded())
-        Emu_RequestRefreshVideo();
-#endif
-    return 0;
-}
-
-#if defined(WSC_BUILD)
-static int resetVControlConfigCallback()
-{
-    ResetVControlConfig();
-    Setting_RefreshCtrlMenu();
-    control_option_changed = 1;
-    if (Emu_IsGameLoaded())
-        Emu_RequestRefreshVideo();
-    return 0;
-}
-#endif
 
 static void controlStrArrayOptionChangedCb(StrArrayOption *option)
 {
@@ -154,109 +120,114 @@ static void controlIntStepOptionChangedCb(IntStepOption *option)
     control_option_changed = 1;
 }
 
-//----------------- Core menu -----------------//
+static void resetControlConfigCallback()
+{
+    ResetControlConfig();
+    control_option_changed = 1;
+    Setting_RefreshCtrlMenu();
+#if defined(WSC_BUILD)
+    if (Emu_IsGameLoaded())
+        Emu_RequestRefreshVideo();
+#endif
+}
 
+#if defined(WSC_BUILD)
+static void resetVControlConfigCallback()
+{
+    ResetVControlConfig();
+    control_option_changed = 1;
+    Setting_RefreshCtrlMenu();
+    if (Emu_IsGameLoaded())
+        Emu_RequestRefreshVideo();
+}
+#endif
+
+//----------------- Core menu -----------------//
 static void coreMenuExitCallback(SettingMenu *menu)
 {
     if (core_option_changed)
     {
-        core_option_changed = 0;
         SaveCoreConfig(setting_config_type);
+        core_option_changed = 0;
         Retro_RequestUpdateVariable();
     }
 }
 
-static int resetCoreConfigCallback()
+static void coreStrArrayOptionChangedCb(StrArrayOption *option)
 {
-    ResetCoreConfig();
-    core_option_changed = 1;
     Retro_UpdateCoreOptionsDisplay();
-    return 0;
+    core_option_changed = 1;
 }
 
-static void coreOptionChangedCallback(StrArrayOption *option)
+static void resetCoreConfigCallback()
 {
+    ResetCoreConfig();
     core_option_changed = 1;
     Retro_UpdateCoreOptionsDisplay();
 }
 
 //----------------- Misc menu -----------------//
-
 static void miscMenuExitCallback(SettingMenu *menu)
 {
     if (misc_option_changed)
     {
-        misc_option_changed = 0;
         SaveMiscConfig(setting_config_type);
+        misc_option_changed = 0;
     }
 }
 
-static int deleteAutoStateCallback()
+static void miscStrIndexsOptionChangedCb(StrIndexsOption *option)
+{
+    misc_option_changed = 1;
+}
+
+static void deleteAutoStateCallback()
 {
     Emu_DeleteState(-1);
     Browser_RequestRefreshPreview(1);
-    return 0;
 }
 
-static int saveScreenshotCallback()
+static void saveScreenshotCallback()
 {
     char path[MAX_PATH_LENGTH];
     if (MakeScreenshotPath(path) < 0)
-        return -1;
+        return;
     if (Emu_SaveVideoScreenshot(path) < 0)
-        return -1;
+        return;
 
     GUI_CloseDialog(&setting_dialog);
-    return 0;
 }
 
-static int saveScreenshotForPreviewCallback()
+static void saveScreenshotForPreviewCallback()
 {
     char path[MAX_PATH_LENGTH];
     MakePreviewPath(path);
     if (Emu_SaveVideoScreenshot(path) < 0)
-        return -1;
+        return;
 
     Browser_RequestRefreshPreview(1);
     GUI_CloseDialog(&setting_dialog);
-    return 0;
 }
 
-static int resetMiscConfigCallback()
+static void resetMiscConfigCallback()
 {
     ResetMiscConfig();
-    misc_option_changed = 1;
-    return 0;
-}
-
-static void miscOptionChangedCallback(StrIndexsOption *option)
-{
     misc_option_changed = 1;
 }
 
 //----------------- App menu -----------------//
-
 static void appMenuExitCallback(SettingMenu *menu)
 {
     if (app_option_changed)
     {
-        app_option_changed = 0;
         SaveAppConfig(setting_config_type);
+        app_option_changed = 0;
     }
 }
 
 static void appStrIndexsOptionChangedCb(StrIndexsOption *option)
 {
     app_option_changed = 1;
-}
-
-static int resetAppConfigCallback()
-{
-    ResetAppConfig();
-    Setting_UpdataLangOption();
-    Browser_RequestRefreshPreview(1);
-    app_option_changed = 1;
-    return 0;
 }
 
 static void updatePreviewCallback(StrIndexsOption *option)
@@ -269,6 +240,14 @@ static void updateAppLangCallback(StrArrayOption *option)
 {
     Setting_UpdataLangOption();
     app_option_changed = 1;
+}
+
+static void resetAppConfigCallback()
+{
+    ResetAppConfig();
+    app_option_changed = 1;
+    Setting_UpdataLangOption();
+    Browser_RequestRefreshPreview(1);
 }
 
 #endif

@@ -97,29 +97,29 @@ static int Emu_LoadSrm()
 
     sceIoLseek(fd, 0, SCE_SEEK_SET);
     char *buf = (char *)src_data;
-	int64_t remain = src_size;
-	int64_t transfer = TRANSFER_SIZE;
+    int64_t remain = src_size;
+    int64_t transfer = TRANSFER_SIZE;
 
-	while (remain > 0)
-	{
-		if (remain < TRANSFER_SIZE)
-			transfer = remain;
+    while (remain > 0)
+    {
+        if (remain < TRANSFER_SIZE)
+            transfer = remain;
         else
             transfer = TRANSFER_SIZE;
 
-		int read = sceIoRead(fd, buf, transfer);
-		if (read < 0)
-		{
+        int read = sceIoRead(fd, buf, transfer);
+        if (read < 0)
+        {
             free(src_data);
             sceIoClose(fd);
             return -1;
-		}
-		if (read == 0)
-			break;
+        }
+        if (read == 0)
+            break;
 
-		buf += read;
-		remain -= read;
-	}
+        buf += read;
+        remain -= read;
+    }
     sceIoClose(fd);
 
     memcpy(src_data, dst_data, src_size);
@@ -146,26 +146,26 @@ static int Emu_SaveSrm()
         return fd;
 
     char *buf = (char *)data;
-	int64_t remain = size;
-	int64_t transfer = TRANSFER_SIZE;
+    int64_t remain = size;
+    int64_t transfer = TRANSFER_SIZE;
 
-	while (remain > 0)
-	{
-		if (remain < TRANSFER_SIZE)
-			transfer = remain;
+    while (remain > 0)
+    {
+        if (remain < TRANSFER_SIZE)
+            transfer = remain;
         else
             transfer = TRANSFER_SIZE;
 
-		int written = sceIoWrite(fd, buf, transfer);
-		if (written < 0)
-		{
+        int written = sceIoWrite(fd, buf, transfer);
+        if (written < 0)
+        {
             sceIoClose(fd);
             return -1;
-		}
+        }
 
-		buf += written;
-		remain -= written;
-	}
+        buf += written;
+        remain -= written;
+    }
     sceIoClose(fd);
 
     return 0;
@@ -209,30 +209,30 @@ static int loadGameFromMemory(const char *path)
 
     sceIoLseek(fd, 0, SCE_SEEK_SET);
     char *buf = (char *)game_rom_data;
-	int64_t remain = size;
-	int64_t transfer = TRANSFER_SIZE;
+    int64_t remain = size;
+    int64_t transfer = TRANSFER_SIZE;
 
-	while (remain > 0)
-	{
-		if (remain < TRANSFER_SIZE)
-			transfer = remain;
+    while (remain > 0)
+    {
+        if (remain < TRANSFER_SIZE)
+            transfer = remain;
         else
             transfer = TRANSFER_SIZE;
 
-		int read = sceIoRead(fd, buf, transfer);
-		if (read < 0)
-		{
+        int read = sceIoRead(fd, buf, transfer);
+        if (read < 0)
+        {
             free(game_rom_data);
             game_rom_data = NULL;
             sceIoClose(fd);
             return -1;
-		}
-		if (read == 0)
-			break;
+        }
+        if (read == 0)
+            break;
 
-		buf += read;
-		remain -= read;
-	}
+        buf += read;
+        remain -= read;
+    }
     sceIoClose(fd);
 
     struct retro_game_info game_info;
@@ -306,7 +306,6 @@ int Emu_LoadGame(const char *path)
     Emu_SetRunSpeed(1.0f);
 
     Retro_SetControllerPortDevices();
-    Retro_UpdateCoreOptionsDisplay();
     Emu_LoadSrm();
     retro_run();
 
@@ -317,9 +316,10 @@ int Emu_LoadGame(const char *path)
 
     game_loaded = 1;
     GUI_CleanPad();
-    Setting_RequestRefreshMenu();
     Emu_RequestRefreshVideo(1);
     Emu_ResumeGame();
+    Retro_UpdateCoreOptionsDisplay();
+    Setting_RequestRefreshMenu();
 
     AppLog("[GAME] Load game done\n");
 
@@ -399,7 +399,6 @@ void Emu_ExitGame()
             Browser_RequestRefreshPreview(1);
         }
         Emu_UnloadGame();
-        Setting_RequestRefreshMenu();
     }
 
     LoadGraphicsConfig(TYPE_CONFIG_MAIN);
@@ -407,6 +406,7 @@ void Emu_ExitGame()
     LoadMiscConfig(TYPE_CONFIG_MAIN);
     LoadCoreConfig(TYPE_CONFIG_MAIN);
     Retro_UpdateCoreOptionsDisplay();
+    Setting_RequestRefreshMenu();
 }
 
 static void checkRequestsEvents()

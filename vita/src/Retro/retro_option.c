@@ -47,7 +47,7 @@ int Retro_SetCoreOptionDisplay(const struct retro_core_option_display *option_di
     }
 
     if (entry != NULL)
-        Setting_RequestRefreshMenu();
+        Setting_RequestRefreshOptionDisplay();
 
     return 0;
 }
@@ -137,7 +137,7 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
     }
 
     Setting_SetCoreMenu(&core_option_list);
-    Setting_RequestRefreshMenu();
+    Retro_UpdateCoreOptionsDisplay();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
         LoadCoreConfig(TYPE_CONFIG_GAME);
@@ -321,7 +321,7 @@ int Retro_GetOptionListFromOptions(void *options, int type)
     }
 
     Setting_SetCoreMenu(&core_option_list);
-    Setting_RequestRefreshMenu();
+    Retro_UpdateCoreOptionsDisplay();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
         LoadCoreConfig(TYPE_CONFIG_GAME);

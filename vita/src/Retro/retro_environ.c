@@ -6,6 +6,7 @@
 
 #include <psp2/io/fcntl.h>
 
+#include "Setting/setting.h"
 #include "Emu/emu.h"
 #include "Gui/gui.h"
 #include "retro.h"
@@ -28,7 +29,10 @@ void Retro_RequestUpdateVariable()
 void Retro_UpdateCoreOptionsDisplay()
 {
     if (core_options_update_display_callback)
+    {
         core_options_update_display_callback();
+        Setting_RequestRefreshOptionDisplay();
+    }
 }
 
 void Retro_LogCallback(enum retro_log_level level, const char *fmt, ...)

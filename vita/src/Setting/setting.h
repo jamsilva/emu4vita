@@ -109,5 +109,6 @@ void Setting_UpdataLangOption();
 
 void Setting_RefreshCtrlMenu();
 void Setting_RequestRefreshMenu();
+void Setting_RequestRefreshOptionDisplay();
 
 #endif
