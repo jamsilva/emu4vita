@@ -78,3 +78,7 @@
 	url  = https://gitee.com/yizhigai/Genesis-Plus-GX
 	path = cores/mednafen_ngp
 
+[submodule "cores/mednafen_pce_fast"]
+	url  = https://gitee.com/yizhigai/beetle-pce-fast-libretro
+	path = cores/mednafen_pce_fast
+
