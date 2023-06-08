@@ -86,3 +86,7 @@
 	url  = https://gitee.com/yizhigai/beetle-supergrafx-libretro
 	path = cores/mednafen_supergrafx
 
+[submodule "cores/mednafen_wswan"]
+	url  = https://gitee.com/yizhigai/beetle-wswan-libretro
+	path = cores/mednafen_wswan
+
