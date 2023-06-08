@@ -102,3 +102,7 @@
 	url  = https://gitee.com/yizhigai/picodrive
 	path = cores/picodrive
 
+[submodule "cores/snes9x2002"]
+	url  = https://gitee.com/yizhigai/snes9x2002
+	path = cores/snes9x2002
+
