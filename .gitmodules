@@ -90,3 +90,7 @@
 	url  = https://gitee.com/yizhigai/beetle-wswan-libretro
 	path = cores/mednafen_wswan
 
+[submodule "cores/nestopia"]
+	url  = https://gitee.com/yizhigai/nestopia
+	path = cores/nestopia
+
