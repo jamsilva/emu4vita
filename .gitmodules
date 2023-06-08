@@ -74,3 +74,7 @@
 	url  = https://gitee.com/yizhigai/Genesis-Plus-GX
 	path = cores/genesis_plus_gx
 
+[submodule "cores/mednafen_ngp"]
+	url  = https://gitee.com/yizhigai/Genesis-Plus-GX
+	path = cores/mednafen_ngp
+
