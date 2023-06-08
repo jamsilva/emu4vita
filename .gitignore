@@ -3,5 +3,6 @@ build
 releases
 cores/*
 arch/cores
+vita/deps/lib/libretro.a
 **/param.sfo
 **/eboot.bin
