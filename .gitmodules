@@ -110,3 +110,7 @@
 	url  = https://gitee.com/yizhigai/snes9x2005
 	path = cores/snes9x2005
 
+[submodule "cores/snes9x2005_plus"]
+	url  = https://gitee.com/yizhigai/snes9x2005
+	path = cores/snes9x2005_plus
+
