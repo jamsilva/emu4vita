@@ -1,0 +1,4 @@
+[submodule "core/fba_lite"]
+	url  = https://gitee.com/yizhigai/fba_lite_libretro
+	path = core/fba_lite
+
