@@ -6,3 +6,7 @@
 	url  = https://gitee.com/yizhigai/gpsp
 	path = cores/gpsp
 
+[submodule "cores/fba_lite"]
+	url  = https://gitee.com/yizhigai/fba_lite_libretro
+	path = cores/fba_lite
+
