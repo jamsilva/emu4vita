@@ -82,3 +82,7 @@
 	url  = https://gitee.com/yizhigai/beetle-pce-fast-libretro
 	path = cores/mednafen_pce_fast
 
+[submodule "cores/mednafen_supergrafx"]
+	url  = https://gitee.com/yizhigai/beetle-supergrafx-libretro
+	path = cores/mednafen_supergrafx
+
