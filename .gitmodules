@@ -62,3 +62,7 @@
 	url  = https://gitee.com/yizhigai/vba-next
 	path = cores/vba_next
 
+[submodule "cores/fceumm"]
+	url  = https://gitee.com/yizhigai/libretro-fceumm
+	path = cores/fceumm
+
