@@ -94,3 +94,7 @@
 	url  = https://gitee.com/yizhigai/nestopia
 	path = cores/nestopia
 
+[submodule "cores/pcsx_rearmed"]
+	url  = https://gitee.com/yizhigai/pcsx_rearmed
+	path = cores/pcsx_rearmed
+
