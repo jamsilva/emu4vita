@@ -50,6 +50,7 @@ void LockUsbConnection();
 void UnlockUsbConnection();
 void LockQuickMenu();
 void UnlockQuickMenu();
+void AutoUnlockQuickMenu();
 
 void LockSuspend();
 void UnlockSuspend();

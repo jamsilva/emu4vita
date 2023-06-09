@@ -27,7 +27,7 @@ enum RetroRequestEventTypes
 
 extern GUI_Dialog setting_dialog;
 
-static int game_loading = 0, game_loaded = 0, game_run = 0;
+static int game_loading = 0, game_reloading = 0, game_loaded = 0, game_run = 0;
 static int request_event_type = REQUEST_EVENT_TYPE_NONE;
 static float game_run_speed = 1.0f;
 static double game_cur_fps = 0;
@@ -312,7 +312,6 @@ int Emu_LoadGame(const char *path)
     Emu_InitAudio();
     Emu_InitVideo();
     Emu_InitInput();
-    LockQuickMenu();
 
     game_loaded = 1;
     GUI_CleanPad();
@@ -326,13 +325,17 @@ int Emu_LoadGame(const char *path)
     return ret;
 }
 
-void Emu_UnloadGame()
+void Emu_ExitGame()
 {
-    Emu_PauseGame();
-
     if (game_loaded)
     {
+        Emu_PauseGame();
         Emu_SaveSrm();
+        if (!game_reloading && misc_config.auto_save_load)
+        {
+            Emu_SaveState(-1);
+            Browser_RequestRefreshPreview(1);
+        }
         retro_unload_game();
         retro_deinit();
         game_loaded = 0;
@@ -346,6 +349,16 @@ void Emu_UnloadGame()
         free(game_rom_data);
         game_rom_data = NULL;
     }
+
+    if (!game_reloading)
+    {
+        LoadGraphicsConfig(TYPE_CONFIG_MAIN);
+        LoadControlConfig(TYPE_CONFIG_MAIN);
+        LoadMiscConfig(TYPE_CONFIG_MAIN);
+        LoadCoreConfig(TYPE_CONFIG_MAIN);
+        Retro_UpdateCoreOptionsDisplay();
+        Setting_RequestRefreshMenu();
+    }
 }
 
 void Emu_PauseGame()
@@ -355,6 +368,8 @@ void Emu_PauseGame()
         game_run = 0;
         Emu_PauseAudio();
         Emu_PauseVideo();
+        if (request_event_type == REQUEST_EVENT_TYPE_NONE)
+            UnlockQuickMenu();
     }
 }
 
@@ -365,6 +380,7 @@ void Emu_ResumeGame()
         game_run = 1;
         Emu_ResumeAudio();
         Emu_ResumeVideo();
+        LockQuickMenu();
     }
 }
 
@@ -379,34 +395,15 @@ void Emu_ResetGame()
 
 int Emu_ReloadGame()
 {
+    game_reloading = 1;
     if (game_loaded)
-        Emu_UnloadGame();
-
+        Emu_ExitGame();
     char path[MAX_PATH_LENGTH];
     MakeCurrentFilePath(path);
+    int ret = Emu_LoadGame(path);
+    game_reloading = 0;
 
-    return Emu_LoadGame(path);
-}
-
-void Emu_ExitGame()
-{
-    if (game_loaded)
-    {
-        Emu_PauseGame();
-        if (misc_config.auto_save_load)
-        {
-            Emu_SaveState(-1);
-            Browser_RequestRefreshPreview(1);
-        }
-        Emu_UnloadGame();
-    }
-
-    LoadGraphicsConfig(TYPE_CONFIG_MAIN);
-    LoadControlConfig(TYPE_CONFIG_MAIN);
-    LoadMiscConfig(TYPE_CONFIG_MAIN);
-    LoadCoreConfig(TYPE_CONFIG_MAIN);
-    Retro_UpdateCoreOptionsDisplay();
-    Setting_RequestRefreshMenu();
+    return ret;
 }
 
 static void checkRequestsEvents()

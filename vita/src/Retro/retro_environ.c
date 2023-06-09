@@ -20,6 +20,7 @@ enum GuiTextureFormat video_texture_format = GUI_TEXTURE_FORMAT_U5U6U5_RGB;
 int retro_input_is_bitmasks = 0;
 
 static int retro_varialbe_need_update = 0;
+static int retro_option_display_need_update = 0;
 
 void Retro_RequestUpdateVariable()
 {
@@ -32,6 +33,10 @@ void Retro_UpdateCoreOptionsDisplay()
     {
         core_options_update_display_callback();
         Setting_RequestRefreshOptionDisplay();
+    }
+    else
+    {
+        retro_option_display_need_update = 1;
     }
 }
 
@@ -310,15 +315,24 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
                 (const struct retro_core_options_update_display_callback *)data;
 
         if (update_display_cb && update_display_cb->callback)
+        {
             core_options_update_display_callback = update_display_cb->callback;
+            if (retro_option_display_need_update)
+            {
+                core_options_update_display_callback();
+                retro_option_display_need_update = 0;
+            }
+        }
         else
+        {
             core_options_update_display_callback = NULL;
+        }
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY\n");
+        // AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY\n");
         const struct retro_core_option_display
             *option_display =
                 (const struct retro_core_option_display *)data;

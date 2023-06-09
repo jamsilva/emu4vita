@@ -36,6 +36,8 @@ int Retro_SetCoreOptionDisplay(const struct retro_core_option_display *option_di
 
     OptionListEntry *entry = core_option_list.head;
 
+    // printf("Retro_SetCoreOptionDisplay: option_display->key = %s, option_display->visible = %d", option_display->key, option_display->visible);
+
     while (entry)
     {
         if (strcmp(option_display->key, entry->key) == 0)
@@ -137,7 +139,8 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
     }
 
     Setting_SetCoreMenu(&core_option_list);
-    Retro_UpdateCoreOptionsDisplay();
+    if (!Emu_IsGameLoading())
+        Retro_UpdateCoreOptionsDisplay();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
         LoadCoreConfig(TYPE_CONFIG_GAME);
@@ -321,7 +324,8 @@ int Retro_GetOptionListFromOptions(void *options, int type)
     }
 
     Setting_SetCoreMenu(&core_option_list);
-    Retro_UpdateCoreOptionsDisplay();
+    if (!Emu_IsGameLoading())
+        Retro_UpdateCoreOptionsDisplay();
 
     if (Emu_IsGameLoading() || Emu_IsGameLoaded())
         LoadCoreConfig(TYPE_CONFIG_GAME);

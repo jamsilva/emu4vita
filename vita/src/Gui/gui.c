@@ -383,5 +383,5 @@ void GUI_RunMain()
     GUI_EndDrawing();
     GUI_ReadPad();
     GUI_CtrlMain();
-    UnlockQuickMenu();
+    AutoUnlockQuickMenu();
 }

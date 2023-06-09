@@ -9,13 +9,12 @@ float Emu_GetCurrentRunSpeed();
 void Emu_SetRunSpeed(float speed);
 
 int Emu_LoadGame(const char *path);
-void Emu_UnloadGame();
+void Emu_ExitGame();
 void Emu_RunGame();
 void Emu_PauseGame();
 void Emu_ResumeGame();
 void Emu_ResetGame();
 int Emu_ReloadGame();
-void Emu_ExitGame();
 void Emu_SpeedUpGame();
 void Emu_SpeedDownGame();
 

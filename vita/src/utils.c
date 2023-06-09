@@ -297,6 +297,15 @@ void LockQuickMenu()
 
 void UnlockQuickMenu()
 {
+    if (quick_menu_locked)
+    {
+        sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
+        quick_menu_locked = 0;
+    }
+}
+
+void AutoUnlockQuickMenu()
+{
     if (quick_menu_locked && !Emu_IsGameLoaded() && IsPSbuttonEventEnabled())
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
