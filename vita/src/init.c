@@ -28,6 +28,7 @@
 #include "file.h"
 #include "config.h"
 #include "boot.h"
+#include "lang.h"
 
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
@@ -113,6 +114,7 @@ int AppInit(int argc, char *const argv[])
     CreateFolder(APP_DATA_DIR);
 
     LoadAppConfig(TYPE_CONFIG_MAIN);
+    SetCurrentLang(app_config.app_lang);
 
     BootCheckParams(argc, argv);
 
