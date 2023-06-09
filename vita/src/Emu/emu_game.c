@@ -84,6 +84,7 @@ static int Emu_LoadSrm()
     int64_t src_size = sceIoLseek(fd, 0, SCE_SEEK_END);
     if (src_size <= 0 || src_size > dst_size)
     {
+        AppLog("Emu_LoadSrm failed: src_size %d, dst_size %d\n", src_size, dst_size);
         sceIoClose(fd);
         return -1;
     }
@@ -122,7 +123,7 @@ static int Emu_LoadSrm()
     }
     sceIoClose(fd);
 
-    memcpy(src_data, dst_data, src_size);
+    memcpy(dst_data, src_data, src_size);
     free(src_data);
 
     return 0;

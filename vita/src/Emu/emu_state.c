@@ -125,15 +125,7 @@ int Emu_LoadState(int num)
         ret = -1;
         goto END;
     }
-
-    size_t serialize_size = retro_serialize_size();
-    if (header.state_size != serialize_size)
-    {
-        AppLog("Emu_LoadState failed: state_size is different from serialize_size\n");
-        ret = -1;
-        goto END;
-    }
-
+    
     state_buf = malloc(header.state_size);
     if (!state_buf)
     {
