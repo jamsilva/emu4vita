@@ -217,13 +217,13 @@ static SettingMenuItem app_menu_items[] = {
 
 // 菜单列表
 static SettingMenu menu_list[] = {
-    {TAB_MAIN, 1, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), 0, 0, NULL, NULL},                                           // 主菜单
-    {TAB_STATE, 0, NULL, 0, 0, 0, stateMenuOpenCallback, stateMenuExitCallback},                                                                       // 即时存档
-    {TAB_GRAPHICS, 1, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), 0, 0, NULL, graphicsMenuExitCallback},                // 图形
-    {TAB_CONTROL, 1, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), 0, 0, NULL, controlMenuExitCallback}, // 控制
-    {TAB_CORE, 0, NULL, 0, 0, 0, NULL, coreMenuExitCallback},                                                                                           // 核心
-    {TAB_MISC, 1, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), 0, 0, NULL, miscMenuExitCallback},                                // 杂项
-    {TAB_APP, 1, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), 0, 0, NULL, appMenuExitCallback},                                    // 程序
+    {TAB_MAIN, 1, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL},                                 // 主菜单
+    {TAB_STATE, 0, NULL, 0, stateMenuOpenCallback, stateMenuExitCallback},                                                   // 即时存档
+    {TAB_GRAPHICS, 1, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, graphicsMenuExitCallback}, // 图形
+    {TAB_CONTROL, 1, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, controlMenuExitCallback},     // 控制
+    {TAB_CORE, 0, NULL, 0, NULL, coreMenuExitCallback},                                                                            // 核心
+    {TAB_MISC, 1, misc_menu_items, sizeof(misc_menu_items) / sizeof(SettingMenuItem), NULL, miscMenuExitCallback},                 // 杂项
+    {TAB_APP, 1, app_menu_items, sizeof(app_menu_items) / sizeof(SettingMenuItem), NULL, appMenuExitCallback},                     // 程序
 };
 #define MENU_LIST_LEN (sizeof(menu_list) / sizeof(SettingMenu))
 

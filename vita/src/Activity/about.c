@@ -100,19 +100,19 @@ static void ActivityCtrl()
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        MoveListPosNoFocus(MOVE_TYPE_UP, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_UP, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        MoveListPosNoFocus(MOVE_TYPE_DOWN, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_DOWN, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
     }
     else if (hold_pad[PAD_LEFT])
     {
-        MoveListPosNoFocus(MOVE_TYPE_LEFT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_LEFT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
     }
     else if (hold_pad[PAD_RIGHT])
     {
-        MoveListPosNoFocus(MOVE_TYPE_RIGHT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_RIGHT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
     }
 
     if (pressed_pad[PAD_CANCEL])

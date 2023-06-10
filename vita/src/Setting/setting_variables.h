@@ -55,16 +55,16 @@ GUI_Dialog setting_dialog = {
 */
 typedef struct
 {
-    int list[100];        // visible list (data is real pos)
-    int list_indexs[100]; // visible list indexs (get it by real pos)
-    int list_len;         // visible list len
-} MenuVisiblePosData;
+    int visible_list[100];        // visible list (data is real pos)
+    int visible_list_indexs[100]; // visible list indexs (get it by real pos)
+    int visible_list_len;         // visible list len
+} MenuPosData;
 
-static MenuVisiblePosData menu_visible_pos_data;
+static MenuPosData menu_pos_data;
 
 static int menu_need_refresh = 1;
 static int option_display_need_refresh = 0;
-static int core_menu_for_main_enabled = 0;
+static int has_main_core_menu = 0;
 static int setting_config_type = 0;
 
 static int menu_list_top_pos = 0;

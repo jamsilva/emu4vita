@@ -124,13 +124,13 @@ static void moveStateListPos(int type)
     int temp_top_pos = list_top_pos;
     int temp_focus_pos = list_focus_pos;
 
-    if ((type == MOVE_TYPE_UP) && (temp_focus_pos >= N_STATE_COUNTS_PER_LINE))
+    if ((type == TYPE_MOVE_UP) && (temp_focus_pos >= N_STATE_COUNTS_PER_LINE))
         temp_focus_pos -= N_STATE_COUNTS_PER_LINE;
-    else if ((type == MOVE_TYPE_DOWN) && (temp_focus_pos < STATE_LIST_LEN - N_STATE_COUNTS_PER_LINE))
+    else if ((type == TYPE_MOVE_DOWN) && (temp_focus_pos < STATE_LIST_LEN - N_STATE_COUNTS_PER_LINE))
         temp_focus_pos += N_STATE_COUNTS_PER_LINE;
-    else if (type == MOVE_TYPE_LEFT)
+    else if (type == TYPE_MOVE_LEFT)
         temp_focus_pos--;
-    else if (type == MOVE_TYPE_RIGHT)
+    else if (type == TYPE_MOVE_RIGHT)
         temp_focus_pos++;
 
     refreshStateListPos(&temp_top_pos, &temp_focus_pos);
@@ -175,7 +175,7 @@ static void refreshStateItem(int num)
     if (!state_list || num < 0 || num >= STATE_LIST_LEN)
         return;
 
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
     cleanStateItem(num);
 
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
@@ -381,19 +381,19 @@ static void ctrlStateList()
 {
     if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP])
     {
-        moveStateListPos(MOVE_TYPE_UP);
+        moveStateListPos(TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        moveStateListPos(MOVE_TYPE_DOWN);
+        moveStateListPos(TYPE_MOVE_DOWN);
     }
     else if (hold_pad[PAD_LEFT] || hold_pad[PAD_LEFT_ANALOG_LEFT])
     {
-        moveStateListPos(MOVE_TYPE_LEFT);
+        moveStateListPos(TYPE_MOVE_LEFT);
     }
     else if (hold_pad[PAD_RIGHT] || hold_pad[PAD_LEFT_ANALOG_RIGHT])
     {
-        moveStateListPos(MOVE_TYPE_RIGHT);
+        moveStateListPos(TYPE_MOVE_RIGHT);
     }
 
     if (released_pad[PAD_ENTER])
@@ -481,7 +481,7 @@ static int stateThreadFunc(SceSize args, void *argp)
 {
     char dir_path[MAX_PATH_LENGTH];
 
-    MakeSaveStateDir(dir_path);
+    MakeSavestateDir(dir_path);
 
     SceUID dfd = sceIoDopen(dir_path);
     if (dfd >= 0)
@@ -549,7 +549,7 @@ int Setting_InitState()
     if (!state_list)
         return -1;
 
-    moveStateListPos(MOVE_TYPE_NONE);
+    moveStateListPos(TYPE_MOVE_NONE);
     initStateThread();
 
     return 0;

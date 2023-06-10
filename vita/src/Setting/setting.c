@@ -84,6 +84,71 @@ void Setting_RequestRefreshOptionDisplay()
     option_display_need_refresh = 1;
 }
 
+static void moveMenuPos(int move_type)
+{
+    int visible_top_pos = menu_pos_data.visible_list_indexs[menu_top_pos];
+    int visible_focus_pos = menu_pos_data.visible_list_indexs[menu_focus_pos];
+    int visible_list_len = menu_pos_data.visible_list_len;
+
+    MoveListPos(move_type, &visible_top_pos, &visible_focus_pos, visible_list_len, menu_list_max_draw_len);
+    menu_top_pos = menu_pos_data.visible_list[visible_top_pos];
+    menu_focus_pos = menu_pos_data.visible_list[visible_focus_pos];
+}
+
+static void refreshMenuPosEx()
+{
+    SettingMenu *menu = &menu_list[menu_list_focus_pos];
+    SettingMenuItem *items = menu->items;
+    int n_items = menu->n_items;
+    menu_pos_data.visible_list_len = 0;
+
+    if (!items || n_items <= 0)
+        return;
+
+    int i;
+    for (i = 0; i < n_items; i++)
+    {
+        menu_pos_data.visible_list_indexs[i] = menu_pos_data.visible_list_len;
+        if (items[i].visible)
+        {
+            menu_pos_data.visible_list[menu_pos_data.visible_list_len] = i;
+            menu_pos_data.visible_list_len++;
+        }
+    }
+
+    moveMenuPos(TYPE_MOVE_NONE);
+}
+
+static void moveMenuListPos(int move_type)
+{
+    if (move_type == TYPE_MOVE_UP)
+    {
+        do
+        {
+            if (menu_list_focus_pos > 0)
+                menu_list_focus_pos--;
+            else
+                menu_list_focus_pos = MENU_LIST_LEN - 1;
+        } while (!menu_list[menu_list_focus_pos].visible);
+    }
+    else if (move_type == TYPE_MOVE_DOWN)
+    {
+        do
+        {
+            if (menu_list_focus_pos < MENU_LIST_LEN - 1)
+                menu_list_focus_pos++;
+            else
+                menu_list_focus_pos = 0;
+        } while (!menu_list[menu_list_focus_pos].visible);
+    }
+
+    menu_top_pos = 0;
+    menu_focus_pos = 0;
+    refreshMenuPosEx();
+    option_open = 0;
+    option_listview_scroll_sx = option_listview_dx;
+}
+
 static void cleanSettingMenuItem(SettingMenuItem *item)
 {
     if (item->option_type == TYPE_OPTION_STR_ARRAY)
@@ -122,8 +187,6 @@ int Setting_SetCoreMenu(OptionList *list)
     }
     menu->n_items = 0;
     menu->visible = 0;
-    menu->top_pos = 0;
-    menu->focus_pos = 0;
 
     if (!list || list->length <= 0)
         return -1;
@@ -206,6 +269,9 @@ int Setting_SetCoreMenu(OptionList *list)
     item->option = resetCoreConfigCallback;
     item->visible = 1;
 
+    if (menu_list_focus_pos == INDEX_MENU_CORE)
+        moveMenuListPos(TYPE_MOVE_NONE);
+
     return 0;
 }
 
@@ -287,73 +353,44 @@ void Setting_UpdataLangOption()
     }
 }
 
-static void moveMenuPos(int move_type)
+void Setting_RefreshCtrlMenu()
 {
-    int visible_top_pos = menu_visible_pos_data.list_indexs[menu_top_pos];
-    int visible_focus_pos = menu_visible_pos_data.list_indexs[menu_focus_pos];
-    int visible_list_len = menu_visible_pos_data.list_len;
+    SettingMenu *menu = &(menu_list[INDEX_MENU_CONTROL]);
+    SettingMenuItem *menu_item;
 
-    MoveListPos(move_type, &visible_top_pos, &visible_focus_pos, visible_list_len, menu_list_max_draw_len);
-    menu_top_pos = menu_visible_pos_data.list[visible_top_pos];
-    menu_focus_pos = menu_visible_pos_data.list[visible_focus_pos];
-}
-
-static void refreshMenuVisiblePosData()
-{
-    SettingMenu *menu = &menu_list[menu_list_focus_pos];
-    SettingMenuItem *items = menu->items;
-    int n_items = menu->n_items;
-    menu_visible_pos_data.list_len = 0;
-
-    if (!items || n_items <= 0)
-        return;
-
-    int i;
-    for (i = 0; i < n_items; i++)
+    int i, j;
+    for (i = 0; i < menu->n_items; i++)
     {
-        menu_visible_pos_data.list_indexs[i] = menu_visible_pos_data.list_len;
-        if (items[i].visible)
+        menu_item = &(menu->items[i]);
+        if (menu_item->option_type != TYPE_OPTION_KEY_MAP)
+            continue;
+
+        OptionMenu *option = (OptionMenu *)(menu_item->option);
+        char *text = option->name;
+        uint32_t set_key = *(uint32_t *)(option->userdata);
+        // ptintf("%d\n", set_key);
+        int enabled = set_key & ENABLE_KEY_BITMASK;
+        text[0] = '\0';
+        if (!enabled)
         {
-            menu_visible_pos_data.list[menu_visible_pos_data.list_len] = i;
-            menu_visible_pos_data.list_len++;
+            strcpy(text, cur_lang[DISABLE]);
+            continue;
         }
-    }
 
-    moveMenuPos(MOVE_TYPE_NONE);
-}
-
-static void moveMenuListPos(int move_type)
-{
-    int temp_focus_pos = menu_list_focus_pos;
-
-    if (move_type == MOVE_TYPE_UP)
-    {
-        do
+        int n_maped = 0;
+        for (j = 0; j < option->n_items; j++)
         {
-            if (temp_focus_pos > 0)
-                temp_focus_pos--;
-            else
-                temp_focus_pos = MENU_LIST_LEN - 1;
-        } while (!menu_list[temp_focus_pos].visible);
-    }
-    else if (move_type == MOVE_TYPE_DOWN)
-    {
-        do
-        {
-            if (temp_focus_pos < MENU_LIST_LEN - 1)
-                temp_focus_pos++;
-            else
-                temp_focus_pos = 0;
-        } while (!menu_list[temp_focus_pos].visible);
-    }
+            OptionMenuItem *option_item = &(option->items[j]);
+            uint32_t map_key = (uint32_t)(option_item->userdata);
 
-    if (temp_focus_pos != menu_list_focus_pos)
-    {
-        menu_list_focus_pos = temp_focus_pos;
-        menu_focus_pos = 0;
-        refreshMenuVisiblePosData();
-        option_open = 0;
-        option_listview_scroll_sx = option_listview_dx;
+            if (set_key & map_key)
+            {
+                if (n_maped > 0)
+                    strcat(text, "+");
+                strcat(text, cur_lang[option_item->lang]);
+                n_maped++;
+            }
+        }
     }
 }
 
@@ -519,8 +556,8 @@ static void drawMenu()
             item_sy += menu_itemview_height;
         }
 
-        int visible_top_pos = menu_visible_pos_data.list_indexs[menu_top_pos];
-        int visible_list_len = menu_visible_pos_data.list_len;
+        int visible_top_pos = menu_pos_data.visible_list_indexs[menu_top_pos];
+        int visible_list_len = menu_pos_data.visible_list_len;
         GUI_DrawVerticalScrollbar(menu_scrollbar_track_x, menu_scrollbar_track_y, menu_scrollbar_track_height,
                                   visible_list_len, menu_list_max_draw_len, visible_top_pos, 0);
 
@@ -603,9 +640,7 @@ static void ctrlCommon()
         if (menu_list_focus_pos != 0)
         {
             menu_list_focus_pos = 0;
-            moveMenuListPos(MOVE_TYPE_NONE);
-            menu_focus_pos = 0;
-            refreshMenuVisiblePosData();
+            moveMenuListPos(TYPE_MOVE_NONE);
             option_open = 0;
             option_listview_scroll_sx = option_listview_dx;
         }
@@ -631,11 +666,11 @@ static void ctrlCommon()
     }
     else if (released_pad[PAD_L1])
     {
-        moveMenuListPos(MOVE_TYPE_UP);
+        moveMenuListPos(TYPE_MOVE_UP);
     }
     else if (released_pad[PAD_R1])
     {
-        moveMenuListPos(MOVE_TYPE_DOWN);
+        moveMenuListPos(TYPE_MOVE_DOWN);
     }
 }
 
@@ -643,11 +678,11 @@ static void ctrlOption()
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        MoveListPos(MOVE_TYPE_UP, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
+        MoveListPos(TYPE_MOVE_UP, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        MoveListPos(MOVE_TYPE_DOWN, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
+        MoveListPos(TYPE_MOVE_DOWN, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
     }
 
     if (released_pad[PAD_ENTER] || released_pad[PAD_SQUARE])
@@ -687,11 +722,11 @@ static void ctrlMenu()
 
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        moveMenuPos(MOVE_TYPE_UP);
+        moveMenuPos(TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        moveMenuPos(MOVE_TYPE_DOWN);
+        moveMenuPos(TYPE_MOVE_DOWN);
     }
 
     if (released_pad[PAD_CANCEL])
@@ -827,7 +862,7 @@ static void DialogCtrl()
 {
     if (option_display_need_refresh)
     {
-        refreshMenuVisiblePosData();
+        refreshMenuPosEx();
         option_display_need_refresh = 0;
     }
 
@@ -837,47 +872,6 @@ static void DialogCtrl()
         Setting_CtrlState();
     else
         ctrlMenu();
-}
-
-void Setting_RefreshCtrlMenu()
-{
-    SettingMenu *menu = &(menu_list[INDEX_MENU_CONTROL]);
-    SettingMenuItem *menu_item;
-
-    int i, j;
-    for (i = 0; i < menu->n_items; i++)
-    {
-        menu_item = &(menu->items[i]);
-        if (menu_item->option_type != TYPE_OPTION_KEY_MAP)
-            continue;
-
-        OptionMenu *option = (OptionMenu *)(menu_item->option);
-        char *text = option->name;
-        uint32_t set_key = *(uint32_t *)(option->userdata);
-        // ptintf("%d\n", set_key);
-        int enabled = set_key & ENABLE_KEY_BITMASK;
-        text[0] = '\0';
-        if (!enabled)
-        {
-            strcpy(text, cur_lang[DISABLE]);
-            continue;
-        }
-
-        int n_maped = 0;
-        for (j = 0; j < option->n_items; j++)
-        {
-            OptionMenuItem *option_item = &(option->items[j]);
-            uint32_t map_key = (uint32_t)(option_item->userdata);
-
-            if (set_key & map_key)
-            {
-                if (n_maped > 0)
-                    strcat(text, "+");
-                strcat(text, cur_lang[option_item->lang]);
-                n_maped++;
-            }
-        }
-    }
 }
 
 static int DialogOpen()
@@ -898,10 +892,7 @@ static int DialogOpen()
     {
         menu_list[INDEX_MENU_STATE].visible = 0;
         if (menu_list_focus_pos == 1)
-        {
-            menu_list_focus_pos = 0;
             menu_need_refresh = 1;
-        }
     }
 
     if (menu_need_refresh)
@@ -928,7 +919,7 @@ static int DialogOpen()
             // 程序菜单 (菜单 可见/隐藏)
             menu_list[INDEX_MENU_APP].visible = 1;
             // 核心菜单 (菜单 可见/隐藏)
-            if (menu_list[INDEX_MENU_CORE].items && core_menu_for_main_enabled)
+            if (menu_list[INDEX_MENU_CORE].items && has_main_core_menu)
                 menu_list[INDEX_MENU_CORE].visible = 1;
             else
                 menu_list[INDEX_MENU_CORE].visible = 0;
@@ -960,9 +951,7 @@ static int DialogOpen()
         Setting_RefreshCtrlMenu();
         Settting_SetStateSelectId(0);
         menu_list_focus_pos = 0;
-        moveMenuListPos(MOVE_TYPE_NONE);
-        menu_focus_pos = 0;
-        refreshMenuVisiblePosData();
+        moveMenuListPos(TYPE_MOVE_NONE);
         menu_need_refresh = 0;
     }
 
@@ -987,7 +976,7 @@ static int DialogClose()
 int Setting_Init()
 {
     if (menu_list[INDEX_MENU_CORE].items)
-        core_menu_for_main_enabled = 1;
+        has_main_core_menu = 1;
     Setting_SetAppLangOption();
     Setting_InitOverlay();
     refreshSettingLayout();

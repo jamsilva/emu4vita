@@ -340,7 +340,7 @@ static int setFocusByName(const char *name)
         return -1;
 
     list_focus_pos = pos;
-    moveFileListPos(MOVE_TYPE_NONE);
+    moveFileListPos(TYPE_MOVE_NONE);
     return 0;
 }
 
@@ -359,7 +359,7 @@ static int refreshFileList()
         }
     } while (res < 0);
 
-    moveFileListPos(MOVE_TYPE_NONE);
+    moveFileListPos(TYPE_MOVE_NONE);
     return ret;
 }
 
@@ -570,19 +570,19 @@ static void ActivityCtrl()
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        moveFileListPos(MOVE_TYPE_UP);
+        moveFileListPos(TYPE_MOVE_UP);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        moveFileListPos(MOVE_TYPE_DOWN);
+        moveFileListPos(TYPE_MOVE_DOWN);
     }
     else if (hold_pad[PAD_LEFT])
     {
-        moveFileListPos(MOVE_TYPE_LEFT);
+        moveFileListPos(TYPE_MOVE_LEFT);
     }
     else if (hold_pad[PAD_RIGHT])
     {
-        moveFileListPos(MOVE_TYPE_RIGHT);
+        moveFileListPos(TYPE_MOVE_RIGHT);
     }
 
     if (pressed_pad[PAD_TRIANGLE])

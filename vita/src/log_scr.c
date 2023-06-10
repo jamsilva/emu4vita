@@ -101,9 +101,9 @@ static void LogScrCtrl()
         GUI_ReadPad();
 
         if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
-            MoveListPosNoFocus(MOVE_TYPE_UP, &list_top_pos, log_text_list.length, list_max_draw_len);
+            MoveListPosNoFocus(TYPE_MOVE_UP, &list_top_pos, log_text_list.length, list_max_draw_len);
         else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
-            MoveListPosNoFocus(MOVE_TYPE_DOWN, &list_top_pos, log_text_list.length, list_max_draw_len);
+            MoveListPosNoFocus(TYPE_MOVE_DOWN, &list_top_pos, log_text_list.length, list_max_draw_len);
 
         if (released_pad[PAD_CANCEL] || released_pad[PAD_PSBUTTON])
             log_thread_stop = 1;

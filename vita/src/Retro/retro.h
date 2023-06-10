@@ -16,8 +16,6 @@ extern enum GuiTextureFormat video_texture_format;
 extern char core_assets_dir[MAX_PATH_LENGTH];
 extern char core_system_dir[MAX_PATH_LENGTH];
 
-int MakeSrmPath(char *path);
-
 int Retro_InitLib();
 int Retro_DeinitLib();
 

@@ -14,7 +14,7 @@
 #include "file.h"
 #include "config.h"
 
-void MakeSaveStateDir(char *path)
+void MakeSavestateDir(char *path)
 {
     char name[MAX_NAME_LENGTH];
     MakeCurrentFileName(name);
@@ -24,10 +24,10 @@ void MakeSaveStateDir(char *path)
     snprintf(path, MAX_PATH_LENGTH, "%s/%s", (CORE_SAVESTATES_DIR), base_name);
 }
 
-void MakeSaveStatePath(char *path, int num)
+void MakeSavestatePath(char *path, int num)
 {
     char dir[MAX_PATH_LENGTH];
-    MakeSaveStateDir(dir);
+    MakeSavestateDir(dir);
 
     if (num == -1)
         snprintf(path, MAX_PATH_LENGTH, "%s/state-auto.bin", dir);
@@ -40,7 +40,7 @@ GUI_Texture *Emu_GetStateScreenshotTexture(int num)
     char path[MAX_PATH_LENGTH];
     GUI_Texture *tex = NULL;
 
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
         return NULL;
@@ -69,7 +69,7 @@ GUI_Texture *Emu_GetStatePreviewTexture(int num)
     char path[MAX_PATH_LENGTH];
     GUI_Texture *tex = NULL;
 
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
         return NULL;
@@ -103,7 +103,7 @@ int Emu_LoadState(int num)
     if (!Emu_IsGameLoaded())
         return -1;
 
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
 
     fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
@@ -200,9 +200,9 @@ int Emu_SaveState(int num)
     if (!Emu_IsGameLoaded())
         return -1;
 
-    MakeSaveStateDir(path);
+    MakeSavestateDir(path);
     CreateFolder(path);
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
 
     uint32_t base_width, base_height;
     Emu_MakeVideoBaseWH(&base_width, &base_height);
@@ -327,7 +327,7 @@ END:
 int Emu_DeleteState(int num)
 {
     char path[MAX_PATH_LENGTH];
-    MakeSaveStatePath(path, num);
+    MakeSavestatePath(path, num);
     sceIoRemove(path);
     return 0;
 }

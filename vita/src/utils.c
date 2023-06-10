@@ -220,13 +220,13 @@ void MoveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
 {
     int temp_top_pos = *top_pos;
     int temp_focus_pos = *focus_pos;
-    if (type == MOVE_TYPE_UP)
+    if (type == TYPE_MOVE_UP)
         temp_focus_pos--;
-    else if (type == MOVE_TYPE_DOWN)
+    else if (type == TYPE_MOVE_DOWN)
         temp_focus_pos++;
-    if (type == MOVE_TYPE_LEFT)
+    if (type == TYPE_MOVE_LEFT)
         temp_focus_pos -= lines;
-    else if (type == MOVE_TYPE_RIGHT)
+    else if (type == TYPE_MOVE_RIGHT)
         temp_focus_pos += lines;
 
     RefreshListPos(&temp_top_pos, &temp_focus_pos, length, lines);
@@ -237,13 +237,13 @@ void MoveListPos(int type, int *top_pos, int *focus_pos, int length, int lines)
 void MoveListPosNoFocus(int type, int *top_pos, int length, int lines)
 {
     int temp_top_pos = *top_pos;
-    if (type == MOVE_TYPE_UP)
+    if (type == TYPE_MOVE_UP)
         temp_top_pos--;
-    else if (type == MOVE_TYPE_DOWN)
+    else if (type == TYPE_MOVE_DOWN)
         temp_top_pos++;
-    if (type == MOVE_TYPE_LEFT)
+    if (type == TYPE_MOVE_LEFT)
         temp_top_pos -= lines;
-    else if (type == MOVE_TYPE_RIGHT)
+    else if (type == TYPE_MOVE_RIGHT)
         temp_top_pos += lines;
 
     RefreshListPosNoFocus(&temp_top_pos, length, lines);

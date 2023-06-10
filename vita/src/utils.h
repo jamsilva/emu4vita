@@ -6,13 +6,13 @@
 #include <psp2/rtc.h>
 #include <psp2/ctrl.h>
 
-enum MoveTypes
+enum TypeMove
 {
-    MOVE_TYPE_NONE,
-    MOVE_TYPE_UP,
-    MOVE_TYPE_DOWN,
-    MOVE_TYPE_LEFT,
-    MOVE_TYPE_RIGHT,
+    TYPE_MOVE_NONE,
+    TYPE_MOVE_UP,
+    TYPE_MOVE_DOWN,
+    TYPE_MOVE_LEFT,
+    TYPE_MOVE_RIGHT,
 };
 
 #ifndef MIN

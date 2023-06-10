@@ -7,11 +7,11 @@
 #include "config_text.h"
 #include "file.h"
 
-enum OverlayTextType
+enum TypeOverlayText
 {
-    OVERLAY_TEXT_TYPE_NONE,
-    OVERLAY_TEXT_TYPE_ITEM,
-    OVERLAY_TEXT_TYPE_NAME_VALUE,
+    TYPE_OVERLAY_TEXT_NONE,
+    TYPE_OVERLAY_TEXT_ITEM,
+    TYPE_OVERLAY_TEXT_NAME_VALUE,
 };
 
 void OverlayListFreeEntry(OverlayListEntry *entry)
@@ -191,9 +191,9 @@ static char *getItem(const char *str)
 static int readLine(char *line, char **pkey, char **pvalue)
 {
     if (!line)
-        return OVERLAY_TEXT_TYPE_NONE;
+        return TYPE_OVERLAY_TEXT_NONE;
 
-    int res = OVERLAY_TEXT_TYPE_NONE;
+    int res = TYPE_OVERLAY_TEXT_NONE;
     char *key = NULL;
     char *value = NULL;
     const char *head = line;
@@ -224,7 +224,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
     {
         key = getItem(line);
         if (key != NULL)
-            res = OVERLAY_TEXT_TYPE_ITEM;
+            res = TYPE_OVERLAY_TEXT_ITEM;
         goto END;
     }
 
@@ -270,10 +270,10 @@ static int readLine(char *line, char **pkey, char **pvalue)
     value[len] = '\0';
     // AppLog("VALUE: %s\n", value);
 
-    res = OVERLAY_TEXT_TYPE_NAME_VALUE;
+    res = TYPE_OVERLAY_TEXT_NAME_VALUE;
 
 END:
-    if (res == OVERLAY_TEXT_TYPE_NONE)
+    if (res == TYPE_OVERLAY_TEXT_NONE)
     {
         if (key)
             free(key);
@@ -317,7 +317,7 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
         {
             type = readLine(line, &name, &value);
 
-            if (type == OVERLAY_TEXT_TYPE_ITEM)
+            if (type == TYPE_OVERLAY_TEXT_ITEM)
             {
                 if (name)
                 {
@@ -330,7 +330,7 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
                     }
                 }
             }
-            else if (type == OVERLAY_TEXT_TYPE_NAME_VALUE)
+            else if (type == TYPE_OVERLAY_TEXT_NAME_VALUE)
             {
                 if (entry && name && value)
                 {

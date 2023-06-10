@@ -90,8 +90,6 @@ typedef struct SettingMenu
     int visible;
     SettingMenuItem *items;
     int n_items;
-    int top_pos;
-    int focus_pos;
     void (*init)(struct SettingMenu *menu);
     void (*exit)(struct SettingMenu *menu);
 } SettingMenu;

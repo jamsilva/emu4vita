@@ -9,7 +9,6 @@
 #include <pthread.h>
 #include <time/rtime.h>
 
-#include "Activity/browser.h"
 #include "Emu/emu.h"
 #include "retro.h"
 #include "utils.h"
@@ -30,13 +29,13 @@ struct retro_system_av_info core_system_av_info;
 
 static unsigned int core_device = RETRO_DEVICE_JOYPAD;
 
-int MakeCoreAssetsDirPath(char *path)
+static int makeCoreAssetsDirPath(char *path)
 {
     snprintf(path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, CORE_ASSETS_DIR_NAME);
     return 0;
 }
 
-int MakeCoreSystemDirPath(char *path)
+static int makeCoreSystemDirPath(char *path)
 {
 #if defined(USE_INTE_SYSTEM_DIR)
     if (private_assets_dir)
@@ -49,18 +48,8 @@ int MakeCoreSystemDirPath(char *path)
     return 0;
 }
 
-int MakeSrmPath(char *path)
-{
-    char name[MAX_NAME_LENGTH];
-    MakeCurrentFileName(name);
-    char base_name[MAX_NAME_LENGTH];
-    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
-    snprintf(path, MAX_PATH_LENGTH, "%s/%s.srm", (CORE_SAVEFILES_DIR), base_name);
-    return 0;
-}
-
 #if defined(COPY_INTE_SYSTEM_DIR)
-static int CopyInternalSystemDir()
+static int copyInternalSystemDir()
 {
     char src_path[MAX_PATH_LENGTH];
     if (private_assets_dir)
@@ -106,7 +95,7 @@ static int creatValidFileExts()
 
     if (!exts)
         return -1;
-    AppLog("[RETRO] Valid extensions: %s\n", exts);
+    AppLog("[RETRO] valid ext: %s\n", exts);
 
     exts_len = strlen(exts);
     if (exts_len == 0)
@@ -169,13 +158,13 @@ void Retro_SetControllerPortDevices()
 
 int Retro_InitLib()
 {
-    AppLog("[RETRO] Retro init lib...\n");
+    AppLog("[RETRO] init retro lib...\n");
 
     pthread_init();
     rtime_init();
 
-    MakeCoreAssetsDirPath(core_assets_dir);
-    MakeCoreSystemDirPath(core_system_dir);
+    makeCoreAssetsDirPath(core_assets_dir);
+    makeCoreSystemDirPath(core_system_dir);
 
     core_options_update_display_callback = NULL;
     core_device = RETRO_DEVICE_JOYPAD;
@@ -183,24 +172,24 @@ int Retro_InitLib()
     setRetroCallbacks();
     retro_get_system_info(&core_system_info);
     creatValidFileExts();
-    
+
 #if defined(COPY_INTE_SYSTEM_DIR)
-    CopyInternalSystemDir();
+    copyInternalSystemDir();
 #endif
 
-    AppLog("[RETRO] Retro init lib done\n");
+    AppLog("[RETRO] init retro lib done\n");
 
     return 0;
 }
 
 int Retro_DeinitLib()
 {
-    AppLog("[RETRO] Retro deinit lib...\n");
+    AppLog("[RETRO] deinit retro lib...\n");
 
     rtime_deinit();
     pthread_terminate();
 
-    AppLog("[RETRO] Retro deinit lib done\n");
+    AppLog("[RETRO] deinit retro lib done\n");
 
     return 0;
 }

@@ -16,19 +16,19 @@
 #include "utils.h"
 #include "log_scr.h"
 
-enum RetroRequestEventTypes
+enum TypeRetroRequestEvent
 {
-    REQUEST_EVENT_TYPE_NONE,
-    REQUEST_EVENT_TYPE_SAVE_STATE,
-    REQUEST_EVENT_TYPE_LOAD_STATE,
-    REQUEST_EVENT_TYPE_RESET,
-    REQUEST_EVENT_TYPE_EXIT,
+    TYPE_REQUEST_EVENT_NONE,
+    TYPE_REQUEST_EVENT_SAVE_STATE,
+    TYPE_REQUEST_EVENT_LOAD_STATE,
+    TYPE_REQUEST_EVENT_RESET,
+    TYPE_REQUEST_EVENT_EXIT,
 };
 
 extern GUI_Dialog setting_dialog;
 
 static int game_loading = 0, game_reloading = 0, game_loaded = 0, game_run = 0;
-static int request_event_type = REQUEST_EVENT_TYPE_NONE;
+static int request_event_type = TYPE_REQUEST_EVENT_NONE;
 static float game_run_speed = 1.0f;
 static double game_cur_fps = 0;
 static void *game_rom_data = NULL;
@@ -65,26 +65,47 @@ void Emu_SetRunSpeed(float speed)
     Emu_SetMicrosPerFrame(1000000.0f / game_cur_fps);
 }
 
-static int Emu_LoadSrm()
+static int makeSavefilePath(char *path, int id)
 {
-    size_t dst_size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    char name[MAX_NAME_LENGTH];
+    MakeCurrentFileName(name);
+    char base_name[MAX_NAME_LENGTH];
+    MakeBaseName(base_name, name, MAX_NAME_LENGTH);
+    if (id == RETRO_MEMORY_SAVE_RAM)
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s.srm", (CORE_SAVEFILES_DIR), base_name);
+    else if (id == RETRO_MEMORY_RTC)
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s.rtc", (CORE_SAVEFILES_DIR), base_name);
+    else
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s.unk", (CORE_SAVEFILES_DIR), base_name);
+    return 0;
+}
+
+static int loadRamFile(int id)
+{
+    size_t dst_size = retro_get_memory_size(id);
     if (dst_size == 0)
         return -1;
 
-    void *dst_data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+    void *dst_data = retro_get_memory_data(id);
     if (dst_data == NULL)
         return -1;
 
     char path[MAX_PATH_LENGTH];
-    MakeSrmPath(path);
+    makeSavefilePath(path, id);
     SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
     if (fd < 0)
         return fd;
 
     int64_t src_size = sceIoLseek(fd, 0, SCE_SEEK_END);
-    if (src_size <= 0 || src_size > dst_size)
+    if (src_size <= 0)
     {
-        AppLog("Emu_LoadSrm failed: src_size %d, dst_size %d\n", src_size, dst_size);
+        AppLog("Emu_LoadSrm failed: get file size failed\n");
+        sceIoClose(fd);
+        return -1;
+    }
+    if (src_size > dst_size)
+    {
+        AppLog("Emu_LoadSrm failed: SRAM is larger than implementation expects\n");
         sceIoClose(fd);
         return -1;
     }
@@ -129,18 +150,18 @@ static int Emu_LoadSrm()
     return 0;
 }
 
-static int Emu_SaveSrm()
+static int saveRamFile(int id)
 {
-    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    size_t size = retro_get_memory_size(id);
     if (size == 0)
         return -1;
 
-    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+    void *data = retro_get_memory_data(id);
     if (data == NULL)
         return -1;
 
     char path[MAX_PATH_LENGTH];
-    MakeSrmPath(path);
+    makeSavefilePath(path, id);
     CreateFolder(CORE_SAVEFILES_DIR);
     SceUID fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
@@ -169,6 +190,20 @@ static int Emu_SaveSrm()
     }
     sceIoClose(fd);
 
+    return 0;
+}
+
+static int Emu_LoadSrm()
+{
+    loadRamFile(RETRO_MEMORY_SAVE_RAM);
+    loadRamFile(RETRO_MEMORY_RTC);
+    return 0;
+}
+
+static int Emu_SaveSrm()
+{
+    saveRamFile(RETRO_MEMORY_SAVE_RAM);
+    saveRamFile(RETRO_MEMORY_RTC);
     return 0;
 }
 
@@ -302,7 +337,7 @@ int Emu_LoadGame(const char *path)
     if (show_log)
         LogScrDeinit();
 
-    request_event_type = REQUEST_EVENT_TYPE_NONE;
+    request_event_type = TYPE_REQUEST_EVENT_NONE;
     retro_get_system_av_info(&core_system_av_info);
     Emu_SetRunSpeed(1.0f);
 
@@ -369,7 +404,7 @@ void Emu_PauseGame()
         game_run = 0;
         Emu_PauseAudio();
         Emu_PauseVideo();
-        if (request_event_type == REQUEST_EVENT_TYPE_NONE)
+        if (request_event_type == TYPE_REQUEST_EVENT_NONE)
             UnlockQuickMenu();
     }
 }
@@ -409,35 +444,35 @@ int Emu_ReloadGame()
 
 static void checkRequestsEvents()
 {
-    if (request_event_type == REQUEST_EVENT_TYPE_NONE)
+    if (request_event_type == TYPE_REQUEST_EVENT_NONE)
         return;
 
-    if (request_event_type == REQUEST_EVENT_TYPE_SAVE_STATE)
+    if (request_event_type == TYPE_REQUEST_EVENT_SAVE_STATE)
     {
         Emu_PauseGame();
         Emu_SaveState(Setting_GetStateSelectId());
         Emu_ResumeGame();
     }
-    else if (request_event_type == REQUEST_EVENT_TYPE_LOAD_STATE)
+    else if (request_event_type == TYPE_REQUEST_EVENT_LOAD_STATE)
     {
         Emu_PauseGame();
         Emu_LoadState(Setting_GetStateSelectId());
         Emu_ResumeGame();
     }
-    else if (request_event_type == REQUEST_EVENT_TYPE_RESET)
+    else if (request_event_type == TYPE_REQUEST_EVENT_RESET)
     {
         Emu_PauseGame();
         Emu_ResetGame();
         Emu_ResumeGame();
     }
-    else if (request_event_type == REQUEST_EVENT_TYPE_EXIT)
+    else if (request_event_type == TYPE_REQUEST_EVENT_EXIT)
     {
         Emu_ExitGame();
         if (exec_boot_mode == BOOT_MODE_GAME)
             BootReturnToParent();
     }
 
-    request_event_type = REQUEST_EVENT_TYPE_NONE;
+    request_event_type = TYPE_REQUEST_EVENT_NONE;
 }
 
 void Emu_RunGame()
@@ -469,20 +504,20 @@ void Emu_SpeedDownGame()
 
 void Emu_RequestResetGame()
 {
-    request_event_type = REQUEST_EVENT_TYPE_RESET;
+    request_event_type = TYPE_REQUEST_EVENT_RESET;
 }
 
 void Emu_RequestExitGame()
 {
-    request_event_type = REQUEST_EVENT_TYPE_EXIT;
+    request_event_type = TYPE_REQUEST_EVENT_EXIT;
 }
 
 void Emu_RequestSaveState()
 {
-    request_event_type = REQUEST_EVENT_TYPE_SAVE_STATE;
+    request_event_type = TYPE_REQUEST_EVENT_SAVE_STATE;
 }
 
 void Emu_RequestLoadState()
 {
-    request_event_type = REQUEST_EVENT_TYPE_LOAD_STATE;
+    request_event_type = TYPE_REQUEST_EVENT_LOAD_STATE;
 }
