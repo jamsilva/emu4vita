@@ -14,24 +14,27 @@ typedef struct
 
 typedef struct GUI_Activity
 {
-    int title;                                // Title
-    GUI_ButtonInstruction *button_instructions; // Button instructions
-    int (*init)();                              // Init callback
-    int (*exit)();                              // Exit callback
-    void (*draw)();                             // Draw callback
-    void (*ctrl)();                             // Ctrl callback
-    int nostatusbar;                            // Disable draw statusbar
-    int nowallpaper;                            // Disable draw wallpaper
-    struct GUI_Activity *parent;                // Parent activity
+    int title;                                           // Title
+    GUI_ButtonInstruction *button_instructions;          // Button instructions
+    int (*enterCallBack)(struct GUI_Activity *activity); // Init callback
+    int (*exitCallback)(struct GUI_Activity *activity);  // Exit callback
+    void (*drawCallback)(struct GUI_Activity *activity); // Draw callback
+    void (*ctrlCallBack)(struct GUI_Activity *activity); // Ctrl callback
+    int nostatusbar;                                     // Disable draw statusbar
+    int nowallpaper;                                     // Disable draw wallpaper
+    struct GUI_Activity *parent;                         // Parent activity
+    void *userdata;                                      // User data
 } GUI_Activity;
 
 typedef struct GUI_Dialog
 {
-    int (*open)();             // Init callback
-    int (*close)();            // Exit callback
-    void (*draw)();            // Draw callback
-    void (*ctrl)();            // Ctrl callback
-    struct GUI_Dialog *parent; // Parent dialog
+    int (*openCallback)(struct GUI_Dialog *dialog);  // Open callback
+    int (*closeCallback)(struct GUI_Dialog *dialog); // Close callback
+    void (*drawCallback)(struct GUI_Dialog *dialog); // Draw callback
+    void (*ctrlCallBack)(struct GUI_Dialog *dialog); // Ctrl callback
+    struct GUI_Dialog *previous;                     // Previous dialog
+    struct GUI_Dialog *next;                         // Next dialog
+    void *userdata;                                  // User data
 } GUI_Dialog;
 
 // Primary colors
@@ -62,6 +65,7 @@ typedef struct GUI_Dialog
 // Define colors
 #define GUI_DEFALUT_TEXT_COLOR COLOR_WHITE
 #define GUI_DEFALUT_BG_COLOR 0xAF1F1F1F
+#define GUI_DEFALUT_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_AZURE, 0xBF)
 
 // Screen size
 #define GUI_SCREEN_WIDTH 960.0f
@@ -74,25 +78,23 @@ typedef struct GUI_Dialog
 #define GUI_SCROLLBAR_TRACK_COLOR COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
 #define GUI_SCROLLBAR_THUMB_COLOR COLOR_ALPHA(COLOR_LITEGRAY, 0x8F)
 
-#define BUTTON_ENTER -1
-#define BUTTON_CANCEL -2
-#define APP_TITLE -3
-#define LANG_DISABLE -1000
-
 // Free draw
 extern float ACTIVITY_FREE_DRAW_WIDTH, ACTIVITY_FREE_DRAW_HEIGHT;
 extern float ACTIVITY_FREE_DRAW_SX, ACTIVITY_FREE_DRAW_SY, ACTIVITY_FREE_DRAW_DX, ACTIVITY_FREE_DRAW_DY;
 
 void GUI_RefreshLayout();
-void GUI_GetEnterButton();
 
-int GUI_SetMainActivity(GUI_Activity *activity);
 int GUI_BacktoMainActivity();
 int GUI_EnterActivity(GUI_Activity *activity);
 int GUI_ExitActivity(GUI_Activity *activity);
 
-int GUI_OpenDialog(GUI_Dialog *activity);
-int GUI_CloseDialog(GUI_Dialog *activity);
+int GUI_OpenDialog(GUI_Dialog *dialog);
+int GUI_CloseDialog(GUI_Dialog *dialog);
+void GUI_CloseAllDialogs();
+void GUI_ClosePreviousDialogs(GUI_Dialog *dialog);
+
+char *GUI_GetStringByLangId(int index);
+char **GUI_GetStringListByLangIdList(int *list, int list_len);
 
 void GUI_DrawVerticalScrollbar(int track_sx, int track_sy, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track);
 
@@ -107,5 +109,7 @@ void GUI_DisplaySplash();
 void GUI_DrawMain();
 void GUI_CtrlMain();
 void GUI_RunMain();
+
+#include "alert_dialog.h"
 
 #endif

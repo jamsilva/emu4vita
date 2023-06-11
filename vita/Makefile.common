@@ -73,10 +73,12 @@ SRC_C += \
 	Emu/emu_audio.c \
 	Emu/emu_game.c \
 	Emu/emu_input.c \
+	Emu/emu_save.c \
 	Emu/emu_state.c \
 	Emu/emu_video.c
 
 SRC_C += \
+	Gui/alert_dialog.c \
 	Gui/gui_ctrl.c \
 	Gui/gui_init.c \
 	Gui/gui_lib.c \

@@ -8,9 +8,9 @@
 #include "utils.h"
 #include "lang.h"
 
-static int ActivityInit();
-static void ActivityDraw();
-static void ActivityCtrl();
+static int enterActivityCallback(GUI_Activity *activity);
+static void drawActivityCallback(GUI_Activity *activity);
+static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
     {BUTTON_CANCEL, BACK_TO_BROWSER},
@@ -18,15 +18,16 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity about_activity = {
-    ABOUT,               // Title
-    button_instructions, // Button instructions
-    ActivityInit,        // Init callback
-    NULL,                // Exit callback
-    ActivityDraw,        // Draw callback
-    ActivityCtrl,        // Ctrl callback
-    0,                   // Disable draw statusbar
-    0,                   // Disable draw wallpaper
-    NULL,                // Parent activity
+    ABOUT,                 // Title
+    button_instructions,   // Button instructions
+    enterActivityCallback, // Init callback
+    NULL,                  // Exit callback
+    drawActivityCallback,  // Draw callback
+    ctrlActivityCallback,  // Ctrl callback
+    0,                     // Disable draw statusbar
+    0,                     // Disable draw wallpaper
+    NULL,                  // Parent activity
+    NULL,                  // User data
 };
 
 #define LISTVIEW_PADDING_L 4.0f
@@ -62,13 +63,13 @@ static void refreshLayout()
     scrollbar_track_height = listview_height;
 }
 
-static int ActivityInit()
+static int enterActivityCallback(GUI_Activity *activity)
 {
     refreshLayout();
     return 0;
 }
 
-static void ActivityDraw()
+static void drawActivityCallback(GUI_Activity *activity)
 {
     // Listview bg
     GUI_DrawFillRectangle(listview_sx, listview_sy, listview_width, listview_height, GUI_DEFALUT_BG_COLOR);
@@ -96,7 +97,7 @@ static void ActivityDraw()
     GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, N_ABOUT_TEXTS, list_max_draw_len, list_top_pos, 0);
 }
 
-static void ActivityCtrl()
+static void ctrlActivityCallback(GUI_Activity *activity)
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {

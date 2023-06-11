@@ -26,8 +26,6 @@
 #define MENU_ITEMVIEW_PADDING_L 10.0f
 #define MENU_ITEMVIEW_PADDING_T 6.0f
 
-#define MENU_ITEMVIEW_COLOR_BG_FOCUS COLOR_ALPHA(COLOR_AZURE, 0xAF)
-
 // Checkbox dialog
 #define OPTION_LISTVIEW_WIDTH 210.0f
 #define OPTION_LISTVIEW_PADDING_L 2.0f
@@ -35,17 +33,21 @@
 #define OPTION_ITEMVIEW_PADDING_L 10.0f
 #define OPTION_ITEMVIEW_PADDING_T 6.0f
 
-static int DialogOpen();
-static int DialogClose();
-static void DialogDraw();
-static void DialogCtrl();
+#define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
+
+static int openDialogCallback(GUI_Dialog *dialog);
+static int closeDialogCallback(GUI_Dialog *dialog);
+static void drawDialogCallback(GUI_Dialog *dialog);
+static void ctrlDialogCallback(GUI_Dialog *dialog);
 
 GUI_Dialog setting_dialog = {
-    DialogOpen,  // Init callback
-    DialogClose, // Exit callback
-    DialogDraw,  // Draw callback
-    DialogCtrl,  // Ctrl callback
-    NULL,        // Parent dialog
+    openDialogCallback,  // Open callback
+    closeDialogCallback, // Close callback
+    drawDialogCallback,  // Draw callback
+    ctrlDialogCallback,  // Ctrl callback
+    NULL,                // Previous dialog
+    NULL,                // Next dialog
+    NULL,                // User data
 };
 
 /*
@@ -75,7 +77,7 @@ static int menu_focus_pos = 0;
 static int option_open = 0;
 static int option_top_pos = 0;
 static int option_focus_pos = 0;
-static OptionMenu *option_menu = NULL;
+static KeyMapOptionMenu *option_menu = NULL;
 
 // Free draw
 int SETTING_FREE_DRAW_WIDTH, SETTING_FREE_DRAW_HEIGHT;

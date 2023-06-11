@@ -23,8 +23,8 @@
 #define STATE_ITEMVIEW_PADDING 8.0f
 #define STATE_ITEMVIEW_MARGIN 8.0f
 
-#define STATE_ITEMVIEW_COLOR_BG_DEF COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
-#define STATE_ITEMVIEW_COLOR_BG_FOCUS COLOR_ALPHA(COLOR_AZURE, 0xAF)
+#define STATE_ITEMVIEW_COLOR_DEF_BG COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
+#define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
 
 #define STATE_LIST_LEN 30
 #define N_STATE_COUNTS_PER_LINE 2
@@ -229,6 +229,7 @@ int Setting_GetStatePreviewHeight()
 void Settting_SetStateSelectId(int id)
 {
     list_focus_pos = id;
+    moveStateListPos(TYPE_MOVE_NONE);
 }
 
 int Setting_GetStateSelectId()
@@ -245,6 +246,7 @@ int Setting_LoadState(int num)
         if (Emu_LoadGame(path) < 0)
             return -1;
     }
+    
     return Emu_LoadState(num);
 }
 
@@ -278,7 +280,7 @@ void Setting_DrawState()
         if (drawn_len >= max_draw_len)
             break;
 
-        uint32_t color = (i == list_focus_pos) ? STATE_ITEMVIEW_COLOR_BG_FOCUS : STATE_ITEMVIEW_COLOR_BG_DEF;
+        uint32_t color = (i == list_focus_pos) ? STATE_ITEMVIEW_COLOR_FOCUS_BG : STATE_ITEMVIEW_COLOR_DEF_BG;
         GUI_DrawFillRectangle(itemview_sx, itemview_sy, state_itemview_width, state_itemview_height, color);
 
         int preview_sx = itemview_sx + STATE_ITEMVIEW_PADDING;

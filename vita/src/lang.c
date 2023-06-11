@@ -8,6 +8,14 @@
 char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // ERROR
     "Error",
+    // CONFIRM
+    "confirm",
+    // CANCEL
+    "cancel",
+    // TIP
+    "Tip",
+    // MENU
+    "Menu",
 
     /**************  Safe mode  *****************/
     // MESSAGE_SAFE_MODE_0
@@ -27,7 +35,7 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // BUTTON_DOWN
     "↓",
     // BUTTON_CROSS
-    "X", //"×"
+    "×",
     // BUTTON_CIRCLE
     "○",
     // BUTTON_SQUARE
@@ -134,6 +142,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "parent dir",
     // OPEN
     "open",
+    // OPTION_MENU
+    "option menu",
     // EMU_SETTING
     "emu setting",
     // ABOUT
@@ -142,6 +152,26 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "change dir",
     // BACK_TO_BROWSER
     "back",
+
+    // START_GAME
+    "Start game",
+    // DELETE_GAME
+    "Delete game",
+    // DELETE_AUTO_STATE
+    "Delete auto state",
+    // DELETE_SAVEFILE
+    "Delete savefile",
+
+    // TIP_DELETE_GAME
+    "Are you sure you want to delete this game?",
+    // TIP_DELETE_AUTO_STATE
+    "Are you sure you want to delete the auto state of this game?",
+    // TIP_DELETE_SAVEFILE
+    "Are you sure you want to delete the save file of this game?",
+
+    /**************  About  *****************/
+    // ABOUT_TITLE
+    "About",
 
     /**************  Setting tab  *****************/
     // TAB_MAIN
@@ -266,10 +296,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "follow D-Pad",
 
     /**************  Menu misc  *****************/
-    // AUTO_STATE
-    "Auto state",
-    // DELETE_AUTO_STATE
-    "Delete auto state",
+    // AUTO_SAVE_LOAD_STATE
+    "Auto save/load state",
     // SAVE_SCREENSHOT
     "Save screenshot",
     // SAVE_PREVIEW
@@ -309,14 +337,19 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "save",
     // DELETE
     "delete",
-    // CANCEL
-    "cancel",
-
 };
 
 char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // ERROR
     "错误",
+    // CONFIRM
+    "确定",
+    // CANCEL
+    "取消",
+    // TIP
+    "提示",
+    // MENU
+    "菜单",
 
     /**************  Safe mode  *****************/
     // MESSAGE_SAFE_MODE_0
@@ -336,7 +369,7 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     // BUTTON_DOWN
     "↓",
     // BUTTON_CROSS
-    "X", //"×"
+    "×",
     // BUTTON_CIRCLE
     "○",
     // BUTTON_SQUARE
@@ -443,14 +476,36 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "上层目录",
     // OPEN
     "打开",
+    // OPTION_MENU
+    "选项菜单",
     // EMU_SETTING
-    "模拟器菜单",
+    "模拟器设置",
     // ABOUT
     "关于",
     // CHANGE_DIRECTORY
     "跳转目录",
     // BACK_TO_BROWSER
     "返回浏览器",
+
+    // START_GAME
+    "开始游戏",
+    // DELETE_GAME
+    "删除游戏",
+    // DELETE_AUTO_STATE
+    "删除自动存档",
+    // DELETE_SAVEFILE
+    "删除模拟存档",
+
+    // TIP_DELETE_GAME
+    "确认要删除这个游戏？",
+    // TIP_DELETE_AUTO_STATE
+    "确认要删除这个游戏的自动存档？",
+    // TIP_DELETE_SAVEFILE
+    "确认要删除这个游戏的模拟存档？",
+
+    /**************  About  *****************/
+    // ABOUT_TITLE
+    "关于",
 
     /**************  Setting tab  *****************/
     // TAB_MAIN
@@ -575,10 +630,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "跟随十字键",
 
     /**************  Menu misc  *****************/
-    // AUTO_STATE
+    // AUTO_SAVE_LOAD_STATE
     "自动存读档",
-    // DELETE_AUTO_STATE
-    "删除自动存档",
     // SAVE_SCREENSHOT
     "保存截图",
     // SAVE_PREVIEW
@@ -618,9 +671,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "保存",
     // DELETE
     "删除",
-    // CANCEL
-    "取消",
-
 };
 
 LangEntry lang_entries[] = {

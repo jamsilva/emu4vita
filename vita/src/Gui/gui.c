@@ -16,8 +16,9 @@
 extern GUI_Activity browser_activity;
 extern GUI_Dialog setting_dialog;
 
-static GUI_Activity *main_activity = &browser_activity;
+static GUI_Activity *main_activity = NULL;
 static GUI_Activity *current_activity = NULL;
+static GUI_Dialog *main_dialog = NULL;
 static GUI_Dialog *current_dialog = NULL;
 
 // Images
@@ -37,9 +38,6 @@ static int statusbar_width, statusbar_height;
 float ACTIVITY_FREE_DRAW_WIDTH, ACTIVITY_FREE_DRAW_HEIGHT;
 float ACTIVITY_FREE_DRAW_SX, ACTIVITY_FREE_DRAW_SY, ACTIVITY_FREE_DRAW_DX, ACTIVITY_FREE_DRAW_DY;
 
-// Button
-int BUTTON_ENTER_INDEX = BUTTON_CIRCLE, BUTTON_CANCEL_INDEX = BUTTON_CROSS;
-
 void GUI_RefreshLayout()
 {
     statusbar_width = GUI_SCREEN_WIDTH;
@@ -51,31 +49,6 @@ void GUI_RefreshLayout()
     ACTIVITY_FREE_DRAW_SY = statusbar_height + ACTIVITY_FREE_DRAW_PADDING_T;
     ACTIVITY_FREE_DRAW_DX = ACTIVITY_FREE_DRAW_SX + ACTIVITY_FREE_DRAW_WIDTH;
     ACTIVITY_FREE_DRAW_DY = ACTIVITY_FREE_DRAW_SY + ACTIVITY_FREE_DRAW_HEIGHT;
-}
-
-void GUI_GetEnterButton()
-{
-    if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
-    {
-        BUTTON_ENTER_INDEX = BUTTON_CIRCLE;
-        BUTTON_CANCEL_INDEX = BUTTON_CROSS;
-    }
-    else
-    {
-        BUTTON_ENTER_INDEX = BUTTON_CROSS;
-        BUTTON_CANCEL_INDEX = BUTTON_CIRCLE;
-    }
-}
-
-int GUI_SetMainActivity(GUI_Activity *activity)
-{
-    if (!activity)
-        return -1;
-
-    main_activity = activity;
-    main_activity->parent = NULL;
-
-    return 0;
 }
 
 int GUI_BacktoMainActivity()
@@ -96,21 +69,27 @@ int GUI_EnterActivity(GUI_Activity *activity)
 
     activity->parent = current_activity;
     current_activity = activity;
-    if (current_activity->init)
-        current_activity->init();
+    if (!main_activity)
+        main_activity = current_activity;
+    if (current_activity->enterCallBack)
+        current_activity->enterCallBack(current_activity);
 
     return 0;
 }
 
 int GUI_ExitActivity(GUI_Activity *activity)
 {
-    if (!activity || current_activity != activity)
+    if (!activity || !current_activity || current_activity != activity)
         return -1;
 
-    if (activity->parent)
+    // Must show one activity
+    if (current_activity->parent)
     {
-        current_activity = activity->parent;
-        activity->parent = NULL;
+        GUI_Activity *parent = current_activity->parent;
+        current_activity->parent = NULL;
+        if (current_activity->exitCallback)
+            current_activity->exitCallback(current_activity);
+        current_activity = parent;
     }
 
     return 0;
@@ -121,39 +100,126 @@ int GUI_OpenDialog(GUI_Dialog *dialog)
     if (!dialog || current_dialog == dialog)
         return -1;
 
-    dialog->parent = current_dialog;
+    if (current_dialog)
+        current_dialog->next = dialog;
+    dialog->previous = current_dialog;
+    dialog->next = NULL;
     current_dialog = dialog;
-    if (current_dialog && current_dialog->open)
-        current_dialog->open();
+    if (!main_dialog)
+        main_dialog = current_dialog;
+    if (current_dialog->openCallback)
+        current_dialog->openCallback(current_dialog);
 
     return 0;
 }
 
 int GUI_CloseDialog(GUI_Dialog *dialog)
 {
-    if (!dialog || current_dialog != dialog)
+    if (!dialog || !current_dialog || current_dialog != dialog)
         return -1;
 
-    if (current_dialog && current_dialog->close)
-        current_dialog->close();
-    current_dialog = dialog->parent;
-    dialog->parent = NULL;
+    // If the main dialog, set main_dialog to null
+    if (main_dialog == current_dialog)
+        main_dialog = NULL;
+
+    GUI_Dialog *previous = current_dialog->previous;
+    current_dialog->previous = NULL;
+    if (previous)
+        previous->next = NULL;
+    if (current_dialog->closeCallback)
+        current_dialog->closeCallback(current_dialog);
+    current_dialog = previous;
 
     return 0;
 }
 
-static char *getLangStr(int index)
+void GUI_CloseAllDialogs()
+{
+    GUI_Dialog *colse_dialog = current_dialog;
+
+    while (colse_dialog)
+    {
+        GUI_Dialog *previous = colse_dialog->previous;
+        colse_dialog->previous = NULL;
+        if (previous)
+            previous->next = NULL;
+        if (colse_dialog->closeCallback)
+            colse_dialog->closeCallback(current_dialog);
+        colse_dialog = previous;
+    }
+
+    current_dialog = NULL;
+    main_dialog = NULL;
+}
+
+void GUI_ClosePreviousDialogs(GUI_Dialog *dialog)
+{
+    if (!dialog)
+        return;
+        
+    GUI_Dialog *colse_dialog = dialog->previous;
+    dialog->previous = NULL;
+
+    while (colse_dialog)
+    {
+        GUI_Dialog *previous = colse_dialog->previous;
+        colse_dialog->previous = NULL;
+        if (previous)
+            previous->next = NULL;
+        if (colse_dialog->closeCallback)
+            colse_dialog->closeCallback(current_dialog);
+        colse_dialog = previous;
+    }
+
+    main_dialog = dialog;
+}
+
+char *GUI_GetStringByLangId(int index)
 {
     if (index >= 0)
+    {
         return cur_lang[index];
+    }
     else if (index == BUTTON_ENTER)
-        return cur_lang[BUTTON_ENTER_INDEX];
+    {
+        if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
+            return cur_lang[BUTTON_CIRCLE];
+        else
+            return cur_lang[BUTTON_CROSS];
+    }
     else if (index == BUTTON_CANCEL)
-        return cur_lang[BUTTON_CANCEL_INDEX];
+    {
+        if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
+            return cur_lang[BUTTON_CROSS];
+        else
+            return cur_lang[BUTTON_CIRCLE];
+    }
     else if (index == APP_TITLE)
+    {
         return (APP_NAME_STR " v" APP_VER_STR);
+    }
     else
+    {
         return NULL;
+    }
+}
+
+char **GUI_GetStringListByLangIdList(int *list, int list_len)
+{
+    if (!list || list_len <= 0)
+        return NULL;
+    
+    char **str_list = calloc(list_len, sizeof(char *));
+    if (!str_list)
+        return NULL;
+
+    int i;
+    for (i = 0; i < list_len; i++)
+    {
+        str_list[i] = cur_lang[list[i]];
+    }
+
+    return str_list;
 }
 
 void GUI_DrawTopStatusBar(char *title)
@@ -215,7 +281,7 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     int i;
     for (i = 0; instructions[i].button != LANG_DISABLE; i++)
     {
-        sx += GUI_DrawTextf(sx, sy, COLOR_AZURE, "%s:", getLangStr(instructions[i].button));
+        sx += GUI_DrawTextf(sx, sy, COLOR_AZURE, "%s:", GUI_GetStringByLangId(instructions[i].button));
         sx += GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[instructions[i].instruction]);
         sx += STATUS_BAR_PADDING_L;
     }
@@ -323,13 +389,24 @@ static void drawActivity()
     if (!current_activity->nowallpaper)
         GUI_DrawWallpaper();
 
-    if (current_activity->draw)
-        current_activity->draw();
+    if (current_activity->drawCallback)
+        current_activity->drawCallback(current_activity);
 
     if (!current_activity->nostatusbar)
     {
-        GUI_DrawTopStatusBar(getLangStr(current_activity->title));
+        GUI_DrawTopStatusBar(GUI_GetStringByLangId(current_activity->title));
         GUI_DrawBottomStatusBar(current_activity->button_instructions);
+    }
+}
+
+static void drawDialogs()
+{
+    GUI_Dialog *dialog = main_dialog;
+    while (dialog)
+    {
+        if (dialog->drawCallback)
+            dialog->drawCallback(dialog);
+        dialog = dialog->next;
     }
 }
 
@@ -340,8 +417,7 @@ void GUI_DrawMain()
     else
         drawActivity();
 
-    if (current_dialog && current_dialog->draw)
-        current_dialog->draw();
+    drawDialogs();
 }
 
 static void ctrlCommon()
@@ -370,10 +446,10 @@ void GUI_CtrlMain()
 {
     ctrlCommon();
 
-    if (current_dialog && current_dialog->ctrl)
-        current_dialog->ctrl();
-    else if (current_activity->ctrl)
-        current_activity->ctrl();
+    if (current_dialog && current_dialog->ctrlCallBack)
+        current_dialog->ctrlCallBack(current_dialog);
+    else if (current_activity->ctrlCallBack)
+        current_activity->ctrlCallBack(current_activity);
 }
 
 void GUI_RunMain()

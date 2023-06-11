@@ -230,7 +230,7 @@ int Setting_SetCoreMenu(OptionList *list)
         item->option = option;
 
         // Update callback
-        option->update = coreStrArrayOptionChangedCb;
+        option->updateCallback = coreStrArrayOptionChangedCb;
 
         // Item option value pointer
         option->value = &(entry->sel_pos);
@@ -365,7 +365,7 @@ void Setting_RefreshCtrlMenu()
         if (menu_item->option_type != TYPE_OPTION_KEY_MAP)
             continue;
 
-        OptionMenu *option = (OptionMenu *)(menu_item->option);
+        KeyMapOptionMenu *option = (KeyMapOptionMenu *)(menu_item->option);
         char *text = option->name;
         uint32_t set_key = *(uint32_t *)(option->userdata);
         // ptintf("%d\n", set_key);
@@ -380,7 +380,7 @@ void Setting_RefreshCtrlMenu()
         int n_maped = 0;
         for (j = 0; j < option->n_items; j++)
         {
-            OptionMenuItem *option_item = &(option->items[j]);
+            KeyMapOptionMenuItem *option_item = &(option->items[j]);
             uint32_t map_key = (uint32_t)(option_item->userdata);
 
             if (set_key & map_key)
@@ -434,14 +434,14 @@ static void drawOption()
         else
             clip_height = option_itemview_height;
 
-        OptionMenuItem *item = &(option_menu->items[i]);
+        KeyMapOptionMenuItem *item = &(option_menu->items[i]);
 
         GUI_EnableClipping();
         GUI_SetClipRectangle(item_sx, item_sy, option_itemview_width, clip_height);
 
         // Focus
         if (i == option_focus_pos)
-            GUI_DrawFillRectangle(item_sx, item_sy, option_itemview_width, option_itemview_height, COLOR_ALPHA(COLOR_AZURE, 0xBF));
+            GUI_DrawFillRectangle(item_sx, item_sy, option_itemview_width, option_itemview_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
         GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, cur_lang[item->lang]);
         GUI_DrawEmptyRectangle(mark_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, mark_width, mark_width, 1.0f, COLOR_GREEN);
@@ -497,7 +497,7 @@ static void drawMenu()
 
             // Focus
             if (i == menu_focus_pos)
-                GUI_DrawFillRectangle(item_sx, item_sy, menu_itemview_width, menu_itemview_height, MENU_ITEMVIEW_COLOR_BG_FOCUS);
+                GUI_DrawFillRectangle(item_sx, item_sy, menu_itemview_width, menu_itemview_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
             if (item->name)
                 GUI_DrawText(sx, sy, COLOR_WHITE, item->name);
@@ -539,7 +539,7 @@ static void drawMenu()
                 }
                 else if (option_type == TYPE_OPTION_KEY_MAP) // Option key map
                 {
-                    OptionMenu *option = (OptionMenu *)item->option;
+                    KeyMapOptionMenu *option = (KeyMapOptionMenu *)item->option;
                     int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
                     uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
                     uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
@@ -587,7 +587,7 @@ static void drawCommon()
         sx = view_sx + MENU_TAB_VIEW_PADDING_L;
 
         if (i == menu_list_focus_pos)
-            GUI_DrawFillRectangle(view_sx, view_sy, view_width, menu_tab_view_height, MENU_ITEMVIEW_COLOR_BG_FOCUS);
+            GUI_DrawFillRectangle(view_sx, view_sy, view_width, menu_tab_view_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
         GUI_DrawText(sx, sy, COLOR_WHITE, name);
         view_sx += view_width;
@@ -620,10 +620,10 @@ static void drawCommon()
     int time_x = sx - GUI_GetTextWidth(time_string);
     GUI_DrawText(time_x, sy, GUI_DEFALUT_TEXT_COLOR, time_string);
 
-    GUI_DrawFillRectangle(menu_tab_view_sx, menu_tab_view_dy, menu_tab_view_width, MENU_TAB_LINEVIEW_HEIGHT, MENU_ITEMVIEW_COLOR_BG_FOCUS);
+    GUI_DrawFillRectangle(menu_tab_view_sx, menu_tab_view_dy, menu_tab_view_width, MENU_TAB_LINEVIEW_HEIGHT, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 }
 
-static void DialogDraw()
+static void drawDialogCallback(GUI_Dialog *dialog)
 {
     drawCommon();
 
@@ -688,8 +688,8 @@ static void ctrlOption()
     if (released_pad[PAD_ENTER] || released_pad[PAD_SQUARE])
     {
         option_menu->items[option_focus_pos].selected = !option_menu->items[option_focus_pos].selected;
-        if (option_menu->update)
-            option_menu->update(option_menu);
+        if (option_menu->updateCallback)
+            option_menu->updateCallback(option_menu);
     }
     else if (released_pad[PAD_TRIANGLE])
     {
@@ -698,8 +698,8 @@ static void ctrlOption()
         {
             option_menu->items[i].selected = 0;
         }
-        if (option_menu->update)
-            option_menu->update(option_menu);
+        if (option_menu->updateCallback)
+            option_menu->updateCallback(option_menu);
     }
     else if (released_pad[PAD_CANCEL])
     {
@@ -754,8 +754,8 @@ static void ctrlMenu()
                     (*(option->value))++;
                 else
                     *(option->value) = 0;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
             else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
             {
@@ -763,8 +763,8 @@ static void ctrlMenu()
                     (*(option->value))--;
                 else
                     *(option->value) = option->n_names - 1;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
         }
         else if (option_type == TYPE_OPTION_STR_INDEXS)
@@ -776,8 +776,8 @@ static void ctrlMenu()
                     (*(option->value))++;
                 else
                     *(option->value) = 0;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
             else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
             {
@@ -785,8 +785,8 @@ static void ctrlMenu()
                     (*(option->value))--;
                 else
                     *(option->value) = option->n_langs - 1;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
         }
         else if (option_type == TYPE_OPTION_INT_ARRAY)
@@ -798,8 +798,8 @@ static void ctrlMenu()
                     (*(option->value))++;
                 else
                     *(option->value) = 0;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
             else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
             {
@@ -807,8 +807,8 @@ static void ctrlMenu()
                     (*(option->value))--;
                 else
                     *(option->value) = option->n_values - 1;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
         }
         else if (option_type == TYPE_OPTION_INT_STEP)
@@ -820,8 +820,8 @@ static void ctrlMenu()
                     (*(option->value))++;
                 else
                     *(option->value) = option->min;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
             else if (released_pad[PAD_LEFT] || released_pad[PAD_LEFT_ANALOG_LEFT])
             {
@@ -829,20 +829,20 @@ static void ctrlMenu()
                     (*(option->value))--;
                 else
                     *(option->value) = option->max;
-                if (option->update)
-                    option->update(option);
+                if (option->updateCallback)
+                    option->updateCallback(option);
             }
         }
         else if (option_type == TYPE_OPTION_KEY_MAP)
         {
-            OptionMenu *option = (OptionMenu *)item->option;
+            KeyMapOptionMenu *option = (KeyMapOptionMenu *)item->option;
             if (released_pad[PAD_ENTER])
             {
                 option_menu = option;
                 option_top_pos = 0;
                 option_focus_pos = 0;
-                if (option->open)
-                    option->open(option);
+                if (option->openCallback)
+                    option->openCallback(option);
                 option_open = 1;
             }
             else if (released_pad[PAD_SQUARE])
@@ -858,7 +858,7 @@ static void ctrlMenu()
     }
 }
 
-static void DialogCtrl()
+static void ctrlDialogCallback(GUI_Dialog *dialog)
 {
     if (option_display_need_refresh)
     {
@@ -874,8 +874,10 @@ static void DialogCtrl()
         ctrlMenu();
 }
 
-static int DialogOpen()
+static int openDialogCallback(GUI_Dialog *dialog)
 {
+    GUI_ClosePreviousDialogs(dialog);
+
     Setting_WaitOverlayInitEnd();
 
     if (Emu_IsGameLoaded())
@@ -911,8 +913,8 @@ static int DialogOpen()
             main_menu_items[1].visible = 1; // 重置游戏
             main_menu_items[2].visible = 1; // 退出游戏
             // 杂项菜单 (子选项 可见/隐藏)
-            misc_menu_items[2].visible = 1; // 保存截图
-            misc_menu_items[3].visible = 1; // 保存截图为预览图
+            misc_menu_items[1].visible = 1; // 保存截图
+            misc_menu_items[2].visible = 1; // 保存截图为预览图
         }
         else
         {
@@ -928,8 +930,8 @@ static int DialogOpen()
             main_menu_items[1].visible = 0;
             main_menu_items[2].visible = 0;
             // 杂项菜单 (子选项 可见/隐藏)
+            misc_menu_items[1].visible = 0;
             misc_menu_items[2].visible = 0;
-            misc_menu_items[3].visible = 0;
         }
 
         if (exec_boot_mode == BOOT_MODE_ARCH)
@@ -958,13 +960,13 @@ static int DialogOpen()
     return 0;
 }
 
-static int DialogClose()
+static int closeDialogCallback(GUI_Dialog *dialog)
 {
     int i;
     for (i = 0; i < MENU_LIST_LEN; i++)
     {
-        if (menu_list[i].visible && menu_list[i].exit)
-            menu_list[i].exit(&menu_list[i]);
+        if (menu_list[i].visible && menu_list[i].exitCallback)
+            menu_list[i].exitCallback(&menu_list[i]);
     }
 
     if (Emu_IsGameLoaded())

@@ -15,7 +15,7 @@
 
 static char key_map_option_texts[16][256];
 
-static OptionMenuItem key_map_option_items[] = {
+static KeyMapOptionMenuItem key_map_option_items[] = {
 #if defined(WSC_BUILD)
     {BUTTON_X1, (void *)RETRO_KEY_TO_BITMASK(RETRO_DEVICE_ID_JOYPAD_LEFT), 0},
     {BUTTON_X2, (void *)RETRO_KEY_TO_BITMASK(RETRO_DEVICE_ID_JOYPAD_UP), 0},
@@ -108,16 +108,16 @@ static OptionMenuItem key_map_option_items[] = {
 
 #define STD_KEY_MAP_OPTION(idx, key)                                                                            \
     {                                                                                                           \
-        key_map_option_texts[idx], key_map_option_items, sizeof(key_map_option_items) / sizeof(OptionMenuItem), \
-            openKeyMapOptionCallback, updateKeyMapOptionCallback, &control_config.key                           \
+        key_map_option_texts[idx], key_map_option_items, sizeof(key_map_option_items) / sizeof(KeyMapOptionMenuItem), \
+            openKeyMapOptionCallback, NULL, updateKeyMapOptionCallback, &control_config.key                     \
     }
 
-static void openKeyMapOptionCallback(OptionMenu *option)
+static void openKeyMapOptionCallback(KeyMapOptionMenu *option)
 {
     uint32_t set_key = *(uint32_t *)(option->userdata);
     int enabled = set_key & ENABLE_KEY_BITMASK;
 
-    OptionMenuItem *item;
+    KeyMapOptionMenuItem *item;
     uint32_t map_key;
     int i;
     for (i = 0; i < option->n_items; i++)
@@ -133,7 +133,7 @@ static void openKeyMapOptionCallback(OptionMenu *option)
     }
 }
 
-static void updateKeyMapOptionCallback(OptionMenu *option)
+static void updateKeyMapOptionCallback(KeyMapOptionMenu *option)
 {
     char *text = option->name;
     uint32_t *set_key = (uint32_t *)(option->userdata);
@@ -141,7 +141,7 @@ static void updateKeyMapOptionCallback(OptionMenu *option)
     uint32_t new_set_key = 0;
     text[0] = '\0';
 
-    OptionMenuItem *item;
+    KeyMapOptionMenuItem *item;
     uint32_t map_key;
     int n_maped = 0;
     int i;

@@ -3,8 +3,18 @@
 
 enum LanguageContainer
 {
-    // ERROR
-    ERROR,
+    // Special
+    BUTTON_ENTER = -1,
+    BUTTON_CANCEL = -2,
+    APP_TITLE = -3,
+    LANG_DISABLE = -1000,
+
+    // General
+    ERROR = 0,
+    CONFIRM,
+    CANCEL,
+    TIP,
+    MENU,
 
     // Safe mode
     MESSAGE_SAFE_MODE_0,
@@ -73,10 +83,23 @@ enum LanguageContainer
     // Browser
     PARENT_DIRECTORY,
     OPEN,
+    OPTION_MENU,
     EMU_SETTING,
     ABOUT,
     CHANGE_DIRECTORY,
     BACK_TO_BROWSER,
+
+    START_GAME,
+    DELETE_GAME,
+    DELETE_AUTO_STATE,
+    DELETE_SAVEFILE,
+
+    TIP_DELETE_GAME,
+    TIP_DELETE_AUTO_STATE,
+    TIP_DELETE_SAVEFILE,
+
+    // About
+    ABOUT_TITLE,
 
     // Setting tab
     TAB_MAIN,
@@ -148,8 +171,7 @@ enum LanguageContainer
     FOLLOW_DPAD,
 
     // Menu misc
-    AUTO_STATE,
-    DELETE_AUTO_STATE,
+    AUTO_SAVE_LOAD_STATE,
     SAVE_SCREENSHOT,
     SAVE_PREVIEW,
 
@@ -173,7 +195,6 @@ enum LanguageContainer
     LOAD,
     SAVE,
     DELETE,
-    CANCEL,
 
     LANGUAGE_CONTAINER_SIZE,
 };

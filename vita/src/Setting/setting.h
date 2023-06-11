@@ -24,7 +24,7 @@ typedef struct StrArrayOption
     uint32_t *value;
     char **names;
     int n_names;
-    void (*update)(struct StrArrayOption *option);
+    void (*updateCallback)(struct StrArrayOption *option);
     void *userdata;
 } StrArrayOption;
 
@@ -33,7 +33,7 @@ typedef struct StrIndexsOption
     uint32_t *value;
     int *langs;
     int n_langs;
-    void (*update)(struct StrIndexsOption *option);
+    void (*updateCallback)(struct StrIndexsOption *option);
     void *userdata;
 } StrIndexsOption;
 
@@ -43,7 +43,7 @@ typedef struct IntArrayOption
     int *values;
     int n_values;
     char *format;
-    void (*update)(struct IntArrayOption *option);
+    void (*updateCallback)(struct IntArrayOption *option);
     void *userdata;
 } IntArrayOption;
 
@@ -54,7 +54,7 @@ typedef struct IntStepOption
     int32_t max;
     int32_t step;
     char *format;
-    void (*update)(struct IntStepOption *option);
+    void (*updateCallback)(struct IntStepOption *option);
     void *userdata;
 } IntStepOption;
 
@@ -63,17 +63,18 @@ typedef struct
     int lang;
     void *userdata;
     int selected;
-} OptionMenuItem;
+} KeyMapOptionMenuItem;
 
-typedef struct OptionMenu
+typedef struct KeyMapOptionMenu
 {
     char *name;
-    OptionMenuItem *items;
+    KeyMapOptionMenuItem *items;
     int n_items;
-    void (*open)(struct OptionMenu *option);
-    void (*update)(struct OptionMenu *option);
+    void (*openCallback)(struct KeyMapOptionMenu *option);
+    void (*closeCallback)(struct KeyMapOptionMenu *option);
+    void (*updateCallback)(struct KeyMapOptionMenu *option);
     void *userdata;
-} OptionMenu;
+} KeyMapOptionMenu;
 
 typedef struct SettingMenuItem
 {
@@ -90,8 +91,8 @@ typedef struct SettingMenu
     int visible;
     SettingMenuItem *items;
     int n_items;
-    void (*init)(struct SettingMenu *menu);
-    void (*exit)(struct SettingMenu *menu);
+    void (*enterCallback)(struct SettingMenu *menu);
+    void (*exitCallback)(struct SettingMenu *menu);
 } SettingMenu;
 
 extern int SETTING_FREE_DRAW_WIDTH, SETTING_FREE_DRAW_HEIGHT;

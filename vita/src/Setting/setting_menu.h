@@ -105,22 +105,22 @@ StrIndexsOption show_fps_option = {&graphics_config.show_fps, no_yes_values, siz
 
 // 控制 (菜单设置)
 StrArrayOption ctrl_player_option = {&control_config.map_port, ctrl_player_values, sizeof(ctrl_player_values) / sizeof(char *), controlStrArrayOptionChangedCb, NULL};
-OptionMenu button_left_option = STD_KEY_MAP_OPTION(0, button_left);
-OptionMenu button_up_option = STD_KEY_MAP_OPTION(1, button_up);
-OptionMenu button_right_option = STD_KEY_MAP_OPTION(2, button_right);
-OptionMenu button_down_option = STD_KEY_MAP_OPTION(3, button_down);
-OptionMenu button_cross_option = STD_KEY_MAP_OPTION(4, button_cross);
-OptionMenu button_circle_option = STD_KEY_MAP_OPTION(5, button_circle);
-OptionMenu button_square_option = STD_KEY_MAP_OPTION(6, button_square);
-OptionMenu button_triangle_option = STD_KEY_MAP_OPTION(7, button_triangle);
-OptionMenu button_l_option = STD_KEY_MAP_OPTION(8, button_l);
-OptionMenu button_r_option = STD_KEY_MAP_OPTION(9, button_r);
-OptionMenu button_l2_option = STD_KEY_MAP_OPTION(10, button_l2);
-OptionMenu button_r2_option = STD_KEY_MAP_OPTION(11, button_r2);
-OptionMenu button_l3_option = STD_KEY_MAP_OPTION(12, button_l3);
-OptionMenu button_r3_option = STD_KEY_MAP_OPTION(13, button_r3);
-OptionMenu button_select_option = STD_KEY_MAP_OPTION(14, button_select);
-OptionMenu button_start_option = STD_KEY_MAP_OPTION(15, button_start);
+KeyMapOptionMenu button_left_option = STD_KEY_MAP_OPTION(0, button_left);
+KeyMapOptionMenu button_up_option = STD_KEY_MAP_OPTION(1, button_up);
+KeyMapOptionMenu button_right_option = STD_KEY_MAP_OPTION(2, button_right);
+KeyMapOptionMenu button_down_option = STD_KEY_MAP_OPTION(3, button_down);
+KeyMapOptionMenu button_cross_option = STD_KEY_MAP_OPTION(4, button_cross);
+KeyMapOptionMenu button_circle_option = STD_KEY_MAP_OPTION(5, button_circle);
+KeyMapOptionMenu button_square_option = STD_KEY_MAP_OPTION(6, button_square);
+KeyMapOptionMenu button_triangle_option = STD_KEY_MAP_OPTION(7, button_triangle);
+KeyMapOptionMenu button_l_option = STD_KEY_MAP_OPTION(8, button_l);
+KeyMapOptionMenu button_r_option = STD_KEY_MAP_OPTION(9, button_r);
+KeyMapOptionMenu button_l2_option = STD_KEY_MAP_OPTION(10, button_l2);
+KeyMapOptionMenu button_r2_option = STD_KEY_MAP_OPTION(11, button_r2);
+KeyMapOptionMenu button_l3_option = STD_KEY_MAP_OPTION(12, button_l3);
+KeyMapOptionMenu button_r3_option = STD_KEY_MAP_OPTION(13, button_r3);
+KeyMapOptionMenu button_select_option = STD_KEY_MAP_OPTION(14, button_select);
+KeyMapOptionMenu button_start_option = STD_KEY_MAP_OPTION(15, button_start);
 StrIndexsOption left_analog_option = {&control_config.left_analog, left_analog_values, sizeof(left_analog_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
 StrIndexsOption right_analog_option = {&control_config.right_analog, right_analog_values, sizeof(right_analog_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
 StrIndexsOption front_touch_pad_option = {&control_config.front_touch_pad, no_yes_values, sizeof(no_yes_values) / sizeof(char *), controlStrIndexsOptionChangedCb, NULL};
@@ -197,8 +197,7 @@ SettingMenuItem control_menu_items[] = {
 
 // 杂项 (菜单选项)
 static SettingMenuItem misc_menu_items[] = {
-    {AUTO_STATE, NULL, 1, TYPE_OPTION_STR_INDEXS, &auto_save_load_option},
-    {DELETE_AUTO_STATE, NULL, 1, TYPE_OPTION_CALLBACK, deleteAutoStateCallback},
+    {AUTO_SAVE_LOAD_STATE, NULL, 1, TYPE_OPTION_STR_INDEXS, &auto_save_load_option},
     {SAVE_SCREENSHOT, NULL, 0, TYPE_OPTION_CALLBACK, saveScreenshotCallback},
     {SAVE_PREVIEW, NULL, 0, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback},
     {RESET_CONFIGS, NULL, 1, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},
@@ -218,7 +217,7 @@ static SettingMenuItem app_menu_items[] = {
 // 菜单列表
 static SettingMenu menu_list[] = {
     {TAB_MAIN, 1, main_menu_items, sizeof(main_menu_items) / sizeof(SettingMenuItem), NULL, NULL},                                 // 主菜单
-    {TAB_STATE, 0, NULL, 0, stateMenuOpenCallback, stateMenuExitCallback},                                                   // 即时存档
+    {TAB_STATE, 0, NULL, 0, NULL, stateMenuExitCallback},                                                                          // 即时存档
     {TAB_GRAPHICS, 1, graphics_menu_items, sizeof(graphics_menu_items) / sizeof(SettingMenuItem), NULL, graphicsMenuExitCallback}, // 图形
     {TAB_CONTROL, 1, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, controlMenuExitCallback},     // 控制
     {TAB_CORE, 0, NULL, 0, NULL, coreMenuExitCallback},                                                                            // 核心

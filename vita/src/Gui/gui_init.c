@@ -79,9 +79,7 @@ void GUI_Init()
     GUI_InitImages();
     GUI_InitShaders();
 
-    GUI_GetEnterButton();
     GUI_RefreshLayout();
-    GUI_SetMainActivity(&browser_activity);
     GUI_EnterActivity(&browser_activity);
 }
 

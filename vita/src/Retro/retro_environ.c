@@ -15,6 +15,7 @@
 #include "log_scr.h"
 #include "lang.h"
 
+struct retro_disk_control_ext_callback core_disk_control_ext_callback = {0};
 retro_core_options_update_display_callback_t core_options_update_display_callback = NULL;
 enum GuiTextureFormat video_texture_format = GUI_TEXTURE_FORMAT_U5U6U5_RGB;
 int retro_input_is_bitmasks = 0;
@@ -72,6 +73,42 @@ void Retro_LogCallback(enum retro_log_level level, const char *fmt, ...)
     sceIoClose(fd);
 }
 
+void setDiskControlCallback(const struct retro_disk_control_callback *cb)
+{
+    memset(&core_disk_control_ext_callback, 0, sizeof(struct retro_disk_control_ext_callback));
+
+    if (!cb)
+        return;
+
+    core_disk_control_ext_callback.set_eject_state = cb->set_eject_state;
+    core_disk_control_ext_callback.get_eject_state = cb->get_eject_state;
+    core_disk_control_ext_callback.get_image_index = cb->get_image_index;
+    core_disk_control_ext_callback.set_image_index = cb->set_image_index;
+    core_disk_control_ext_callback.get_num_images = cb->get_num_images;
+    core_disk_control_ext_callback.replace_image_index = cb->replace_image_index;
+    core_disk_control_ext_callback.add_image_index = cb->add_image_index;
+}
+
+void setDiskControlExtCallback(const struct retro_disk_control_ext_callback *cb)
+{
+    memset(&core_disk_control_ext_callback, 0, sizeof(struct retro_disk_control_ext_callback));
+
+    if (!cb)
+        return;
+
+    core_disk_control_ext_callback.set_eject_state = cb->set_eject_state;
+    core_disk_control_ext_callback.get_eject_state = cb->get_eject_state;
+    core_disk_control_ext_callback.get_image_index = cb->get_image_index;
+    core_disk_control_ext_callback.set_image_index = cb->set_image_index;
+    core_disk_control_ext_callback.get_num_images = cb->get_num_images;
+    core_disk_control_ext_callback.replace_image_index = cb->replace_image_index;
+    core_disk_control_ext_callback.add_image_index = cb->add_image_index;
+
+    core_disk_control_ext_callback.set_initial_image = cb->set_initial_image;
+    core_disk_control_ext_callback.get_image_path = cb->get_image_path;
+    core_disk_control_ext_callback.get_image_label = cb->get_image_label;
+}
+
 bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 {
     if (cmd == RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE)
@@ -86,7 +123,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     {
     case RETRO_ENVIRONMENT_GET_CAN_DUPE:
     {
-        AppLog("case RETRO_ENVIRONMENT_GET_CAN_DUPE: 1\n");
+        AppLog("[RETRO_ENVIRONMENT] GET_CAN_DUPE: 1\n");
         *(bool *)data = true;
     }
     break;
@@ -100,27 +137,27 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         case RETRO_PIXEL_FORMAT_0RGB1555:
         {
             texture_format = GUI_TEXTURE_FORMAT_X1U5U5U5_1RGB;
-            AppLog("case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_0RGB1555\n");
+            AppLog("[RETRO_ENVIRONMENT] SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_0RGB1555\n");
         }
         break;
 
         case RETRO_PIXEL_FORMAT_RGB565:
         {
             texture_format = GUI_TEXTURE_FORMAT_U5U6U5_RGB;
-            AppLog("case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_RGB565\n");
+            AppLog("[RETRO_ENVIRONMENT] SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_RGB565\n");
         }
         break;
 
         case RETRO_PIXEL_FORMAT_XRGB8888:
         {
             texture_format = GUI_TEXTURE_FORMAT_X8U8U8U8_1RGB;
-            AppLog("case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_XRGB8888\n");
+            AppLog("[RETRO_ENVIRONMENT] SET_PIXEL_FORMAT: RETRO_PIXEL_FORMAT_XRGB8888\n");
         }
         break;
 
         default:
         {
-            AppLog("case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: %d is unknow!\n", pix_fmt);
+            AppLog("[RETRO_ENVIRONMENT] SET_PIXEL_FORMAT: %d is unknow!\n", pix_fmt);
             return false;
         }
         }
@@ -156,7 +193,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
     {
-        AppLog("case RETRO_ENVIRONMENT_GET_LOG_INTERFACE\n");
+        AppLog("[RETRO_ENVIRONMENT] GET_LOG_INTERFACE\n");
         struct retro_log_callback *cb = (struct retro_log_callback *)data;
         cb->log = Retro_LogCallback;
     }
@@ -166,20 +203,20 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     {
         int value = GetLangValue(app_config.app_lang);
         *(unsigned *)data = value;
-        // AppLog("case RETRO_ENVIRONMENT_GET_LANGUAGE: %u\n", value);
+        // AppLog("[RETRO_ENVIRONMENT] GET_LANGUAGE: %u\n", value);
     }
     break;
 
     case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
     {
-        // AppLog("case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE\n");
+        // AppLog("[RETRO_ENVIRONMENT] GET_CORE_OPTIONS_VERSION\n");
         *(unsigned *)data = CORE_OPTIONS_VERSION;
     }
     break;
 
     case RETRO_ENVIRONMENT_GET_VARIABLE:
     {
-        // AppLog("case RETRO_ENVIRONMENT_GET_VARIABLE\n");
+        // AppLog("[RETRO_ENVIRONMENT] GET_VARIABLE\n");
         struct retro_variable *var = (struct retro_variable *)data;
         Retro_GetVariable(var);
     }
@@ -187,7 +224,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_VARIABLES:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_VARIABLES\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_VARIABLES\n");
         AppLog("Retro_GetOptionListFromVariables...\n");
         int ret = Retro_GetOptionListFromVariables(data);
         if (ret < 0)
@@ -199,7 +236,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_CORE_OPTIONS\n");
         AppLog("Retro_GetOptionListFromOptions...\n");
         int ret = Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS);
         if (ret < 0)
@@ -211,7 +248,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_CORE_OPTIONS_INTL\n");
         AppLog("Retro_GetOptionListFromOptions...\n");
         int ret = Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL);
         if (ret < 0)
@@ -223,7 +260,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_CORE_OPTIONS_V2\n");
         AppLog("Retro_GetOptionListFromOptions...\n");
         int ret = Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2);
         if (ret < 0)
@@ -237,7 +274,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_CORE_OPTIONS_V2_INTL\n");
         AppLog("Retro_GetOptionListFromOptions...\n");
         int ret = Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL);
         if (ret < 0)
@@ -252,21 +289,21 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
     {
         retro_input_is_bitmasks = 1;
-        AppLog("case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS: %d\n", retro_input_is_bitmasks);
+        AppLog("[RETRO_ENVIRONMENT] GET_INPUT_BITMASKS: %d\n", retro_input_is_bitmasks);
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_ROTATION:
     {
         unsigned rotation = *(unsigned *)data;
-        AppLog("case RETRO_ENVIRONMENT_SET_ROTATION: %d\n", rotation);
+        AppLog("[RETRO_ENVIRONMENT] SET_ROTATION: %d\n", rotation);
         AppLog("Do nothing, use app's rotation\n");
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_GEOMETRY:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_GEOMETRY\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_GEOMETRY\n");
         struct retro_system_av_info *av_info = &core_system_av_info;
         struct retro_game_geometry *geom = (struct retro_game_geometry *)&av_info->geometry;
         const struct retro_game_geometry *in_geom = (const struct retro_game_geometry *)data;
@@ -282,7 +319,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_SYSTEM_AV_INFO\n");
         struct retro_system_av_info *av_info = (struct retro_system_av_info *)data;
         uint32_t new_sample_rate = (uint32_t)av_info->timing.sample_rate;
         uint32_t old_sample_rate = (uint32_t)core_system_av_info.timing.sample_rate;
@@ -309,7 +346,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK:
     {
-        AppLog("case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK\n");
+        AppLog("[RETRO_ENVIRONMENT] SET_CORE_OPTIONS_UPDATE_DISPLAY_CALLBACK\n");
         const struct retro_core_options_update_display_callback
             *update_display_cb =
                 (const struct retro_core_options_update_display_callback *)data;
@@ -339,6 +376,31 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
         if (option_display && option_display->key)
             Retro_SetCoreOptionDisplay(option_display);
+    }
+    break;
+
+    case RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION:
+        AppLog("[RETRO_ENVIRONMENT] GET_DISK_CONTROL_INTERFACE_VERSION\n");
+        *(unsigned *)data = CORE_DISK_CONTROL_INTERFACE_VERSION;
+        break;
+
+    case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
+    {
+        const struct retro_disk_control_callback *control_cb =
+            (const struct retro_disk_control_callback *)data;
+
+        AppLog("[RETRO_ENVIRONMENT] SET_DISK_CONTROL_INTERFACE\n");
+        setDiskControlCallback(control_cb);
+    }
+    break;
+
+    case RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE:
+    {
+        const struct retro_disk_control_ext_callback *control_cb =
+            (const struct retro_disk_control_ext_callback *)data;
+
+        AppLog("[RETRO_ENVIRONMENT] SET_DISK_CONTROL_EXT_INTERFACE\n");
+        setDiskControlExtCallback(control_cb);
     }
     break;
 

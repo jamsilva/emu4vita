@@ -53,11 +53,6 @@ static void exitAppCallback()
 }
 
 //----------------- State menu -----------------//
-static void stateMenuOpenCallback(SettingMenu *menu)
-{
-    Setting_InitState();
-}
-
 static void stateMenuExitCallback(SettingMenu *menu)
 {
     Setting_DeinitState();
@@ -179,12 +174,6 @@ static void miscMenuExitCallback(SettingMenu *menu)
 static void miscStrIndexsOptionChangedCb(StrIndexsOption *option)
 {
     misc_option_changed = 1;
-}
-
-static void deleteAutoStateCallback()
-{
-    Emu_DeleteState(-1);
-    Browser_RequestRefreshPreview(1);
 }
 
 static void saveScreenshotCallback()

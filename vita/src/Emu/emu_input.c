@@ -254,7 +254,7 @@ static int checkHotKey(int port, uint32_t buttons)
         old_pressed = option->old_presseds[port];
         option->old_presseds[port] = cur_pressed;
 
-        if (cur_pressed && !old_pressed)
+        if (!cur_pressed && old_pressed)
         {
             void (*callback)() = option->callback;
             if (callback)
@@ -281,6 +281,7 @@ static int checkPSbutton(int prot, uint32_t buttons)
         psbutton_hold_count[prot]++;
         if (psbutton_hold_count[prot] >= DISABLE_PSBUTTON_EVENT_HOLD_COUNT)
             SetPSbuttonEventEnabled(0);
+        return 1;
     }
     else if (old_pressed)
     {
@@ -341,10 +342,10 @@ void Emu_PollInput()
             TouchToButtons(&ctrl_data.buttons);
         AnalogToButtons(ctrl_data.lx, ctrl_data.ly, ctrl_data.rx, ctrl_data.ry, &ctrl_data.buttons);
 
-        if (checkPSbutton(local_port, ctrl_data.buttons))
+        if (checkHotKey(local_port, ctrl_data.buttons))
             return;
 
-        if (checkHotKey(local_port, ctrl_data.buttons))
+        if (checkPSbutton(local_port, ctrl_data.buttons))
             return;
 
         if (control_config.left_analog == 1)

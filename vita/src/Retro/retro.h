@@ -9,6 +9,8 @@
 #include "retro_option.h"
 #include "file.h"
 
+#define CORE_OPTIONS_VERSION 2
+
 extern struct retro_system_info core_system_info;
 extern struct retro_system_av_info core_system_av_info;
 extern enum GuiTextureFormat video_texture_format;

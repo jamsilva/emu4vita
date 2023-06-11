@@ -18,14 +18,15 @@
 
 extern GUI_Activity about_activity;
 
-static int ActivityInit();
-static int ActivityExit();
-static void ActivityDraw();
-static void ActivityCtrl();
+static int enterActivityCallback(GUI_Activity *activity);
+static int exitActivityCallback(GUI_Activity *activity);
+static void drawActivityCallback(GUI_Activity *activity);
+static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
     {BUTTON_CANCEL, PARENT_DIRECTORY},
     {BUTTON_ENTER, OPEN},
+    {BUTTON_TRIANGLE, OPTION_MENU},
     {BUTTON_PSBUTTON, EMU_SETTING},
     {BUTTON_SELECT, ABOUT},
     {BUTTON_START, CHANGE_DIRECTORY},
@@ -33,16 +34,33 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity browser_activity = {
-    APP_TITLE,           // Title
-    button_instructions, // Button instructions
-    ActivityInit,        // Init callback
-    ActivityExit,        // Exit callback
-    ActivityDraw,        // Draw callback
-    ActivityCtrl,        // Ctrl callback
-    0,                   // Disable draw statusbar
-    0,                   // Disable draw wallpaper
-    NULL,                // Parent activity
+    APP_TITLE,             // Title
+    button_instructions,   // Button instructions
+    enterActivityCallback, // Init callback
+    exitActivityCallback,  // Exit callback
+    drawActivityCallback,  // Draw callback
+    ctrlActivityCallback,  // Ctrl callback
+    0,                     // Disable draw statusbar
+    0,                     // Disable draw wallpaper
+    NULL,                  // Parent activity
+    NULL,                  // User data
 };
+
+enum IndexOptionItem
+{
+    INDEX_OPTION_ITEM_LOAD_GAME,
+    INDEX_OPTION_ITEM_DELETE_GAME,
+    INDEX_OPTION_ITEM_DELETE_AUTO_STATE,
+    INDEX_OPTION_ITEM_DELETE_SAVEFILE,
+};
+
+static int option_items[] = {
+    START_GAME,
+    DELETE_GAME,
+    DELETE_AUTO_STATE,
+    DELETE_SAVEFILE,
+};
+#define N_OPTION_ITEMS (sizeof(option_items) / sizeof(int))
 
 #define MAX_DIR_LEVELS 128
 
@@ -58,7 +76,7 @@ GUI_Activity browser_activity = {
 #define NAME_ITEMVIEW_PADDING_T 5.0f
 #define NAME_TEXT_COLOR_FOLDER COLOR_WHITE
 #define NAME_TEXT_COLOR_FILE COLOR_GREEN
-#define NAME_ITEMVIEW_COLOR_BG_FOCUS COLOR_ALPHA(COLOR_AZURE, 0x8F)
+#define NAME_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
 
 #define PREVIEW_VIEW_PADDING 8.0f
 #define PREVIEW_REFRESH_DELAY_FRAMES 6
@@ -480,7 +498,7 @@ static void checkPreview()
     }
 }
 
-static void ActivityDraw()
+static void drawActivityCallback(GUI_Activity *activity)
 {
     int sx, sy;
     int width, height;
@@ -530,7 +548,7 @@ static void ActivityDraw()
 
             if (i == list_focus_pos)
             {
-                GUI_DrawFillRectangle(item_sx, item_sy, name_itemview_width, name_itemview_height, NAME_ITEMVIEW_COLOR_BG_FOCUS);
+                GUI_DrawFillRectangle(item_sx, item_sy, name_itemview_width, name_itemview_height, NAME_ITEMVIEW_COLOR_FOCUS_BG);
 
                 width = GUI_GetTextWidth(file_entry->name);
                 if (width > text_width)
@@ -566,7 +584,93 @@ static void ActivityDraw()
     }
 }
 
-static void ActivityCtrl()
+static void deleteGameCallback(GUI_Dialog *dialog)
+{
+    char path[MAX_PATH_LENGTH];
+    if (MakeCurrentFilePath(path) < 0)
+        return;
+    sceIoRemove(path);
+    GUI_CloseAllDialogs();
+    refreshFileList(&file_list);
+    Browser_RequestRefreshPreview(0);
+}
+
+static void deleteAutoStateCallback(GUI_Dialog *dialog)
+{
+    Emu_DeleteState(-1);
+    GUI_CloseAllDialogs();
+    Browser_RequestRefreshPreview(0);
+}
+
+static void deleteSrmCallback(GUI_Dialog *dialog)
+{
+    Emu_DeleteSrm();
+    GUI_CloseAllDialogs();
+}
+
+static void optionMenuPositiveCallback(GUI_Dialog *dialog)
+{
+    if (!dialog || !dialog->userdata)
+        return;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    switch (data->focus_pos)
+    {
+    case INDEX_OPTION_ITEM_LOAD_GAME:
+    {
+        FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+        if (entry && !entry->is_folder)
+        {
+            GUI_CloseAllDialogs();
+            handleFile(entry);
+        }
+    }
+    break;
+    case INDEX_OPTION_ITEM_DELETE_GAME:
+    {
+        if (CurrentPathIsFile())
+        {
+            GUI_Dialog *tip_dialog = AlertDialog_Creat();
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_GAME]);
+            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteGameCallback);
+            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
+            GUI_OpenDialog(tip_dialog);
+        }
+    }
+    break;
+    case INDEX_OPTION_ITEM_DELETE_AUTO_STATE:
+    {
+        if (CurrentPathIsFile())
+        {
+            GUI_Dialog *tip_dialog = AlertDialog_Creat();
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_AUTO_STATE]);
+            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteAutoStateCallback);
+            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
+            GUI_OpenDialog(tip_dialog);
+        }
+    }
+    break;
+    case INDEX_OPTION_ITEM_DELETE_SAVEFILE:
+    {
+        if (CurrentPathIsFile())
+        {
+            GUI_Dialog *tip_dialog = AlertDialog_Creat();
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_SAVEFILE]);
+            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteSrmCallback);
+            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
+            GUI_OpenDialog(tip_dialog);
+        }
+    }
+    break;
+    default:
+        break;
+    }
+}
+
+static void ctrlActivityCallback(GUI_Activity *activity)
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
@@ -587,6 +691,14 @@ static void ActivityCtrl()
 
     if (pressed_pad[PAD_TRIANGLE])
     {
+        GUI_Dialog *dialog = AlertDialog_Creat();
+        AlertDialog_SetTitle(dialog, cur_lang[MENU]);
+        int list_len = N_OPTION_ITEMS;
+        char **list = GUI_GetStringListByLangIdList(option_items, list_len);
+        AlertDialog_SetMenu(dialog, list, list_len);
+        AlertDialog_SetPositiveCallback(dialog, cur_lang[CONFIRM], optionMenuPositiveCallback);
+        AlertDialog_SetNegativeCallback(dialog, cur_lang[CANCEL], NULL);
+        GUI_OpenDialog(dialog);
     }
     else if (pressed_pad[PAD_CANCEL])
     {
@@ -618,7 +730,7 @@ static void ActivityCtrl()
     }
 }
 
-static int ActivityInit()
+static int enterActivityCallback(GUI_Activity *activity)
 {
     refreshLayout();
 
@@ -630,7 +742,7 @@ static int ActivityInit()
     return 0;
 }
 
-static int ActivityExit()
+static int exitActivityCallback(GUI_Activity *activity)
 {
     FileListEmpty(&file_list);
     return 0;
