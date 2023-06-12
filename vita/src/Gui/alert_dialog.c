@@ -17,10 +17,10 @@
 #define STATEBAR_PADDING_L 10
 #define STATEBAR_PADDING_T 6
 
-#define TIP_LISTVIEW_PADDING_L 4
-#define TIP_LISTVIEW_PADDING_T 7
-#define MENU_LISTVIEW_PADDING_L 4
-#define MENU_LISTVIEW_PADDING_T 4
+#define TIP_LISTVIEW_PADDING_L 6
+#define TIP_LISTVIEW_PADDING_T 9
+#define MENU_LISTVIEW_PADDING_L 6
+#define MENU_LISTVIEW_PADDING_T 6
 
 #define TIP_ITEMVIEW_PADDING_L 10
 #define TIP_ITEMVIEW_PADDING_T 3
@@ -31,15 +31,15 @@
 #define TIP_ITEMVIEW_HEIGHT (GUI_GetFontSize() + TIP_ITEMVIEW_PADDING_T * 2)
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2)
 
-#define DIALOG_COLOR_BG COLOR_ALPHA(COLOR_BLACK, 0xEF)
-#define DIALOG_COLOR_BORDER COLOR_ALPHA(COLOR_GRAY, 0xEF)
-#define STATEBAR_COLOR_BG COLOR_ALPHA(COLOR_AZURE, 0xEF)
+#define SCREEN_COLOR_VAGUE COLOR_ALPHA(COLOR_BLACK, 0x3F)
+#define STATEBAR_COLOR_BG COLOR_ALPHA(0xFF473800, 0xFF)
+#define DIALOG_COLOR_BG COLOR_ALPHA(0xFF2B2100, 0xFF)
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xBF)
+#define DIALOG_COLOR_TEXT COLOR_WHITE
 
-#define MAX_COLOR_GRADUAL_COUNT 300
-#define BEGIN_COLOR_GRADUAL_COUNT 270
+#define MAX_COLOR_GRADUAL_COUNT 30
+#define BEGIN_COLOR_GRADUAL_COUNT 0
 #define STEP_COLOR_GRADUAL_COUNT 1
-#define COLOR_GRADUAL(color, gradual, max) ((color & 0x00FFFFFF) | (((((color >> 24) & 0xFF) * ((float)gradual / (float)max))) & 0xFF) << 24)
 
 static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
@@ -61,6 +61,14 @@ static int isEnglishCharacter(char ch)
         return 1;
     else
         return 0;
+}
+
+static uint32_t getGradualColor(uint32_t color, int gradual, int max)
+{
+    uint32_t rgb = color & 0x00FFFFFF;
+    uint8_t a = color >> 24;
+    a = a * ((float)gradual / (float)max);
+    return (rgb | (a << 24));
 }
 
 static int convertStringToListByWidth(TextList *list, const char *str, int limit_width)
@@ -308,14 +316,6 @@ void AlertDialog_SetFreeCallback(GUI_Dialog *dialog, void (*callback)(GUI_Dialog
     data->freeCallback = callback;
 }
 
-static uint32_t getGradualColor(uint32_t color, int gradual, int max)
-{
-    uint32_t rgb = color & 0x00FFFFFF;
-    uint8_t a = color >> 24;
-    a = a * (float)gradual / (float)max;
-    return (rgb | (a << 24));
-}
-
 static void drawDialogCallback(GUI_Dialog *dialog)
 {
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
@@ -339,11 +339,11 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     int bottom_bar_x = dialog_x;
     int bottom_bar_y = listview_y + listview_h;
 
-    uint32_t bg_color = getGradualColor(DIALOG_COLOR_BG, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
-    uint32_t border_color = getGradualColor(DIALOG_COLOR_BORDER, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
-    uint32_t statebar_color = getGradualColor(STATEBAR_COLOR_BG, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
-    uint32_t text_color = getGradualColor(GUI_DEFALUT_TEXT_COLOR, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
-    uint32_t focus_color = getGradualColor(ITEMVIEW_COLOR_FOCUS_BG, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
+    uint32_t screen_color = getGradualColor(SCREEN_COLOR_VAGUE, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
+    uint32_t dialog_color = DIALOG_COLOR_BG;
+    uint32_t statebar_color = STATEBAR_COLOR_BG;
+    uint32_t text_color = DIALOG_COLOR_TEXT;
+    uint32_t focus_color = ITEMVIEW_COLOR_FOCUS_BG;
 
     int x, y;
     int clip_w, clip_h;
@@ -353,10 +353,10 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     if (data->color_gradual > MAX_COLOR_GRADUAL_COUNT)
         data->color_gradual = MAX_COLOR_GRADUAL_COUNT;
 
+    // Screen vague
+    GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, screen_color);
     // Dialog bg
-    GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, bg_color);
-    // Dialog border
-    GUI_DrawEmptyRectangle(dialog_x - 1, dialog_y - 1, dialog_w + 2, dialog_h + 2, 1, border_color);
+    GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
     // Top bar bg
     GUI_DrawFillRectangle(top_bar_x, top_bar_y, statebar_w, statebar_h, statebar_color);
     // Bottom bar bg

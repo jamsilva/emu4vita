@@ -18,7 +18,7 @@ static GUI_ButtonInstruction button_instructions[] = {
 };
 
 GUI_Activity about_activity = {
-    ABOUT,                 // Title
+    ABOUT_TITLE,           // Title
     button_instructions,   // Button instructions
     enterActivityCallback, // Init callback
     NULL,                  // Exit callback

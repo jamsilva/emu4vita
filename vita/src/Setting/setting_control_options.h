@@ -106,10 +106,10 @@ static KeyMapOptionMenuItem key_map_option_items[] = {
 #endif
 };
 
-#define STD_KEY_MAP_OPTION(idx, key)                                                                            \
-    {                                                                                                           \
+#define STD_KEY_MAP_OPTION(idx, key)                                                                                  \
+    {                                                                                                                 \
         key_map_option_texts[idx], key_map_option_items, sizeof(key_map_option_items) / sizeof(KeyMapOptionMenuItem), \
-            openKeyMapOptionCallback, NULL, updateKeyMapOptionCallback, &control_config.key                     \
+            openKeyMapOptionCallback, NULL, updateKeyMapOptionCallback, &control_config.key                           \
     }
 
 static void openKeyMapOptionCallback(KeyMapOptionMenu *option)
