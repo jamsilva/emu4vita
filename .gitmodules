@@ -1,5 +1,5 @@
 [submodule "cores/fba_lite"]
-	url  = https://gitee.com/yizhigai/fba_lite_libretro
+	url  = https://gitee.com/yizhigai/libretro-fba-lite
 	path = cores/fba_lite
 
 [submodule "cores/fceumm"]
