@@ -58,9 +58,9 @@ static void refreshLayout()
     itemview_height = GUI_GetFontSize() + ITEMVIEW_PADDING_T * 2;
     list_max_draw_len = (listview_height - LISTVIEW_PADDING_T * 2) / itemview_height;
 
-    scrollbar_track_x = listview_dx - GUI_SCROLLBAR_SIZE;
-    scrollbar_track_y = listview_sy;
-    scrollbar_track_height = listview_height;
+    scrollbar_track_x = listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    scrollbar_track_y = listview_sy + 2;
+    scrollbar_track_height = listview_height - 4;
 }
 
 static int enterActivityCallback(GUI_Activity *activity)

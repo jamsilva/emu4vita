@@ -70,9 +70,9 @@ static int option_items[] = {
 #define PATH_VIEW_PADDING_T 6.0f
 #define PATH_TEXT_COLOR COLOR_SPRING_GREEN
 
-#define NAME_LISTVIEW_PADDING_L 0.0f
-#define NAME_LISTVIEW_PADDING_T 0.0f
-#define NAME_ITEMVIEW_PADDING_L 10.0f
+#define NAME_LISTVIEW_PADDING_L 2.0f
+#define NAME_LISTVIEW_PADDING_T 2.0f
+#define NAME_ITEMVIEW_PADDING_L 8.0f
 #define NAME_ITEMVIEW_PADDING_T 5.0f
 #define NAME_TEXT_COLOR_FOLDER COLOR_WHITE
 #define NAME_TEXT_COLOR_FILE COLOR_GREEN
@@ -140,9 +140,9 @@ static void refreshLayout()
     name_itemview_height = GUI_GetFontSize() + NAME_ITEMVIEW_PADDING_T * 2;
     list_max_draw_len = (name_listview_height - NAME_LISTVIEW_PADDING_T * 2) / name_itemview_height;
 
-    scrollbar_track_x = name_listview_dx - GUI_SCROLLBAR_SIZE;
-    scrollbar_track_y = name_listview_sy;
-    scrollbar_track_height = name_listview_height;
+    scrollbar_track_x = name_listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    scrollbar_track_y = name_listview_sy + 2;
+    scrollbar_track_height = name_listview_height - 4;
 }
 
 int CurrentPathIsFile()
@@ -505,8 +505,11 @@ static void drawActivityCallback(GUI_Activity *activity)
 
     checkPreview();
 
+    // Draw path bg
     GUI_DrawFillRectangle(path_view_sx, path_view_sy, path_view_width, path_view_height, GUI_DEFALUT_BG_COLOR);
+    // Draw name bg
     GUI_DrawFillRectangle(name_listview_sx, name_listview_sy, name_listview_width, name_listview_height, GUI_DEFALUT_BG_COLOR);
+    // Draw preview bg
     GUI_DrawFillRectangle(preview_view_sx, preview_view_sy, preview_view_width, preview_view_height, GUI_DEFALUT_BG_COLOR);
 
     // Draw path

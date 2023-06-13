@@ -37,7 +37,7 @@
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xBF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 
-#define MAX_COLOR_GRADUAL_COUNT 30
+#define MAX_COLOR_GRADUAL_COUNT 16
 #define BEGIN_COLOR_GRADUAL_COUNT 0
 #define STEP_COLOR_GRADUAL_COUNT 1
 
@@ -47,11 +47,11 @@ static int closeDialogCallback(GUI_Dialog *dialog);
 
 int GetUTF8Count(const char *utf8)
 {
-    if ((utf8[0] & 0xF0) == 0xE0) // 0xF0 = 11110000, 0xE0 = 11100000
+    if ((utf8[0] & 0xF0) == 0xE0) // & 0xF0(11110000) => 0xE0(11100000)
         return 3;
-    else if ((utf8[0] & 0xE0) == 0xC0) // 0xE0 = 11100000, 0xC0= 11000000
+    else if ((utf8[0] & 0xE0) == 0xC0) // 0xE0(11100000) => 0xC0(11000000)
         return 2;
-    else
+    else // 0XXXXXXX or other
         return 1;
 }
 
@@ -113,6 +113,8 @@ static int convertStringToListByWidth(TextList *list, const char *str, int limit
             *p = '\0';
             TextListAddEntryEx(list, line);
             *p = ch;
+            if (*p == '\n')
+                p++;
             line = p;
             space = p;
             if (width > max_width)
@@ -353,13 +355,13 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     if (data->color_gradual > MAX_COLOR_GRADUAL_COUNT)
         data->color_gradual = MAX_COLOR_GRADUAL_COUNT;
 
-    // Screen vague
+    // Draw screen vague
     GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, screen_color);
-    // Dialog bg
+    // Draw dialog bg
     GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
-    // Top bar bg
+    // Draw top bar bg
     GUI_DrawFillRectangle(top_bar_x, top_bar_y, statebar_w, statebar_h, statebar_color);
-    // Bottom bar bg
+    // Draw bottom bar bg
     GUI_DrawFillRectangle(bottom_bar_x, bottom_bar_y, statebar_w, statebar_h, statebar_color);
 
     // Draw title
@@ -433,9 +435,20 @@ static void drawDialogCallback(GUI_Dialog *dialog)
             itemview_y += itemview_h;
             entry = entry->next;
         }
+
+        // Draw scrollbar
+        int track_x = listview_x + listview_w - GUI_SCROLLBAR_SIZE - 2;
+        int track_y = listview_y + 2;
+        int track_h = listview_h - 4;
+        int max_draw_len;
+        if (data->type == TYPE_DIALOG_MENU)
+            max_draw_len = (listview_h - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
+        else
+            max_draw_len = (listview_h - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
+        GUI_DrawVerticalScrollbar(track_x, track_y, track_h, data->list.length, max_draw_len, data->top_pos, 0);
     }
 
-    // Draw Button
+    // Draw button
     char buf[24];
     x = dialog_x + dialog_w - STATEBAR_PADDING_L;
     y = bottom_bar_y + STATEBAR_PADDING_T;
@@ -460,28 +473,28 @@ static void ctrlDialogCallback(GUI_Dialog *dialog)
 
     if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP])
     {
-        if (data->type == TYPE_DIALOG_TIP)
+        if (data->type == TYPE_DIALOG_MENU)
         {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2) / TIP_ITEMVIEW_HEIGHT;
-            MoveListPosNoFocus(TYPE_MOVE_UP, &data->top_pos, data->list.length, max_draw_len);
-        }
-        else if (data->type == TYPE_DIALOG_MENU)
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2) / MENU_ITEMVIEW_HEIGHT;
+            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
             MoveListPos(TYPE_MOVE_UP, &data->top_pos, &data->focus_pos, data->list.length, max_draw_len);
+        }
+        else
+        {
+            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
+            MoveListPosNoFocus(TYPE_MOVE_UP, &data->top_pos, data->list.length, max_draw_len);
         }
     }
     else if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        if (data->type == TYPE_DIALOG_TIP)
+        if (data->type == TYPE_DIALOG_MENU)
         {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2) / TIP_ITEMVIEW_HEIGHT;
-            MoveListPosNoFocus(TYPE_MOVE_DOWN, &data->top_pos, data->list.length, max_draw_len);
-        }
-        else if (data->type == TYPE_DIALOG_MENU)
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2) / MENU_ITEMVIEW_HEIGHT;
+            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
             MoveListPos(TYPE_MOVE_DOWN, &data->top_pos, &data->focus_pos, data->list.length, max_draw_len);
+        }
+        else
+        {
+            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
+            MoveListPosNoFocus(TYPE_MOVE_DOWN, &data->top_pos, data->list.length, max_draw_len);
         }
     }
 

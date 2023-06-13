@@ -34,9 +34,9 @@ static void refreshOptionLayout()
     option_itemview_height = GUI_GetFontSize() + OPTION_ITEMVIEW_PADDING_T * 2;
     option_list_max_draw_len = (option_listview_height - OPTION_LISTVIEW_PADDING_T * 2) / option_itemview_height;
 
-    option_scrollbar_track_x = option_listview_dx - GUI_SCROLLBAR_SIZE;
-    option_scrollbar_track_y = option_listview_sy;
-    option_scrollbar_track_height = option_listview_height;
+    option_scrollbar_track_x = option_listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    option_scrollbar_track_y = option_listview_sy + 2;
+    option_scrollbar_track_height = option_listview_height + 4;
 }
 
 static void refreshSettingLayout()
@@ -65,9 +65,9 @@ static void refreshSettingLayout()
     menu_itemview_height = GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2;
     menu_list_max_draw_len = (menu_listview_height - MENU_LISTVIEW_PADDING_T * 2) / menu_itemview_height;
 
-    menu_scrollbar_track_x = menu_listview_dx - GUI_SCROLLBAR_SIZE;
-    menu_scrollbar_track_y = menu_listview_sy;
-    menu_scrollbar_track_height = menu_listview_height;
+    menu_scrollbar_track_x = menu_listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    menu_scrollbar_track_y = menu_listview_sy + 2;
+    menu_scrollbar_track_height = menu_listview_height - 4;
 
     refreshOptionLayout();
 

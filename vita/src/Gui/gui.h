@@ -96,7 +96,7 @@ void GUI_ClosePreviousDialogs(GUI_Dialog *dialog);
 char *GUI_GetStringByLangId(int index);
 char **GUI_GetStringListByLangIdList(int *list, int list_len);
 
-void GUI_DrawVerticalScrollbar(int track_sx, int track_sy, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track);
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track);
 
 void GUI_SetWallpaperTexture(GUI_Texture *texture);
 void GUI_SetSplashTexture(GUI_Texture *texture);

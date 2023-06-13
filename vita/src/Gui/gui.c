@@ -287,29 +287,29 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     }
 }
 
-void GUI_DrawVerticalScrollbar(int track_sx, int track_sy, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track)
+void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track)
 {
     if (list_len > max_draw_len)
     {
         // Draw scroll track
         if (draw_track)
-            GUI_DrawFillRectangle(track_sx, track_sy, GUI_SCROLLBAR_SIZE, track_height, GUI_SCROLLBAR_TRACK_COLOR);
+            GUI_DrawFillRectangle(track_x, track_y, GUI_SCROLLBAR_SIZE, track_height, GUI_SCROLLBAR_TRACK_COLOR);
 
         // Draw scroll thumb
         float size_per_item = (float)track_height / (float)list_len;
         int thumb_height = (float)max_draw_len * size_per_item;
         thumb_height = MAX(thumb_height, 1); // Fix
-        int thumb_sy;
+        int thumb_y;
         if (top_pos >= list_len - max_draw_len)
         {
-            thumb_sy = track_sy + track_height - thumb_height;
+            thumb_y = track_y + track_height - thumb_height;
         }
         else
         {
-            thumb_sy = track_sy + (float)top_pos * size_per_item;
-            thumb_sy = MIN(thumb_sy, (track_sy + track_height - thumb_height)); // Fix
+            thumb_y = track_y + (float)top_pos * size_per_item;
+            thumb_y = MIN(thumb_y, (track_y + track_height - thumb_height)); // Fix
         }
-        GUI_DrawFillRectangle(track_sx, thumb_sy, GUI_SCROLLBAR_SIZE, thumb_height, GUI_SCROLLBAR_THUMB_COLOR);
+        GUI_DrawFillRectangle(track_x, thumb_y, GUI_SCROLLBAR_SIZE, thumb_height, GUI_SCROLLBAR_THUMB_COLOR);
     }
 }
 
