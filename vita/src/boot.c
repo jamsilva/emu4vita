@@ -5,8 +5,8 @@
 
 #include <psp2/appmgr.h>
 
-#include "Activity/browser.h"
-#include "Emu/emu.h"
+#include "activity/browser.h"
+#include "emu/emu.h"
 #include "boot.h"
 #include "utils.h"
 #include "file.h"
@@ -31,10 +31,11 @@ int BootLoadGame()
         return -1;
 
     Browser_ChangeDirByPath(boot_game_path);
-    if (Emu_LoadGame(boot_game_path) < 0)
-        return -1;
-    if (misc_config.auto_save_load)
-        Emu_LoadState(-1);
+
+    EmuGameInfo info;
+    strcpy(info.path, boot_game_path);
+    info.state_num = -2;
+    Emu_StartGame(&info);
 
     return 0;
 }

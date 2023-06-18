@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#include "List/option_list.h"
-#include "List/overlay_list.h"
+#include "list/option_list.h"
+#include "list/overlay_list.h"
 #include "setting_state.h"
 #include "setting_overlay.h"
 
@@ -16,7 +16,7 @@ enum TypeSettingOption
     TYPE_OPTION_STR_INDEXS,
     TYPE_OPTION_INT_ARRAY,
     TYPE_OPTION_INT_STEP,
-    TYPE_OPTION_KEY_MAP,
+    TYPE_OPTION_KEY_MAPPER,
 };
 
 typedef struct StrArrayOption
@@ -58,23 +58,23 @@ typedef struct IntStepOption
     void *userdata;
 } IntStepOption;
 
-typedef struct
+typedef struct KeyMapperOptionMenuItem
 {
     int lang;
     void *userdata;
     int selected;
-} KeyMapOptionMenuItem;
+} KeyMapperOptionMenuItem;
 
-typedef struct KeyMapOptionMenu
+typedef struct KeyMapperOptionMenu
 {
     char *name;
-    KeyMapOptionMenuItem *items;
+    KeyMapperOptionMenuItem *items;
     int n_items;
-    void (*openCallback)(struct KeyMapOptionMenu *option);
-    void (*closeCallback)(struct KeyMapOptionMenu *option);
-    void (*updateCallback)(struct KeyMapOptionMenu *option);
+    void (*openCallback)(struct KeyMapperOptionMenu *option);
+    void (*closeCallback)(struct KeyMapperOptionMenu *option);
+    void (*updateCallback)(struct KeyMapperOptionMenu *option);
     void *userdata;
-} KeyMapOptionMenu;
+} KeyMapperOptionMenu;
 
 typedef struct SettingMenuItem
 {
@@ -106,8 +106,8 @@ int Setting_SetOverlayOption(OverlayList *list);
 int Setting_SetAppLangOption();
 void Setting_UpdataLangOption();
 
-void Setting_RefreshCtrlMenu();
-void Setting_RequestRefreshMenu();
-void Setting_RequestRefreshOptionDisplay();
+void Setting_UpdateKeyMapperMenu(int idx);
+void Setting_PushUpdateMenu();
+void Setting_PushUpdateOptionDisplay();
 
 #endif

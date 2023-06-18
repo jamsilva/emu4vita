@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "overlay_list.h"
-#include "config_text.h"
+#include "config_lib.h"
 #include "file.h"
 
 enum TypeOverlayText

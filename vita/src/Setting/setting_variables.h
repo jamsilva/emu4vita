@@ -1,7 +1,7 @@
 #ifndef __M_SETTING_VARIABLES_H__
 #define __M_SETTING_VARIABLES_H__
 
-#include "Gui/gui.h"
+#include "gui/gui.h"
 #include "setting.h"
 
 // Window
@@ -27,13 +27,24 @@
 #define MENU_ITEMVIEW_PADDING_T 6.0f
 
 // Checkbox dialog
-#define OPTION_LISTVIEW_WIDTH 210.0f
+#define OPTION_LISTVIEW_WIDTH 230.0f
 #define OPTION_LISTVIEW_PADDING_L 2.0f
 #define OPTION_LISTVIEW_PADDING_T 2.0f
 #define OPTION_ITEMVIEW_PADDING_L 10.0f
 #define OPTION_ITEMVIEW_PADDING_T 6.0f
 
-#define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
+#define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS_BG
+
+enum IndexSettingMenuList
+{
+    INDEX_MENU_MAIN,
+    INDEX_MENU_STATE,
+    INDEX_MENU_GRAPHICS,
+    INDEX_MENU_CONTROL,
+    INDEX_MENU_CORE,
+    INDEX_MENU_MISC,
+    INDEX_MENU_APP,
+};
 
 static int openDialogCallback(GUI_Dialog *dialog);
 static int closeDialogCallback(GUI_Dialog *dialog);
@@ -41,13 +52,14 @@ static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
 
 GUI_Dialog setting_dialog = {
-    openDialogCallback,  // Open callback
-    closeDialogCallback, // Close callback
-    drawDialogCallback,  // Draw callback
-    ctrlDialogCallback,  // Ctrl callback
-    NULL,                // Previous dialog
-    NULL,                // Next dialog
-    NULL,                // User data
+    TYPE_GUI_DIALOG_WINDOW, // Dialog type
+    openDialogCallback,     // Open callback
+    closeDialogCallback,    // Close callback
+    drawDialogCallback,     // Draw callback
+    ctrlDialogCallback,     // Ctrl callback
+    NULL,                   // Previous dialog
+    NULL,                   // Next dialog
+    NULL,                   // User data
 };
 
 /*
@@ -62,10 +74,12 @@ typedef struct
     int visible_list_len;         // visible list len
 } MenuPosData;
 
+extern GUI_Dialog setting_dialog;
+
 static MenuPosData menu_pos_data;
 
-static int menu_need_refresh = 1;
-static int option_display_need_refresh = 0;
+static int menu_need_update = 1;
+static int option_display_need_update = 0;
 static int has_main_core_menu = 0;
 static int setting_config_type = 0;
 
@@ -77,7 +91,13 @@ static int menu_focus_pos = 0;
 static int option_open = 0;
 static int option_top_pos = 0;
 static int option_focus_pos = 0;
-static KeyMapOptionMenu *option_menu = NULL;
+static KeyMapperOptionMenu *option_menu = NULL;
+
+static int app_option_changed = 0;
+static int graphics_option_changed = 0;
+static int control_option_changed = 0;
+static int core_option_changed = 0;
+static int misc_option_changed = 0;
 
 // Free draw
 int SETTING_FREE_DRAW_WIDTH, SETTING_FREE_DRAW_HEIGHT;
@@ -90,7 +110,7 @@ static int menu_tab_view_sx, menu_tab_view_sy, menu_tab_view_dx, menu_tab_view_d
 static int menu_listview_width, menu_listview_height;
 static int menu_listview_sx, menu_listview_sy, menu_listview_dx, menu_listview_dy;
 static int menu_itemview_width, menu_itemview_height;
-static int menu_list_max_draw_len;
+static int menu_listview_n_draw_items;
 static int menu_scrollbar_track_x, menu_scrollbar_track_y, menu_scrollbar_track_height;
 
 // Option
@@ -98,7 +118,7 @@ static int option_listview_width, option_listview_height;
 static int option_listview_sx, option_listview_sy, option_listview_dx, option_listview_dy;
 static int option_listview_scroll_sx;
 static int option_itemview_width, option_itemview_height;
-static int option_list_max_draw_len;
+static int option_listview_n_draw_items;
 static int option_scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height;
 
 #endif

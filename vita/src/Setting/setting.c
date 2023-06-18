@@ -7,12 +7,11 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/power.h>
 
-#include "List/config_list.h"
-#include "List/option_list.h"
-#include "Activity/browser.h"
-#include "Retro/retro.h"
-#include "Emu/emu.h"
-#include "Gui/gui.h"
+#include "list/config_list.h"
+#include "list/option_list.h"
+#include "activity/browser.h"
+#include "emu/emu.h"
+#include "gui/gui.h"
 #include "setting.h"
 #include "setting_variables.h"
 #include "setting_menu.h"
@@ -32,9 +31,9 @@ static void refreshOptionLayout()
     option_listview_height = option_listview_dy - option_listview_sy;
     option_itemview_width = option_listview_width - OPTION_LISTVIEW_PADDING_L * 2;
     option_itemview_height = GUI_GetFontSize() + OPTION_ITEMVIEW_PADDING_T * 2;
-    option_list_max_draw_len = (option_listview_height - OPTION_LISTVIEW_PADDING_T * 2) / option_itemview_height;
+    option_listview_n_draw_items = (option_listview_height - OPTION_LISTVIEW_PADDING_T * 2) / option_itemview_height;
 
-    option_scrollbar_track_x = option_listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    option_scrollbar_track_x = option_listview_dx - GUI_DEF_SCROLLBAR_SIZE - 2;
     option_scrollbar_track_y = option_listview_sy + 2;
     option_scrollbar_track_height = option_listview_height + 4;
 }
@@ -63,9 +62,9 @@ static void refreshSettingLayout()
     menu_listview_dy = menu_listview_sy + menu_listview_height;
     menu_itemview_width = menu_listview_width - MENU_LISTVIEW_PADDING_L * 2;
     menu_itemview_height = GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2;
-    menu_list_max_draw_len = (menu_listview_height - MENU_LISTVIEW_PADDING_T * 2) / menu_itemview_height;
+    menu_listview_n_draw_items = (menu_listview_height - MENU_LISTVIEW_PADDING_T * 2) / menu_itemview_height;
 
-    menu_scrollbar_track_x = menu_listview_dx - GUI_SCROLLBAR_SIZE - 2;
+    menu_scrollbar_track_x = menu_listview_dx - GUI_DEF_SCROLLBAR_SIZE - 2;
     menu_scrollbar_track_y = menu_listview_sy + 2;
     menu_scrollbar_track_height = menu_listview_height - 4;
 
@@ -74,14 +73,14 @@ static void refreshSettingLayout()
     Setting_RefreshStateLayout();
 }
 
-void Setting_RequestRefreshMenu()
+void Setting_PushUpdateMenu()
 {
-    menu_need_refresh = 1;
+    menu_need_update = 1;
 }
 
-void Setting_RequestRefreshOptionDisplay()
+void Setting_PushUpdateOptionDisplay()
 {
-    option_display_need_refresh = 1;
+    option_display_need_update = 1;
 }
 
 static void moveMenuPos(int move_type)
@@ -90,7 +89,7 @@ static void moveMenuPos(int move_type)
     int visible_focus_pos = menu_pos_data.visible_list_indexs[menu_focus_pos];
     int visible_list_len = menu_pos_data.visible_list_len;
 
-    MoveListPos(move_type, &visible_top_pos, &visible_focus_pos, visible_list_len, menu_list_max_draw_len);
+    MoveListPos(move_type, &visible_top_pos, &visible_focus_pos, visible_list_len, menu_listview_n_draw_items);
     menu_top_pos = menu_pos_data.visible_list[visible_top_pos];
     menu_focus_pos = menu_pos_data.visible_list[visible_focus_pos];
 }
@@ -206,7 +205,7 @@ int Setting_SetCoreMenu(OptionList *list)
         item = &(menu->items[i]);
 
         // Disable use lang
-        item->lang = LANG_DISABLE;
+        item->lang = LANG_NULL;
 
         // Get visible pointer to option list entry for set item visible or not
         entry->visible = &(item->visible);
@@ -261,7 +260,7 @@ int Setting_SetCoreMenu(OptionList *list)
 
     // The last one is reset config
     item = &(menu->items[n_items - 1]);
-    char *name = cur_lang[RESET_CONFIGS];
+    char *name = cur_lang[LABEL_RESET_CONFIGS];
     item->name = (char *)malloc(strlen(name) + 1);
     if (item->name)
         strcpy(item->name, name);
@@ -306,7 +305,7 @@ int Setting_SetOverlayOption(OverlayList *list)
 
 int Setting_SetAppLangOption()
 {
-    SetCurrentLang(app_config.app_lang);
+    SetCurrentLang(app_config.language);
 
     int n_names = 0;
     int langs_len = GetLangsLength();
@@ -332,16 +331,17 @@ int Setting_SetAppLangOption()
         }
     }
 
-    app_lang_option.names = names;
-    app_lang_option.n_names = n_names;
+    language_option.names = names;
+    language_option.n_names = n_names;
 
     return 0;
 }
 
 void Setting_UpdataLangOption()
 {
-    SetCurrentLang(app_config.app_lang);
-    Setting_RefreshCtrlMenu();
+    SetCurrentLang(app_config.language);
+    Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
+    Setting_UpdateKeyMapperMenu(INDEX_MENU_MISC);
 
     if (overlay_select_option.names)
     {
@@ -353,23 +353,23 @@ void Setting_UpdataLangOption()
     }
 }
 
-void Setting_RefreshCtrlMenu()
+void Setting_UpdateKeyMapperMenu(int idx)
 {
-    SettingMenu *menu = &(menu_list[INDEX_MENU_CONTROL]);
+    SettingMenu *menu = &(menu_list[idx]);
     SettingMenuItem *menu_item;
 
     int i, j;
     for (i = 0; i < menu->n_items; i++)
     {
         menu_item = &(menu->items[i]);
-        if (menu_item->option_type != TYPE_OPTION_KEY_MAP)
+        if (menu_item->option_type != TYPE_OPTION_KEY_MAPPER)
             continue;
 
-        KeyMapOptionMenu *option = (KeyMapOptionMenu *)(menu_item->option);
+        KeyMapperOptionMenu *option = (KeyMapperOptionMenu *)(menu_item->option);
         char *text = option->name;
-        uint32_t set_key = *(uint32_t *)(option->userdata);
-        // ptintf("%d\n", set_key);
-        int enabled = set_key & ENABLE_KEY_BITMASK;
+        uint32_t config_key = *(uint32_t *)(option->userdata);
+        // ptintf("%d\n", config_key);
+        int enabled = config_key & ENABLE_KEY_BITMASK;
         text[0] = '\0';
         if (!enabled)
         {
@@ -380,10 +380,10 @@ void Setting_RefreshCtrlMenu()
         int n_maped = 0;
         for (j = 0; j < option->n_items; j++)
         {
-            KeyMapOptionMenuItem *option_item = &(option->items[j]);
-            uint32_t map_key = (uint32_t)(option_item->userdata);
+            KeyMapperOptionMenuItem *option_item = &(option->items[j]);
+            uint32_t mapping_key = (uint32_t)(option_item->userdata);
 
-            if (set_key & map_key)
+            if (config_key & mapping_key)
             {
                 if (n_maped > 0)
                     strcat(text, "+");
@@ -421,9 +421,9 @@ static void drawOption()
     int item_sy = option_listview_sy + OPTION_LISTVIEW_PADDING_T;
     int item_max_dy = option_listview_dy - OPTION_LISTVIEW_PADDING_T;
     int clip_height = option_itemview_height;
-    int mark_width = GUI_GetFontSize();
-    int mark_height = mark_width;
-    int mark_sx = item_dx - OPTION_ITEMVIEW_PADDING_L - mark_width;
+    int checkbox_width = GUI_GetFontSize();
+    int checkbox_height = checkbox_width;
+    int checkbox_sx = item_dx - OPTION_ITEMVIEW_PADDING_L - checkbox_width;
     int i;
     for (i = option_top_pos; i < option_menu->n_items; i++)
     {
@@ -434,7 +434,7 @@ static void drawOption()
         else
             clip_height = option_itemview_height;
 
-        KeyMapOptionMenuItem *item = &(option_menu->items[i]);
+        KeyMapperOptionMenuItem *item = &(option_menu->items[i]);
 
         GUI_EnableClipping();
         GUI_SetClipRectangle(item_sx, item_sy, option_itemview_width, clip_height);
@@ -444,15 +444,15 @@ static void drawOption()
             GUI_DrawFillRectangle(item_sx, item_sy, option_itemview_width, option_itemview_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
         GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, cur_lang[item->lang]);
-        GUI_DrawEmptyRectangle(mark_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, mark_width, mark_width, 1.0f, COLOR_GREEN);
+        GUI_DrawEmptyRectangle(checkbox_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, checkbox_width, checkbox_width, 1.0f, COLOR_GREEN);
         if (item->selected)
-            GUI_DrawFillRectangle(mark_sx + 1, item_sy + OPTION_ITEMVIEW_PADDING_T + 1, mark_width - 2, mark_width - 2, COLOR_ALPHA(COLOR_ORANGE, 0xBF));
+            GUI_DrawFillRectangle(checkbox_sx + 1, item_sy + OPTION_ITEMVIEW_PADDING_T + 1, checkbox_width - 2, checkbox_width - 2, COLOR_ALPHA(COLOR_ORANGE, 0xBF));
 
         GUI_DisableClipping();
         item_sy += option_itemview_height;
     }
 
-    GUI_DrawVerticalScrollbar(option_scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height, option_menu->n_items, option_list_max_draw_len, option_top_pos, 0);
+    GUI_DrawVerticalScrollbar(option_scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height, option_menu->n_items, option_listview_n_draw_items, option_top_pos, 0);
 }
 
 static void drawMenu()
@@ -501,7 +501,7 @@ static void drawMenu()
 
             if (item->name)
                 GUI_DrawText(sx, sy, COLOR_WHITE, item->name);
-            else if (item->lang >= 0)
+            else if (item->lang != LANG_NULL)
                 GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[item->lang]);
 
             if (item->option)
@@ -537,18 +537,22 @@ static void drawMenu()
                     snprintf(value_str, 256, option->format, value);
                     GUI_DrawText(dx - GUI_GetTextWidth(value_str), sy, COLOR_GREEN, value_str);
                 }
-                else if (option_type == TYPE_OPTION_KEY_MAP) // Option key map
+                else if (option_type == TYPE_OPTION_KEY_MAPPER) // Option key map
                 {
-                    KeyMapOptionMenu *option = (KeyMapOptionMenu *)item->option;
-                    int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
-                    uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
-                    uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
-                    char *turbo_str = cur_lang[TURBO];
-                    int turbo_text_width = GUI_GetTextWidth(turbo_str);
-                    int turbo_sx = dx - turbo_text_width;
-                    GUI_DrawFillRectangle(turbo_sx, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
-                    GUI_DrawText(turbo_sx, sy, text_color, turbo_str);
-                    GUI_DrawText(turbo_sx - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, option->name);
+                    KeyMapperOptionMenu *option = (KeyMapperOptionMenu *)item->option;
+                    int x = dx;
+                    if (menu_list_focus_pos == INDEX_MENU_CONTROL)
+                    {
+                        int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
+                        uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
+                        uint32_t text_color = turbo ? COLOR_WHITE : COLOR_DARKGRAY;
+                        char *turbo_str = cur_lang[LABEL_TURBO];
+                        int turbo_text_width = GUI_GetTextWidth(turbo_str);
+                        x = dx - turbo_text_width;
+                        GUI_DrawFillRectangle(x, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
+                        GUI_DrawText(x, sy, text_color, turbo_str);
+                    }
+                    GUI_DrawText(x - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, option->name);
                 }
             }
 
@@ -559,7 +563,7 @@ static void drawMenu()
         int visible_top_pos = menu_pos_data.visible_list_indexs[menu_top_pos];
         int visible_list_len = menu_pos_data.visible_list_len;
         GUI_DrawVerticalScrollbar(menu_scrollbar_track_x, menu_scrollbar_track_y, menu_scrollbar_track_height,
-                                  visible_list_len, menu_list_max_draw_len, visible_top_pos, 0);
+                                  visible_list_len, menu_listview_n_draw_items, visible_top_pos, 0);
 
         drawOption();
     }
@@ -618,7 +622,7 @@ static void drawCommon()
     char time_string[16];
     GetTimeString(time_string, time_format, &time);
     int time_x = sx - GUI_GetTextWidth(time_string);
-    GUI_DrawText(time_x, sy, GUI_DEFALUT_TEXT_COLOR, time_string);
+    GUI_DrawText(time_x, sy, GUI_DEF_COLOR_TEXT, time_string);
 
     GUI_DrawFillRectangle(menu_tab_view_sx, menu_tab_view_dy, menu_tab_view_width, MENU_TAB_LINEVIEW_HEIGHT, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 }
@@ -678,11 +682,11 @@ static void ctrlOption()
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        MoveListPos(TYPE_MOVE_UP, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
+        MoveListPos(TYPE_MOVE_UP, &option_top_pos, &option_focus_pos, option_menu->n_items, option_listview_n_draw_items);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        MoveListPos(TYPE_MOVE_DOWN, &option_top_pos, &option_focus_pos, option_menu->n_items, option_list_max_draw_len);
+        MoveListPos(TYPE_MOVE_DOWN, &option_top_pos, &option_focus_pos, option_menu->n_items, option_listview_n_draw_items);
     }
 
     if (released_pad[PAD_ENTER] || released_pad[PAD_SQUARE])
@@ -833,9 +837,9 @@ static void ctrlMenu()
                     option->updateCallback(option);
             }
         }
-        else if (option_type == TYPE_OPTION_KEY_MAP)
+        else if (option_type == TYPE_OPTION_KEY_MAPPER)
         {
-            KeyMapOptionMenu *option = (KeyMapOptionMenu *)item->option;
+            KeyMapperOptionMenu *option = (KeyMapperOptionMenu *)item->option;
             if (released_pad[PAD_ENTER])
             {
                 option_menu = option;
@@ -847,12 +851,15 @@ static void ctrlMenu()
             }
             else if (released_pad[PAD_SQUARE])
             {
-                uint32_t *set_key = (uint32_t *)(option->userdata);
-                if (*set_key & TURBO_KEY_BITMASK)
-                    *set_key &= ~TURBO_KEY_BITMASK;
-                else
-                    *set_key |= TURBO_KEY_BITMASK;
-                control_option_changed = 1;
+                if (menu_list_focus_pos == INDEX_MENU_CONTROL)
+                {
+                    uint32_t *config_key = (uint32_t *)(option->userdata);
+                    if (*config_key & TURBO_KEY_BITMASK)
+                        *config_key &= ~TURBO_KEY_BITMASK;
+                    else
+                        *config_key |= TURBO_KEY_BITMASK;
+                    control_option_changed = 1;
+                }
             }
         }
     }
@@ -860,10 +867,10 @@ static void ctrlMenu()
 
 static void ctrlDialogCallback(GUI_Dialog *dialog)
 {
-    if (option_display_need_refresh)
+    if (option_display_need_update)
     {
         refreshMenuPosEx();
-        option_display_need_refresh = 0;
+        option_display_need_update = 0;
     }
 
     ctrlCommon();
@@ -876,7 +883,7 @@ static void ctrlDialogCallback(GUI_Dialog *dialog)
 
 static int openDialogCallback(GUI_Dialog *dialog)
 {
-    GUI_ClosePreviousDialogs(dialog);
+    GUI_CloseOtherDialogs(dialog, TYPE_GUI_DIALOG_ANY);
 
     Setting_WaitOverlayInitEnd();
 
@@ -894,10 +901,10 @@ static int openDialogCallback(GUI_Dialog *dialog)
     {
         menu_list[INDEX_MENU_STATE].visible = 0;
         if (menu_list_focus_pos == 1)
-            menu_need_refresh = 1;
+            menu_need_update = 1;
     }
 
-    if (menu_need_refresh)
+    if (menu_need_update)
     {
         if (Emu_IsGameLoaded())
         {
@@ -912,9 +919,13 @@ static int openDialogCallback(GUI_Dialog *dialog)
             main_menu_items[0].visible = 1; // 继续游戏
             main_menu_items[1].visible = 1; // 重置游戏
             main_menu_items[2].visible = 1; // 退出游戏
+            if (core_disk_control_ext_callback)
+                main_menu_items[3].visible = 1; // 光盘控制
+            else
+                main_menu_items[3].visible = 0; // 光盘控制
             // 杂项菜单 (子选项 可见/隐藏)
-            misc_menu_items[1].visible = 1; // 保存截图
-            misc_menu_items[2].visible = 1; // 保存截图为预览图
+            misc_menu_items[8].visible = 1; // 保存截图
+            misc_menu_items[9].visible = 1; // 保存截图为预览图
         }
         else
         {
@@ -926,35 +937,37 @@ static int openDialogCallback(GUI_Dialog *dialog)
             else
                 menu_list[INDEX_MENU_CORE].visible = 0;
             // 主菜单 (子选项 可见/隐藏)
-            main_menu_items[0].visible = 0;
-            main_menu_items[1].visible = 0;
-            main_menu_items[2].visible = 0;
+            main_menu_items[0].visible = 0; // 继续游戏
+            main_menu_items[1].visible = 0; // 重置游戏
+            main_menu_items[2].visible = 0; // 退出游戏
+            main_menu_items[3].visible = 0; // 光盘控制
             // 杂项菜单 (子选项 可见/隐藏)
-            misc_menu_items[1].visible = 0;
-            misc_menu_items[2].visible = 0;
+            misc_menu_items[8].visible = 0; // 保存截图
+            misc_menu_items[9].visible = 0; // 保存截图为预览图
         }
 
         if (exec_boot_mode == BOOT_MODE_ARCH)
-            main_menu_items[3].visible = 1; // 返回模拟器前端
+            main_menu_items[4].visible = 1; // 返回模拟器前端
         else
-            main_menu_items[3].visible = 0; // 返回模拟器前端
+            main_menu_items[4].visible = 0; // 返回模拟器前端
 
         if (is_vitatv_model)
         {
-            control_menu_items[18].visible = 0; // 前触摸补键
-            control_menu_items[19].visible = 0; // 背触摸补键
+            control_menu_items[18].visible = 0; // 前触摸映射按键
+            control_menu_items[19].visible = 0; // 背触摸映射按键
         }
         else
         {
-            control_menu_items[18].visible = 1; // 前触摸补键
-            control_menu_items[19].visible = 1; // 背触摸补键
+            control_menu_items[18].visible = 1; // 前触摸映射按键
+            control_menu_items[19].visible = 1; // 背触摸映射按键
         }
 
-        Setting_RefreshCtrlMenu();
-        Settting_SetStateSelectId(0);
+        Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
+        Setting_UpdateKeyMapperMenu(INDEX_MENU_MISC);
+        Setting_SetStateSelectId(0);
         menu_list_focus_pos = 0;
         moveMenuListPos(TYPE_MOVE_NONE);
-        menu_need_refresh = 0;
+        menu_need_update = 0;
     }
 
     return 0;

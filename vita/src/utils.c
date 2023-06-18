@@ -10,7 +10,7 @@
 #include <psp2/rtc.h>
 #include <psp2/io/fcntl.h>
 
-#include "Emu/emu.h"
+#include "emu/emu.h"
 #include "utils.h"
 #include "config.h"
 
@@ -306,7 +306,7 @@ void UnlockQuickMenu()
 
 void AutoUnlockQuickMenu()
 {
-    if (quick_menu_locked && !Emu_IsGameLoaded() && IsPSbuttonEventEnabled())
+    if (quick_menu_locked && !Emu_IsGameLoaded() && !Emu_IsGameLoading() && IsPSbuttonEventEnabled())
     {
         sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_QUICK_MENU);
         quick_menu_locked = 0;

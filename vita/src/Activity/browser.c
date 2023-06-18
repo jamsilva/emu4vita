@@ -5,11 +5,10 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "List/file_list.h"
-#include "Setting/setting.h"
-#include "Retro/retro.h"
-#include "Emu/emu.h"
-#include "Gui/gui.h"
+#include "list/file_list.h"
+#include "setting/setting.h"
+#include "emu/emu.h"
+#include "gui/gui.h"
 #include "browser.h"
 #include "utils.h"
 #include "file.h"
@@ -18,30 +17,30 @@
 
 extern GUI_Activity about_activity;
 
-static int enterActivityCallback(GUI_Activity *activity);
+static int startActivityCallback(GUI_Activity *activity);
 static int exitActivityCallback(GUI_Activity *activity);
 static void drawActivityCallback(GUI_Activity *activity);
 static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {BUTTON_CANCEL, PARENT_DIRECTORY},
-    {BUTTON_ENTER, OPEN},
-    {BUTTON_TRIANGLE, OPTION_MENU},
-    {BUTTON_PSBUTTON, EMU_SETTING},
-    {BUTTON_SELECT, ABOUT},
-    {BUTTON_START, CHANGE_DIRECTORY},
-    {LANG_DISABLE, LANG_DISABLE},
+    {BUTTON_CANCEL, PARENT_DIRECTORY, 1},
+    {BUTTON_ENTER, OPEN_DIR, 1},
+    {BUTTON_TRIANGLE, OPTION_MENU, 1},
+    {BUTTON_PSBUTTON, SETTING_MENU, 1},
+    {BUTTON_SELECT, ABOUT, 1},
+    {BUTTON_START, CHANGE_DIR, 1},
+    {LANG_NULL, LANG_NULL, 0},
 };
 
 GUI_Activity browser_activity = {
     APP_TITLE,             // Title
     button_instructions,   // Button instructions
-    enterActivityCallback, // Init callback
+    NULL,                  // Wallpaper
+    startActivityCallback, // Start callback
     exitActivityCallback,  // Exit callback
     drawActivityCallback,  // Draw callback
     ctrlActivityCallback,  // Ctrl callback
     0,                     // Disable draw statusbar
-    0,                     // Disable draw wallpaper
     NULL,                  // Parent activity
     NULL,                  // User data
 };
@@ -55,30 +54,32 @@ enum IndexOptionItem
 };
 
 static int option_items[] = {
-    START_GAME,
-    DELETE_GAME,
-    DELETE_AUTO_STATE,
-    DELETE_SAVEFILE,
+    LABEL_START_GAME,
+    LABEL_DELETE_GAME,
+    LABEL_DELETE_AUTO_STATE,
+    LABEL_DELETE_SAVEFILE,
 };
 #define N_OPTION_ITEMS (sizeof(option_items) / sizeof(int))
 
 #define MAX_DIR_LEVELS 128
 
-#define LAYOUT_CHILD_MARGIN 2.0f
+#define LAYOUT_CHILD_MARGIN 2
 
-#define PATH_VIEW_PADDING_L 10.0f
-#define PATH_VIEW_PADDING_T 6.0f
+#define PATH_VIEW_PADDING_L 10
+#define PATH_VIEW_PADDING_T 6
+#define PATH_VIEW_HEIGHT (GUI_GetFontSize() + PATH_VIEW_PADDING_T * 2)
 #define PATH_TEXT_COLOR COLOR_SPRING_GREEN
 
-#define NAME_LISTVIEW_PADDING_L 2.0f
-#define NAME_LISTVIEW_PADDING_T 2.0f
-#define NAME_ITEMVIEW_PADDING_L 8.0f
-#define NAME_ITEMVIEW_PADDING_T 5.0f
+#define NAME_LISTVIEW_PADDING_L 2
+#define NAME_LISTVIEW_PADDING_T 2
+#define NAME_ITEMVIEW_PADDING_L 8
+#define NAME_ITEMVIEW_PADDING_T 5
+#define NAME_ITEMVIEW_HEIGHT (GUI_GetFontSize() + NAME_ITEMVIEW_PADDING_T * 2)
 #define NAME_TEXT_COLOR_FOLDER COLOR_WHITE
 #define NAME_TEXT_COLOR_FILE COLOR_GREEN
-#define NAME_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
+#define NAME_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS_BG
 
-#define PREVIEW_VIEW_PADDING 8.0f
+#define PREVIEW_VIEW_PADDING 8
 #define PREVIEW_REFRESH_DELAY_FRAMES 6
 
 // File list
@@ -86,7 +87,7 @@ static FileList file_list = {0};
 static int list_sort_mode = SORT_BY_NAME;
 
 // Position
-static int list_top_pos = 0, list_focus_pos = 0;
+static int listview_top_pos = 0, listview_focus_pos = 0;
 static int top_pos_saves[MAX_DIR_LEVELS] = {0}, focus_pos_saves[MAX_DIR_LEVELS] = {0};
 static int dir_level = 0;
 
@@ -95,68 +96,79 @@ static GUI_Texture *preview_tex = NULL;
 static int preview_need_refresh = 1;
 static int preview_refresh_delay_frames = 0;
 
-// Coord
-static int path_view_width, path_view_height;
-static int path_view_sx, path_view_sy, path_view_dx, path_view_dy;
+// Layout
+int layout_x, layout_y;
+int layout_w, layout_h;
 
-static int name_listview_width, name_listview_height;
-static int name_listview_sx, name_listview_sy, name_listview_dx, name_listview_dy;
-static int name_itemview_width, name_itemview_height;
-static int name_scroll_count = 0;
-static int list_max_draw_len;
+int path_textview_w, path_textview_h;
+int path_textview_x, path_textview_y, path_textview_dx, path_textview_dy;
 
-static int scrollbar_track_x, scrollbar_track_y;
-static int scrollbar_track_height;
+int name_listview_x, name_listview_y;
+int name_listview_w, name_listview_h;
+int name_itemview_w, name_itemview_h;
+int name_listview_n_draw_items;
+int name_scroll_count = 0;
 
-static int preview_view_sx, preview_view_sy, preview_view_dx, preview_view_dy;
-static int preview_view_width, preview_view_height;
-static int preview_tex_sx, preview_tex_sy;
-static float preview_tex_x_scale, preview_tex_y_scale;
+int name_scrollbar_track_x, name_scrollbar_track_y;
+int name_scrollbar_track_height;
+
+int preview_imageview_x, preview_imageview_y;
+int preview_imageview_w, preview_imageview_h;
+int preview_tex_x, preview_tex_y;
+float preview_tex_x_scale, preview_tex_y_scale;
 
 static void refreshLayout()
 {
-    path_view_width = ACTIVITY_FREE_DRAW_WIDTH;
-    path_view_height = GUI_GetFontSize() + PATH_VIEW_PADDING_T * 2;
-    path_view_sx = ACTIVITY_FREE_DRAW_SX;
-    path_view_sy = ACTIVITY_FREE_DRAW_SY;
-    path_view_dx = path_view_sx + path_view_width;
-    path_view_dy = path_view_sy + path_view_height;
+    int layout_x, layout_y;
+    int layout_w, layout_h;
+    int layout_dx, layout_dy;
 
-    preview_view_sy = path_view_dy + LAYOUT_CHILD_MARGIN;
-    preview_view_dy = ACTIVITY_FREE_DRAW_DY;
-    preview_view_height = preview_view_dy - preview_view_sy;
-    preview_view_width = preview_view_height;
-    preview_view_dx = ACTIVITY_FREE_DRAW_DX;
-    preview_view_sx = preview_view_dx - preview_view_width;
+    GUI_GetActivityLayoutXY(&about_activity, &layout_x, &layout_y);
+    GUI_GetActivityLayoutWH(&about_activity, &layout_w, &layout_h);
 
-    name_listview_sx = path_view_sx;
-    name_listview_sy = preview_view_sy;
-    name_listview_dx = preview_view_sx - LAYOUT_CHILD_MARGIN;
-    name_listview_dy = preview_view_dy;
-    name_listview_width = name_listview_dx - name_listview_sx;
-    name_listview_height = name_listview_dy - name_listview_sy;
+    layout_x = layout_x + GUI_DEF_MAIN_LAYOUT_PADDING;
+    layout_y = layout_y + GUI_DEF_MAIN_LAYOUT_PADDING;
+    layout_w = layout_w - (GUI_DEF_MAIN_LAYOUT_PADDING * 2);
+    layout_h = layout_h - (GUI_DEF_MAIN_LAYOUT_PADDING * 2);
+    layout_dx = layout_x + layout_w;
+    layout_dy = layout_y + layout_h;
 
-    name_itemview_width = name_listview_width - NAME_LISTVIEW_PADDING_L * 2;
-    name_itemview_height = GUI_GetFontSize() + NAME_ITEMVIEW_PADDING_T * 2;
-    list_max_draw_len = (name_listview_height - NAME_LISTVIEW_PADDING_T * 2) / name_itemview_height;
+    path_textview_x = layout_x;
+    path_textview_y = layout_y;
+    path_textview_w = layout_w;
+    path_textview_h = PATH_VIEW_HEIGHT;
 
-    scrollbar_track_x = name_listview_dx - GUI_SCROLLBAR_SIZE - 2;
-    scrollbar_track_y = name_listview_sy + 2;
-    scrollbar_track_height = name_listview_height - 4;
+    preview_imageview_y = path_textview_y + path_textview_h + LAYOUT_CHILD_MARGIN;
+    preview_imageview_h = layout_dy - preview_imageview_y;
+    preview_imageview_w = preview_imageview_h;
+    preview_imageview_x = layout_dx - preview_imageview_w;
+
+    name_listview_x = layout_x;
+    name_listview_y = preview_imageview_y;
+    name_listview_w = preview_imageview_x - LAYOUT_CHILD_MARGIN - name_listview_x;
+    name_listview_h = preview_imageview_h;
+
+    name_itemview_w = name_listview_w - NAME_LISTVIEW_PADDING_L * 2;
+    name_itemview_h = NAME_ITEMVIEW_HEIGHT;
+    name_listview_n_draw_items = (name_listview_h - NAME_LISTVIEW_PADDING_T * 2) / name_itemview_h;
+
+    name_scrollbar_track_x = name_listview_x + name_listview_w - GUI_DEF_SCROLLBAR_SIZE - 2;
+    name_scrollbar_track_y = name_listview_y + 2;
+    name_scrollbar_track_height = name_listview_h - 4;
 }
 
 int CurrentPathIsFile()
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
-    if (!entry || entry->is_folder)
-        return 0;
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
+    if (entry && !entry->is_folder)
+        return 1;
 
-    return 1;
+    return 0;
 }
 
 int MakeCurrentFileName(char *name)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
     if (!entry || !entry->name)
         return -1;
 
@@ -166,7 +178,7 @@ int MakeCurrentFileName(char *name)
 
 int MakeCurrentFilePath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
     if (!entry || !entry->name)
         return -1;
 
@@ -176,7 +188,7 @@ int MakeCurrentFilePath(char *path)
 
 int MakePreviewPath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
     if (!entry || !entry->name)
         return -1;
 
@@ -191,7 +203,7 @@ int MakePreviewPath(char *path)
 
 int MakeScreenshotPath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
     if (!entry || !entry->name)
         return -1;
 
@@ -215,10 +227,12 @@ GUI_Texture *GetDefaultPreviewTexture()
 {
     char path[MAX_PATH_LENGTH];
     MakePreviewPath(path);
-    return GUI_LoadPNGFile(path);
+    GUI_Texture *texture = GUI_LoadPNGFile(path);
+
+    return texture;
 }
 
-void Browser_RequestRefreshPreview(int urgent)
+void Browser_PushRefreshPreview(int urgent)
 {
     preview_need_refresh = 1;
     if (urgent)
@@ -234,86 +248,45 @@ void Browser_RequestRefreshPreview(int urgent)
     }
 }
 
-static void refreshPreview()
-{
-    if (preview_tex)
-    {
-        GUI_WaitRenderDone();
-        GUI_DestroyTexture(preview_tex);
-        preview_tex = NULL;
-    }
-
-    if (!CurrentPathIsFile())
-        return;
-
-    if (app_config.preview_path == TYPE_PREVIEW_PATH_AUTO)
-    {
-        if (misc_config.auto_save_load)
-            preview_tex = Emu_GetStateScreenshotTexture(-1);
-        if (!preview_tex)
-            preview_tex = GetDefaultPreviewTexture();
-    }
-    else if (app_config.preview_path == TYPE_PREVIEW_PATH_DEFAULT)
-    {
-        preview_tex = GetDefaultPreviewTexture();
-    }
-    else if (app_config.preview_path == TYPE_PREVIEW_PATH_SAVESTATE)
-    {
-        preview_tex = Emu_GetStateScreenshotTexture(-1);
-    }
-
-    if (!preview_tex)
-        return;
-
-    int tex_width = GUI_GetTextureWidth(preview_tex);
-    int tex_height = GUI_GetTextureHeight(preview_tex);
-    int max_width = preview_view_width - PREVIEW_VIEW_PADDING * 2;
-    int max_height = preview_view_height - PREVIEW_VIEW_PADDING * 2;
-    int width = max_width;
-    int height = max_height;
-    if (app_config.preview_style == TYPE_PREVIEW_STYLE_PRESERVE_FULL)
-    {
-        float ratio = (float)tex_width / (float)tex_height;
-        height = width / ratio;
-        if (height > max_height)
-        {
-            height = max_height;
-            width = height * ratio;
-        }
-    }
-    preview_tex_sx = preview_view_sx + PREVIEW_VIEW_PADDING + (max_width - width) / 2;
-    preview_tex_sy = preview_view_sy + PREVIEW_VIEW_PADDING + (max_height - height) / 2;
-    preview_tex_x_scale = (float)width / (float)tex_width;
-    preview_tex_y_scale = (float)height / (float)tex_height;
-}
-
 static void moveFileListPos(int type)
 {
     static int old_dir_level = -1;
     static int old_focus_pos = -1;
 
-    MoveListPos(type, &list_top_pos, &list_focus_pos, file_list.length, list_max_draw_len);
-    if (old_dir_level != dir_level || old_focus_pos != list_focus_pos)
+    MoveListPos(type, &listview_top_pos, &listview_focus_pos, file_list.length, name_listview_n_draw_items);
+    if (old_dir_level != dir_level || old_focus_pos != listview_focus_pos)
     {
         name_scroll_count = 0;
-        Browser_RequestRefreshPreview(0);
-        Settting_SetStateSelectId(0);
+        Browser_PushRefreshPreview(0);
+        Setting_SetStateSelectId(0);
     }
+
+    if (CurrentPathIsFile())
+    {
+        button_instructions[1].instruction = START_GAME;
+        button_instructions[2].visible = 1;
+    }
+    else
+    {
+        button_instructions[1].instruction = OPEN_DIR;
+        button_instructions[2].visible = 0;
+    }
+
     old_dir_level = dir_level;
-    old_focus_pos = list_focus_pos;
+    old_focus_pos = listview_focus_pos;
 }
 
 static void dirLevelUp()
 {
     if (dir_level < MAX_DIR_LEVELS - 1)
     {
-        top_pos_saves[dir_level] = list_top_pos;
-        focus_pos_saves[dir_level] = list_focus_pos;
+        top_pos_saves[dir_level] = listview_top_pos;
+        focus_pos_saves[dir_level] = listview_focus_pos;
         dir_level++;
     }
 
-    list_top_pos = 0;
-    list_focus_pos = 0;
+    listview_top_pos = 0;
+    listview_focus_pos = 0;
 }
 
 static void dirLevelDown()
@@ -347,8 +320,8 @@ DIR_UP_RETURN:
     if (dir_level < 0)
         dir_level = 0;
 
-    list_top_pos = top_pos_saves[dir_level];
-    list_focus_pos = focus_pos_saves[dir_level];
+    listview_top_pos = top_pos_saves[dir_level];
+    listview_focus_pos = focus_pos_saves[dir_level];
 }
 
 static int setFocusByName(const char *name)
@@ -357,7 +330,7 @@ static int setFocusByName(const char *name)
     if (pos < 0 || pos >= file_list.length)
         return -1;
 
-    list_focus_pos = pos;
+    listview_focus_pos = pos;
     moveFileListPos(TYPE_MOVE_NONE);
     return 0;
 }
@@ -454,136 +427,236 @@ int Browser_ChangeDirByFile(const char *path)
     return Browser_ChangeDirByPath(lastfile);
 }
 
-static void handleFile(FileListEntry *file_entry)
+static void backToParentDir()
 {
-    char path[MAX_PATH_LENGTH];
-    snprintf(path, MAX_PATH_LENGTH, "%s%s", file_list.path, file_entry->name);
-
-    if (Emu_LoadGame(path) < 0)
-        return;
-    if (misc_config.auto_save_load)
-        Emu_LoadState(-1);
+    if (dir_level > 0)
+    {
+        dirLevelDown();
+        refreshFileList();
+    }
 }
 
-static void handleFolder(FileListEntry *file_entry)
+static void enterChildDir(FileListEntry *entry)
 {
     if (dir_level == 0)
     {
-        strcpy(file_list.path, file_entry->name);
+        strcpy(file_list.path, entry->name);
     }
     else
     {
         if (dir_level > 1)
             AddEndSlash(file_list.path);
-        strcat(file_list.path, file_entry->name);
+        strcat(file_list.path, entry->name);
     }
 
     dirLevelUp();
     refreshFileList();
 }
 
+static void startGame(FileListEntry *entry)
+{
+    EmuGameInfo info;
+    snprintf(info.path, MAX_PATH_LENGTH, "%s%s", file_list.path, entry->name);
+    info.state_num = -2;
+    Emu_StartGame(&info);
+}
+
+static void makePreviewDisplayWH(int *w, int *h, int max_w, int max_h)
+{
+    float ratio;
+
+    switch (app_config.preview_style)
+    {
+    case TYPE_PREVIEW_STYLE_FULL_STRETCH:
+        *w = max_w;
+        *h = max_h;
+        return;
+    case TYPE_PREVIEW_STYLE_FULL_4_3:
+        ratio = 4.f / 3.f;
+        break;
+    case TYPE_PREVIEW_STYLE_FULL_3_2:
+        ratio = 3.f / 2.f;
+        break;
+    default:
+        ratio = (float)*w / (float)*h;
+        break;
+    }
+
+    // new_w / new_h = w / h
+    // ==> new_w = new_h * (w / h)
+    // ==> new_h = new_w / (w / h)
+
+    // Full max
+    int new_w = max_w;
+    int new_h = (float)new_w / ratio;
+    // Fix above
+    if (new_h > max_h)
+    {
+        new_h = max_h;
+        new_w = (float)new_h * ratio;
+    }
+
+    *w = new_w;
+    *h = new_h;
+}
+
+static void refreshPreviewLayout()
+{
+    preview_tex_x = preview_imageview_x + PREVIEW_VIEW_PADDING;
+    preview_tex_y = preview_imageview_y + PREVIEW_VIEW_PADDING;
+    int max_w = preview_imageview_w - PREVIEW_VIEW_PADDING * 2;
+    int max_h = preview_imageview_h - PREVIEW_VIEW_PADDING * 2;
+    int tex_w = GUI_GetTextureWidth(preview_tex);
+    int tex_h = GUI_GetTextureHeight(preview_tex);
+    int new_w = tex_w;
+    int new_h = tex_h;
+    makePreviewDisplayWH(&new_w, &new_h, max_w, max_h);
+    preview_tex_x += ((max_w - new_w) / 2);
+    preview_tex_y += ((max_h - new_h) / 2);
+    preview_tex_x_scale = (float)new_w / (float)tex_w;
+    preview_tex_y_scale = (float)new_h / (float)tex_h;
+}
+
+static void refreshPreview()
+{
+    if (preview_tex)
+    {
+        GUI_WaitRenderDone();
+        GUI_DestroyTexture(preview_tex);
+        preview_tex = NULL;
+    }
+
+    if (!CurrentPathIsFile())
+        return;
+
+    if (app_config.preview_path == TYPE_PREVIEW_PATH_AUTO)
+    {
+        if (misc_config.auto_save_load)
+            preview_tex = Emu_GetStateScreenshotTexture(-1);
+        if (!preview_tex)
+            preview_tex = GetDefaultPreviewTexture();
+    }
+    else if (app_config.preview_path == TYPE_PREVIEW_PATH_DEFAULT)
+    {
+        preview_tex = GetDefaultPreviewTexture();
+    }
+    else if (app_config.preview_path == TYPE_PREVIEW_PATH_SAVESTATE)
+    {
+        preview_tex = Emu_GetStateScreenshotTexture(-1);
+    }
+
+    if (preview_tex)
+        refreshPreviewLayout();
+}
+
 static void checkPreview()
 {
-    if (preview_need_refresh)
+    if (!preview_need_refresh)
+        return;
+
+    if (preview_refresh_delay_frames > 0)
     {
-        if (preview_refresh_delay_frames > 0)
-        {
-            preview_refresh_delay_frames--;
-        }
-        else
-        {
-            refreshPreview();
-            preview_need_refresh = 0;
-        }
+        preview_refresh_delay_frames--;
+    }
+    else
+    {
+        refreshPreview();
+        preview_need_refresh = 0;
     }
 }
 
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    int sx, sy;
-    int width, height;
+    int x, y;
+    int w, h, clip_w, clip_h;
 
     checkPreview();
 
     // Draw path bg
-    GUI_DrawFillRectangle(path_view_sx, path_view_sy, path_view_width, path_view_height, GUI_DEFALUT_BG_COLOR);
+    GUI_DrawFillRectangle(path_textview_x, path_textview_y, path_textview_w, path_textview_h, GUI_DEF_COLOR_BG);
     // Draw name bg
-    GUI_DrawFillRectangle(name_listview_sx, name_listview_sy, name_listview_width, name_listview_height, GUI_DEFALUT_BG_COLOR);
+    GUI_DrawFillRectangle(name_listview_x, name_listview_y, name_listview_w, name_listview_h, GUI_DEF_COLOR_BG);
     // Draw preview bg
-    GUI_DrawFillRectangle(preview_view_sx, preview_view_sy, preview_view_width, preview_view_height, GUI_DEFALUT_BG_COLOR);
+    GUI_DrawFillRectangle(preview_imageview_x, preview_imageview_y, preview_imageview_w, preview_imageview_h, GUI_DEF_COLOR_BG);
 
     // Draw path
-    sx = path_view_sx + PATH_VIEW_PADDING_L;
-    sy = path_view_sy + PATH_VIEW_PADDING_T;
-    width = path_view_width - PATH_VIEW_PADDING_L * 2;
-    height = path_view_height - PATH_VIEW_PADDING_T * 2;
+    x = path_textview_x + PATH_VIEW_PADDING_L;
+    y = path_textview_y + PATH_VIEW_PADDING_T;
+    clip_w = path_textview_w - PATH_VIEW_PADDING_L * 2;
+    clip_h = path_textview_h;
     GUI_EnableClipping();
-    GUI_SetClipRectangle(sx, sy, width, height);
-    GUI_DrawText(sx, sy, PATH_TEXT_COLOR, file_list.path);
+    GUI_SetClipRectangle(x, y, clip_w, clip_h);
+    GUI_DrawText(x, y, PATH_TEXT_COLOR, file_list.path);
     GUI_DisableClipping();
 
     // Draw FileListEntries
-    FileListEntry *file_entry = FileListGetEntryByNumber(&file_list, list_top_pos);
+    FileListEntry *file_entry = FileListGetEntryByNumber(&file_list, listview_top_pos);
 
     if (file_entry)
     {
-        int item_sx = name_listview_sx + NAME_LISTVIEW_PADDING_L;
-        int item_sy = name_listview_sy + NAME_LISTVIEW_PADDING_T;
-        int text_sx = item_sx + NAME_ITEMVIEW_PADDING_L;
-        int text_width = name_itemview_width - NAME_ITEMVIEW_PADDING_L * 2;
-        int text_height = name_itemview_height - NAME_ITEMVIEW_PADDING_T * 2;
-        int drawn_len = 0;
+        int itemview_max_dy = name_listview_y + name_listview_h - NAME_LISTVIEW_PADDING_T;
+        int itemview_x = name_listview_x + NAME_LISTVIEW_PADDING_L;
+        int itemview_y = name_listview_y + NAME_LISTVIEW_PADDING_T;
+        uint32_t color;
 
         int i;
-        for (i = list_top_pos; i < file_list.length; i++)
+        for (i = listview_top_pos; i < file_list.length; i++)
         {
-            if (drawn_len >= list_max_draw_len)
+            if (itemview_y >= itemview_max_dy)
                 break;
 
-            sx = text_sx;
-            sy = item_sy + NAME_ITEMVIEW_PADDING_T;
-
-            uint32_t color;
             if (file_entry->is_folder)
                 color = NAME_TEXT_COLOR_FOLDER;
             else
                 color = NAME_TEXT_COLOR_FILE;
 
-            if (i == list_focus_pos)
-            {
-                GUI_DrawFillRectangle(item_sx, item_sy, name_itemview_width, name_itemview_height, NAME_ITEMVIEW_COLOR_FOCUS_BG);
+            GUI_EnableClipping();
 
-                width = GUI_GetTextWidth(file_entry->name);
-                if (width > text_width)
+            clip_h = name_itemview_h;
+            if (clip_h > itemview_max_dy - itemview_y)
+                clip_h = itemview_max_dy - itemview_y;
+
+            if (i == listview_focus_pos)
+            {
+                clip_w = name_itemview_w;
+                GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
+                GUI_DrawFillRectangle(itemview_x, itemview_y, name_itemview_w, name_itemview_h, NAME_ITEMVIEW_COLOR_FOCUS_BG);
+
+                // Name scroll
+                clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
+                w = GUI_GetTextWidth(file_entry->name);
+                if (w > clip_w)
                 {
                     name_scroll_count++;
                     if (name_scroll_count > 60) // Start scroll, the delay is 60 frames
                     {
                         int effect_count = name_scroll_count - 60;
-                        if (effect_count < width) // Enable scroll, set the coord x offset
-                            sx -= effect_count;
-                        else if (effect_count < width + 30) // No scroll, fade-in in 30 frames
-                            color = (color & 0x00FFFFFF) | ((((color >> 24) * (effect_count - width)) / 30) << 24);
+                        if (effect_count < w) // Enable scroll, set the coord x offset
+                            x -= effect_count;
+                        else if (effect_count < w + 30) // No scroll, fade-in in 30 frames
+                            color = (color & 0x00FFFFFF) | ((((color >> 24) * (effect_count - w)) / 30) << 24);
                         else // No scroll, reset the scroll count for loop
                             name_scroll_count = 0;
                     }
                 }
             }
 
-            GUI_EnableClipping();
-            GUI_SetClipRectangle(text_sx, sy, text_width, text_height);
-            GUI_DrawText(sx, sy, color, file_entry->name);
+            x = itemview_x + NAME_ITEMVIEW_PADDING_L;
+            y = itemview_y + NAME_ITEMVIEW_PADDING_T;
+            clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
+            GUI_SetClipRectangle(x, y, clip_w, clip_h);
+            GUI_DrawText(x, y, color, file_entry->name);
+
             GUI_DisableClipping();
 
             file_entry = file_entry->next;
-            item_sy += name_itemview_height;
-            drawn_len++;
+            itemview_y += name_itemview_h;
         }
 
-        GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, file_list.length, list_max_draw_len, list_top_pos, 0);
+        GUI_DrawVerticalScrollbar(name_scrollbar_track_x, name_scrollbar_track_y, name_scrollbar_track_height, file_list.length, name_listview_n_draw_items, listview_top_pos, 0);
 
         if (preview_tex)
-            GUI_DrawTextureScale(preview_tex, preview_tex_sx, preview_tex_sy, preview_tex_x_scale, preview_tex_y_scale);
+            GUI_DrawTextureScale(preview_tex, preview_tex_x, preview_tex_y, preview_tex_x_scale, preview_tex_y_scale);
     }
 }
 
@@ -592,23 +665,27 @@ static void deleteGameCallback(GUI_Dialog *dialog)
     char path[MAX_PATH_LENGTH];
     if (MakeCurrentFilePath(path) < 0)
         return;
+
     sceIoRemove(path);
-    GUI_CloseAllDialogs();
+    GUI_CloseDialog(dialog->prev);
+    AlertDialog_Dismiss(dialog);
     refreshFileList(&file_list);
-    Browser_RequestRefreshPreview(0);
+    Browser_PushRefreshPreview(0);
 }
 
 static void deleteAutoStateCallback(GUI_Dialog *dialog)
 {
     Emu_DeleteState(-1);
-    GUI_CloseAllDialogs();
-    Browser_RequestRefreshPreview(0);
+    GUI_CloseDialog(dialog->prev);
+    AlertDialog_Dismiss(dialog);
+    Browser_PushRefreshPreview(0);
 }
 
 static void deleteSrmCallback(GUI_Dialog *dialog)
 {
     Emu_DeleteSrm();
-    GUI_CloseAllDialogs();
+    GUI_CloseDialog(dialog->prev);
+    AlertDialog_Dismiss(dialog);
 }
 
 static void optionMenuPositiveCallback(GUI_Dialog *dialog)
@@ -621,11 +698,11 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
     {
     case INDEX_OPTION_ITEM_LOAD_GAME:
     {
-        FileListEntry *entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
+        FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
         if (entry && !entry->is_folder)
         {
-            GUI_CloseAllDialogs();
-            handleFile(entry);
+            GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
+            startGame(entry);
         }
     }
     break;
@@ -634,11 +711,11 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Creat();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_GAME]);
-            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteGameCallback);
-            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
-            GUI_OpenDialog(tip_dialog);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_GAME]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteGameCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_Show(tip_dialog);
         }
     }
     break;
@@ -647,11 +724,11 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Creat();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_AUTO_STATE]);
-            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteAutoStateCallback);
-            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
-            GUI_OpenDialog(tip_dialog);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_AUTO_STATE]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteAutoStateCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_Show(tip_dialog);
         }
     }
     break;
@@ -660,16 +737,47 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
         if (CurrentPathIsFile())
         {
             GUI_Dialog *tip_dialog = AlertDialog_Creat();
-            AlertDialog_SetTitle(tip_dialog, cur_lang[TIP]);
-            AlertDialog_SetMessage(tip_dialog, cur_lang[TIP_DELETE_SAVEFILE]);
-            AlertDialog_SetPositiveCallback(tip_dialog, cur_lang[CONFIRM], deleteSrmCallback);
-            AlertDialog_SetNegativeCallback(tip_dialog, cur_lang[CANCEL], NULL);
-            GUI_OpenDialog(tip_dialog);
+            AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
+            AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_ASK_DELETE_SAVEFILE]);
+            AlertDialog_SetPositiveButton(tip_dialog, cur_lang[CONFIRM], deleteSrmCallback);
+            AlertDialog_SetNegativeButton(tip_dialog, cur_lang[CANCEL], NULL);
+            AlertDialog_Show(tip_dialog);
         }
     }
     break;
     default:
         break;
+    }
+}
+
+static void openOptionMenu()
+{
+    name_scroll_count = 0;
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
+    if (!entry || entry->is_folder)
+        return;
+
+    GUI_Dialog *dialog = AlertDialog_Creat();
+    AlertDialog_SetTitle(dialog, cur_lang[TITLE_MENU]);
+    int n_items = N_OPTION_ITEMS;
+    char **items = GUI_GetStringArrayByIdArray(option_items, n_items);
+    AlertDialog_SetItems(dialog, items, n_items);
+    free(items);
+    AlertDialog_SetPositiveButton(dialog, cur_lang[CONFIRM], optionMenuPositiveCallback);
+    AlertDialog_SetNegativeButton(dialog, cur_lang[CANCEL], NULL);
+    AlertDialog_Show(dialog);
+}
+
+static void onItemClick()
+{
+    name_scroll_count = 0;
+    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
+    if (entry)
+    {
+        if (entry->is_folder)
+            enterChildDir(entry);
+        else
+            startGame(entry);
     }
 }
 
@@ -692,49 +800,31 @@ static void ctrlActivityCallback(GUI_Activity *activity)
         moveFileListPos(TYPE_MOVE_RIGHT);
     }
 
-    if (pressed_pad[PAD_TRIANGLE])
+    if (released_pad[PAD_TRIANGLE])
     {
-        GUI_Dialog *dialog = AlertDialog_Creat();
-        AlertDialog_SetTitle(dialog, cur_lang[MENU]);
-        int list_len = N_OPTION_ITEMS;
-        char **list = GUI_GetStringListByLangIdList(option_items, list_len);
-        AlertDialog_SetMenu(dialog, list, list_len);
-        AlertDialog_SetPositiveCallback(dialog, cur_lang[CONFIRM], optionMenuPositiveCallback);
-        AlertDialog_SetNegativeCallback(dialog, cur_lang[CANCEL], NULL);
-        GUI_OpenDialog(dialog);
+        openOptionMenu();
     }
-    else if (pressed_pad[PAD_CANCEL])
+    else if (released_pad[PAD_CANCEL])
     {
-        if (dir_level > 0)
-        {
-            dirLevelDown();
-            refreshFileList();
-        }
+        backToParentDir();
     }
-    else if (pressed_pad[PAD_ENTER])
+    else if (released_pad[PAD_ENTER])
     {
-        name_scroll_count = 0;
-        FileListEntry *file_entry = FileListGetEntryByNumber(&file_list, list_focus_pos);
-        if (file_entry)
-        {
-            if (file_entry->is_folder)
-                handleFolder(file_entry);
-            else
-                handleFile(file_entry);
-        }
+        onItemClick();
     }
-    else if (pressed_pad[PAD_SELECT])
+    else if (released_pad[PAD_SELECT])
     {
-        GUI_EnterActivity(&about_activity);
+        GUI_StartActivity(&about_activity);
     }
-    else if (pressed_pad[PAD_START])
+    else if (released_pad[PAD_START])
     {
         Browser_ChangeDirByFile(LASTFILE_PATH);
     }
 }
 
-static int enterActivityCallback(GUI_Activity *activity)
+static int startActivityCallback(GUI_Activity *activity)
 {
+    browser_activity.wallpaper = GUI_GetDefaultWallpaper();
     refreshLayout();
 
     FileListEmpty(&file_list);

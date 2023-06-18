@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "List/text_list.h"
+#include "list/string_list.h"
 #include "alert_dialog.h"
 #include "gui.h"
 #include "utils.h"
@@ -31,23 +31,22 @@
 #define TIP_ITEMVIEW_HEIGHT (GUI_GetFontSize() + TIP_ITEMVIEW_PADDING_T * 2)
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2)
 
-#define SCREEN_COLOR_VAGUE COLOR_ALPHA(COLOR_BLACK, 0x3F)
+#define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x3F)
 #define STATEBAR_COLOR_BG COLOR_ALPHA(0xFF473800, 0xFF)
 #define DIALOG_COLOR_BG COLOR_ALPHA(0xFF2B2100, 0xFF)
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xBF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 
-#define MAX_COLOR_GRADUAL_COUNT 16
-#define BEGIN_COLOR_GRADUAL_COUNT 0
-#define STEP_COLOR_GRADUAL_COUNT 1
+#define MAX_DIALOG_SCALE_COUNT 12
 
 static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
+static int openDialogCallback(GUI_Dialog *dialog);
 static int closeDialogCallback(GUI_Dialog *dialog);
 
 int GetUTF8Count(const char *utf8)
 {
-    if ((utf8[0] & 0xF0) == 0xE0) // & 0xF0(11110000) => 0xE0(11100000)
+    if ((utf8[0] & 0xF0) == 0xE0) // 0xF0(11110000) => 0xE0(11100000)
         return 3;
     else if ((utf8[0] & 0xE0) == 0xC0) // 0xE0(11100000) => 0xC0(11000000)
         return 2;
@@ -71,16 +70,18 @@ static uint32_t getGradualColor(uint32_t color, int gradual, int max)
     return (rgb | (a << 24));
 }
 
-static int convertStringToListByWidth(TextList *list, const char *str, int limit_width)
+static int convertStringToListByWidth(StringList *list, const char *str, int limit_width)
 {
     if (!list || !str)
         return 0;
 
     int len = strlen(str);
     char *buf = malloc(len + 1);
+    if (!buf)
+        return 0;
     strcpy(buf, str);
 
-    char *line = buf;
+    char *start = buf;
     char *space = buf;
     char *finish = buf + len;
     char *p = buf;
@@ -102,20 +103,21 @@ static int convertStringToListByWidth(TextList *list, const char *str, int limit
 
         if (*p == '\n' || width + ch_w > limit_width)
         {
-            if (isEnglishCharacter(*p) && (p > line && isEnglishCharacter(*(p - 1))) && space > line)
+            // Check english word truncated (if current character and space is not in the line's first)
+            if ((p > start && space > start) && (isEnglishCharacter(*p) && isEnglishCharacter(*(p - 1))))
             {
-                // Go back to the last space
+                // Go back to the last space, current word will be in the next line
                 p = space + 1;
-                count = 0;
-                ch_w = 0;
+                count = 0; // Set to zero for skip auto step
+                ch_w = 0;  // Set to zero for skip auto step
             }
             ch = *p;
             *p = '\0';
-            TextListAddEntryEx(list, line);
+            StringListAdd(list, start);
             *p = ch;
             if (*p == '\n')
                 p++;
-            line = p;
+            start = p;
             space = p;
             if (width > max_width)
                 max_width = width;
@@ -129,8 +131,8 @@ static int convertStringToListByWidth(TextList *list, const char *str, int limit
         }
         p += count;
     }
-    if (line < finish)
-        TextListAddEntryEx(list, line);
+    if (start < finish)
+        StringListAdd(list, start);
 
     free(buf);
     return max_width;
@@ -153,19 +155,21 @@ GUI_Dialog *AlertDialog_Creat()
     data->auto_free = 1;
     data->dialog_width = DIALOG_MIN_WIDTH;
     data->dialog_height = DIALOG_MIN_HEIGHT;
-    data->color_gradual = BEGIN_COLOR_GRADUAL_COUNT;
     data->dialog = dialog;
-    dialog->userdata = data;
+    
+    dialog->type = TYPE_GUI_DIALOG_ALERT;
     dialog->drawCallback = drawDialogCallback;
     dialog->ctrlCallBack = ctrlDialogCallback;
+    dialog->openCallback = openDialogCallback;
     dialog->closeCallback = closeDialogCallback;
+    dialog->userdata = data;
 
     return dialog;
 }
 
 void AlertDialog_Destroy(GUI_Dialog *dialog)
 {
-    if (!dialog || dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
@@ -177,23 +181,34 @@ void AlertDialog_Destroy(GUI_Dialog *dialog)
         free(data->positive_text);
     if (data->negative_text)
         free(data->negative_text);
-    TextListEmpty(&data->list);
+    if (data->neutral_text)
+        free(data->neutral_text);
+    StringListEmpty(&data->list);
     free(data);
     free(dialog);
 }
 
 void AlertDialog_SetAutoFree(GUI_Dialog *dialog, int auto_free)
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
     data->auto_free = auto_free;
 }
 
+void AlertDialog_SetUserdata(GUI_Dialog *dialog, void *userdata)
+{
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
+        return;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    data->userdata = userdata;
+}
+
 void AlertDialog_SetTitle(GUI_Dialog *dialog, char *title)
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
@@ -206,18 +221,19 @@ void AlertDialog_SetTitle(GUI_Dialog *dialog, char *title)
 
 void AlertDialog_SetMessage(GUI_Dialog *dialog, char *message)
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
-    data->type = TYPE_DIALOG_TIP;
-    TextListEmpty(&data->list);
+    data->type = TYPE_ALERT_DIALOG_TIP;
+    StringListEmpty(&data->list);
     data->dialog_width = DIALOG_MIN_WIDTH;
     data->dialog_height = DIALOG_MIN_HEIGHT;
 
     if (!message)
         return;
 
+    int item_height = TIP_ITEMVIEW_HEIGHT;
     int limit_width = DIALOG_MAX_WIDTH - TIP_LISTVIEW_PADDING_L * 2 - TIP_ITEMVIEW_PADDING_L * 2;
     int max_width = convertStringToListByWidth(&data->list, message, limit_width);
 
@@ -229,41 +245,45 @@ void AlertDialog_SetMessage(GUI_Dialog *dialog, char *message)
     else
         data->dialog_width = max_width;
 
-    int max_height = data->list.length * TIP_ITEMVIEW_HEIGHT + TIP_LISTVIEW_PADDING_T * 2 + STATEBAR_HEIGHT * 2;
+    int max_height = data->list.length * item_height + TIP_LISTVIEW_PADDING_T * 2 + STATEBAR_HEIGHT * 2;
     if (max_height > DIALOG_MAX_HEIGHT)
         data->dialog_height = DIALOG_MAX_HEIGHT;
     else if (max_height < DIALOG_MIN_HEIGHT)
         data->dialog_height = DIALOG_MIN_HEIGHT;
     else
         data->dialog_height = max_height;
+
+    int listview_h = data->dialog_height - STATEBAR_HEIGHT * 2;
+    data->listview_n_draw_items = (listview_h - TIP_LISTVIEW_PADDING_T * 2) / item_height;
 }
 
-void AlertDialog_SetMenu(GUI_Dialog *dialog, char **list, int list_len)
+void AlertDialog_SetItems(GUI_Dialog *dialog, char **items, int n_items)
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
-    data->type = TYPE_DIALOG_MENU;
-    TextListEmpty(&data->list);
+    data->type = TYPE_ALERT_DIALOG_MENU;
+    StringListEmpty(&data->list);
     data->dialog_width = DIALOG_MIN_WIDTH;
     data->dialog_height = DIALOG_MIN_HEIGHT;
 
-    if (!list)
+    if (!items)
         return;
 
+    int item_height = TIP_ITEMVIEW_HEIGHT;
     int limit_width = DIALOG_MAX_WIDTH - MENU_LISTVIEW_PADDING_L * 2 - MENU_ITEMVIEW_PADDING_L * 2;
     int max_width = 0;
     int i;
-    for (i = 0; i < list_len; i++)
+    for (i = 0; i < n_items; i++)
     {
         if (max_width < limit_width)
         {
-            int w = GUI_GetTextWidth(list[i]);
+            int w = GUI_GetTextWidth(items[i]);
             if (w > max_width)
                 max_width = w;
         }
-        TextListAddEntryEx(&data->list, list[i]);
+        StringListAdd(&data->list, items[i]);
     }
 
     max_width += (MENU_LISTVIEW_PADDING_L * 2 + MENU_ITEMVIEW_PADDING_L * 2);
@@ -274,44 +294,69 @@ void AlertDialog_SetMenu(GUI_Dialog *dialog, char **list, int list_len)
     else
         data->dialog_width = max_width;
 
-    int max_height = data->list.length * MENU_ITEMVIEW_HEIGHT + MENU_LISTVIEW_PADDING_T * 2 + STATEBAR_HEIGHT * 2;
+    int max_height = data->list.length * item_height + MENU_LISTVIEW_PADDING_T * 2 + STATEBAR_HEIGHT * 2;
     if (max_height > DIALOG_MAX_HEIGHT)
         data->dialog_height = DIALOG_MAX_HEIGHT;
     else if (max_height < DIALOG_MIN_HEIGHT)
         data->dialog_height = DIALOG_MIN_HEIGHT;
     else
         data->dialog_height = max_height;
+
+    int listview_h = data->dialog_height - STATEBAR_HEIGHT * 2;
+    data->listview_n_draw_items = (listview_h - TIP_LISTVIEW_PADDING_T * 2) / item_height;
 }
 
-void AlertDialog_SetPositiveCallback(GUI_Dialog *dialog, char *name, void (*callback)(GUI_Dialog *dialog))
+void AlertDialog_SetPositiveButton(GUI_Dialog *dialog, char *name, void (*callback)(GUI_Dialog *dialog))
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
     if (data->positive_text)
         free(data->positive_text);
-    data->positive_text = malloc(strlen(name) + 1);
-    strcpy(data->positive_text, name);
+    if (name)
+    {
+        data->positive_text = malloc(strlen(name) + 1);
+        strcpy(data->positive_text, name);
+    }
     data->positiveCallback = callback;
 }
 
-void AlertDialog_SetNegativeCallback(GUI_Dialog *dialog, char *name, void (*callback)(GUI_Dialog *dialog))
+void AlertDialog_SetNegativeButton(GUI_Dialog *dialog, char *name, void (*callback)(GUI_Dialog *dialog))
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
     if (data->negative_text)
         free(data->negative_text);
-    data->negative_text = malloc(strlen(name) + 1);
-    strcpy(data->negative_text, name);
+    if (name)
+    {
+        data->negative_text = malloc(strlen(name) + 1);
+        strcpy(data->negative_text, name);
+    }
     data->negativeCallback = callback;
+}
+
+void AlertDialog_setNeutralButton(GUI_Dialog *dialog, char *name, void (*callback)(GUI_Dialog *dialog))
+{
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
+        return;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    if (data->neutral_text)
+        free(data->neutral_text);
+    if (name)
+    {
+        data->neutral_text = malloc(strlen(name) + 1);
+        strcpy(data->neutral_text, name);
+    }
+    data->neutralCallback = callback;
 }
 
 void AlertDialog_SetFreeCallback(GUI_Dialog *dialog, void (*callback)(GUI_Dialog *dialog))
 {
-    if (!dialog || !dialog->userdata)
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
@@ -322,13 +367,15 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 {
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
 
-    int dialog_w = data->dialog_width;
-    int dialog_h = data->dialog_height;
+    float percent = ((float)data->dialog_scale_count / (float)MAX_DIALOG_SCALE_COUNT);
+
+    int dialog_w = data->dialog_width * percent;
+    int dialog_h = data->dialog_height * percent;
     int dialog_x = (GUI_SCREEN_WIDTH - dialog_w) / 2;
     int dialog_y = (GUI_SCREEN_HEIGHT - dialog_h) / 2;
 
     int statebar_w = dialog_w;
-    int statebar_h = STATEBAR_HEIGHT;
+    int statebar_h = STATEBAR_HEIGHT * percent;
 
     int top_bar_x = dialog_x;
     int top_bar_y = dialog_y;
@@ -341,7 +388,11 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     int bottom_bar_x = dialog_x;
     int bottom_bar_y = listview_y + listview_h;
 
-    uint32_t screen_color = getGradualColor(SCREEN_COLOR_VAGUE, data->color_gradual, MAX_COLOR_GRADUAL_COUNT);
+    uint32_t overlay_color;
+    if (data->dialog_scale_count < MAX_DIALOG_SCALE_COUNT)
+        overlay_color = getGradualColor(OVERLAY_COLOR, data->dialog_scale_count, MAX_DIALOG_SCALE_COUNT);
+    else
+        overlay_color = OVERLAY_COLOR;
     uint32_t dialog_color = DIALOG_COLOR_BG;
     uint32_t statebar_color = STATEBAR_COLOR_BG;
     uint32_t text_color = DIALOG_COLOR_TEXT;
@@ -350,19 +401,31 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     int x, y;
     int clip_w, clip_h;
 
-    if (data->color_gradual < MAX_COLOR_GRADUAL_COUNT)
-        data->color_gradual += STEP_COLOR_GRADUAL_COUNT;
-    if (data->color_gradual > MAX_COLOR_GRADUAL_COUNT)
-        data->color_gradual = MAX_COLOR_GRADUAL_COUNT;
-
-    // Draw screen vague
-    GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, screen_color);
+    // Draw overlay
+    GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, overlay_color);
     // Draw dialog bg
     GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
     // Draw top bar bg
     GUI_DrawFillRectangle(top_bar_x, top_bar_y, statebar_w, statebar_h, statebar_color);
     // Draw bottom bar bg
     GUI_DrawFillRectangle(bottom_bar_x, bottom_bar_y, statebar_w, statebar_h, statebar_color);
+
+    if (data->status == TYPE_DIALOG_STATUS_SHOW)
+    {
+        if (data->dialog_scale_count < MAX_DIALOG_SCALE_COUNT)
+        {
+            data->dialog_scale_count++;
+            return;
+        }
+    }
+    else
+    {
+        if (data->dialog_scale_count > 0)
+            data->dialog_scale_count--;
+        else
+            GUI_CloseDialog(dialog);
+        return;
+    }
 
     // Draw title
     if (data->title)
@@ -380,14 +443,14 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     }
 
     // Draw list
-    TextListEntry *entry = TextListGetEntryByNumber(&data->list, data->top_pos);
+    StringListEntry *entry = StringListGetEntryByNumber(&data->list, data->top_pos);
     if (entry)
     {
         int listview_padding_l, listview_padding_t;
         int itemview_padding_l, itemview_padding_t;
         int itemview_h;
 
-        if (data->type == TYPE_DIALOG_MENU)
+        if (data->type == TYPE_ALERT_DIALOG_MENU)
         {
             listview_padding_l = MENU_LISTVIEW_PADDING_L;
             listview_padding_t = MENU_LISTVIEW_PADDING_T;
@@ -422,14 +485,14 @@ static void drawDialogCallback(GUI_Dialog *dialog)
             GUI_EnableClipping();
 
             GUI_SetClipRectangle(itemview_x, itemview_y, itemview_w, clip_h);
-            if (data->type == TYPE_DIALOG_MENU && i == data->focus_pos)
+            if (data->type == TYPE_ALERT_DIALOG_MENU && i == data->focus_pos)
                 GUI_DrawFillRectangle(itemview_x, itemview_y, clip_w, clip_h, focus_color);
 
             x = itemview_x + itemview_padding_l;
             y = itemview_y + itemview_padding_t;
             clip_w = itemview_w - itemview_padding_l * 2;
             GUI_SetClipRectangle(x, itemview_y, clip_w, clip_h);
-            GUI_DrawText(x, y, text_color, entry->text);
+            GUI_DrawText(x, y, text_color, entry->string);
 
             GUI_DisableClipping();
             itemview_y += itemview_h;
@@ -437,15 +500,10 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         }
 
         // Draw scrollbar
-        int track_x = listview_x + listview_w - GUI_SCROLLBAR_SIZE - 2;
+        int track_x = listview_x + listview_w - GUI_DEF_SCROLLBAR_SIZE - 2;
         int track_y = listview_y + 2;
         int track_h = listview_h - 4;
-        int max_draw_len;
-        if (data->type == TYPE_DIALOG_MENU)
-            max_draw_len = (listview_h - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
-        else
-            max_draw_len = (listview_h - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
-        GUI_DrawVerticalScrollbar(track_x, track_y, track_h, data->list.length, max_draw_len, data->top_pos, 0);
+        GUI_DrawVerticalScrollbar(track_x, track_y, track_h, data->list.length, data->listview_n_draw_items, data->top_pos, 0);
     }
 
     // Draw button
@@ -454,14 +512,21 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     y = bottom_bar_y + STATEBAR_PADDING_T;
     if (data->positive_text)
     {
-        snprintf(buf, 24, "%s:%s", GUI_GetStringByLangId(BUTTON_ENTER), data->positive_text);
+        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_ENTER], data->positive_text);
+        x -= GUI_GetTextWidth(buf);
+        GUI_DrawText(x, y, text_color, buf);
+        x -= STATEBAR_PADDING_L;
+    }
+    if (data->neutral_text)
+    {
+        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_TRIANGLE], data->neutral_text);
         x -= GUI_GetTextWidth(buf);
         GUI_DrawText(x, y, text_color, buf);
         x -= STATEBAR_PADDING_L;
     }
     if (data->negative_text)
     {
-        snprintf(buf, 24, "%s:%s", GUI_GetStringByLangId(BUTTON_CANCEL), data->negative_text);
+        snprintf(buf, 24, "%s:%s", cur_lang[BUTTON_CANCEL], data->negative_text);
         x -= GUI_GetTextWidth(buf);
         GUI_DrawText(x, y, text_color, buf);
     }
@@ -473,45 +538,49 @@ static void ctrlDialogCallback(GUI_Dialog *dialog)
 
     if (hold_pad[PAD_UP] || hold_pad[PAD_LEFT_ANALOG_UP])
     {
-        if (data->type == TYPE_DIALOG_MENU)
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
-            MoveListPos(TYPE_MOVE_UP, &data->top_pos, &data->focus_pos, data->list.length, max_draw_len);
-        }
+        if (data->type == TYPE_ALERT_DIALOG_MENU)
+            MoveListPos(TYPE_MOVE_UP, &data->top_pos, &data->focus_pos, data->list.length, data->listview_n_draw_items);
         else
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
-            MoveListPosNoFocus(TYPE_MOVE_UP, &data->top_pos, data->list.length, max_draw_len);
-        }
+            MoveListPosNoFocus(TYPE_MOVE_UP, &data->top_pos, data->list.length, data->listview_n_draw_items);
     }
     else if (hold_pad[PAD_DOWN] || hold_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        if (data->type == TYPE_DIALOG_MENU)
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - MENU_LISTVIEW_PADDING_T * 2) / MENU_ITEMVIEW_HEIGHT;
-            MoveListPos(TYPE_MOVE_DOWN, &data->top_pos, &data->focus_pos, data->list.length, max_draw_len);
-        }
+        if (data->type == TYPE_ALERT_DIALOG_MENU)
+            MoveListPos(TYPE_MOVE_DOWN, &data->top_pos, &data->focus_pos, data->list.length, data->listview_n_draw_items);
         else
-        {
-            int max_draw_len = (data->dialog_height - STATEBAR_HEIGHT * 2 - TIP_LISTVIEW_PADDING_T * 2) / TIP_ITEMVIEW_HEIGHT;
-            MoveListPosNoFocus(TYPE_MOVE_DOWN, &data->top_pos, data->list.length, max_draw_len);
-        }
+            MoveListPosNoFocus(TYPE_MOVE_DOWN, &data->top_pos, data->list.length, data->listview_n_draw_items);
     }
 
     if (released_pad[PAD_ENTER])
     {
         if (data->positiveCallback)
             data->positiveCallback(dialog);
-        else
-            GUI_CloseDialog(dialog);
     }
     else if (released_pad[PAD_CANCEL])
     {
         if (data->negativeCallback)
             data->negativeCallback(dialog);
         else
-            GUI_CloseDialog(dialog);
+            AlertDialog_Dismiss(dialog);
     }
+    else if (released_pad[PAD_TRIANGLE])
+    {
+        if (data->negativeCallback)
+            data->negativeCallback(dialog);
+    }
+}
+
+static int openDialogCallback(GUI_Dialog *dialog)
+{
+    if (!dialog || !dialog->userdata)
+        return -1;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    data->opened = 1;
+    data->status = TYPE_DIALOG_STATUS_SHOW;
+    data->dialog_scale_count = 0;
+
+    return 0;
 }
 
 static int closeDialogCallback(GUI_Dialog *dialog)
@@ -520,8 +589,47 @@ static int closeDialogCallback(GUI_Dialog *dialog)
         return -1;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    data->opened = 0;
+    data->status = TYPE_DIALOG_STATUS_DISMISS;
     if (data->auto_free)
         AlertDialog_Destroy(dialog);
+
+    return 0;
+}
+
+int AlertDialog_ShowSimpleTipDialog(char *title, char *message)
+{
+    GUI_Dialog *tip_dialog = AlertDialog_Creat();
+    if (!tip_dialog)
+        return -1;
+    AlertDialog_SetTitle(tip_dialog, title);
+    AlertDialog_SetMessage(tip_dialog, message);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[COLSE], NULL);
+    AlertDialog_Show(tip_dialog);
+    return 0;
+}
+
+int AlertDialog_Show(GUI_Dialog *dialog)
+{
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
+        return -1;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    if (!data->opened)
+        GUI_OpenDialog(dialog);
+    else
+        data->status = TYPE_DIALOG_STATUS_SHOW;
+    
+    return 0;
+}
+
+int AlertDialog_Dismiss(GUI_Dialog *dialog)
+{
+    if (!dialog || dialog->type != TYPE_GUI_DIALOG_ALERT || !dialog->userdata)
+        return -1;
+
+    AlertDialogData *data = (AlertDialogData *)dialog->userdata;
+    data->status = TYPE_DIALOG_STATUS_DISMISS;
 
     return 0;
 }

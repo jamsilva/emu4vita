@@ -1,7 +1,7 @@
 #ifndef __M_BROWSER_H__
 #define __M_BROWSER_H__
 
-#include "Gui/gui.h"
+#include "gui/gui.h"
 
 int CurrentPathIsFile();
 int MakeCurrentFileName(char *name);
@@ -11,7 +11,7 @@ int MakeScreenshotPath(char *path);
 
 GUI_Texture *GetDefaultPreviewTexture();
 
-void Browser_RequestRefreshPreview(int urgent);
+void Browser_PushRefreshPreview(int urgent);
 
 int Browser_ChangeDirByPath(const char *path);
 int Browser_ChangeDirByFile(const char *path);

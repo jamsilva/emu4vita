@@ -52,7 +52,7 @@ int StringToBoolean(const char *str)
     return -1;
 }
 
-int ConfigGetLine(const char *buf, int size, char **line)
+int ConfigGetLine(const char *buf, int size, char **pline)
 {
     int n = 0;
     int i = 0;
@@ -70,9 +70,9 @@ int ConfigGetLine(const char *buf, int size, char **line)
 
     if (n > 0)
     {
-        *line = malloc(n + 1);
-        strncpy(*line, buf, n);
-        (*line)[n] = '\0';
+        *pline = malloc(n + 1);
+        strncpy(*pline, buf, n);
+        (*pline)[n] = '\0';
     }
 
     return i;

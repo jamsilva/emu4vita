@@ -9,8 +9,7 @@
 #include <pthread.h>
 #include <time/rtime.h>
 
-#include "Emu/emu.h"
-#include "retro.h"
+#include "emu/emu.h"
 #include "utils.h"
 #include "file.h"
 #include "config.h"
@@ -24,10 +23,17 @@ extern int16_t Retro_InputStateCallback(unsigned port, unsigned device, unsigned
 char core_assets_dir[MAX_PATH_LENGTH];
 char core_system_dir[MAX_PATH_LENGTH];
 
-struct retro_system_info core_system_info;
-struct retro_system_av_info core_system_av_info;
+struct retro_core_options_update_display_callback *core_options_update_display_callback = NULL;
+struct retro_disk_control_ext_callback *core_disk_control_ext_callback = NULL;
 
-static unsigned int core_device = RETRO_DEVICE_JOYPAD;
+struct retro_system_info core_system_info = {0};
+struct retro_system_av_info core_system_av_info = {0};
+enum retro_pixel_format core_pixel_format = RETRO_PIXEL_FORMAT_RGB565;
+GuiPixelFormat core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
+int core_input_supports_bitmasks = 0;
+int core_display_rotate = 0;
+
+static unsigned int emu_device_type = RETRO_DEVICE_JOYPAD;
 
 static int makeCoreAssetsDirPath(char *path)
 {
@@ -74,12 +80,9 @@ static void freeValidFileExts()
 {
     if (file_valid_exts)
     {
-        int i = 0;
-        while (file_valid_exts[i])
-        {
+        int i;
+        for (int i = 0; file_valid_exts[i]; i++)
             free(file_valid_exts[i]);
-            i++;
-        }
         free(file_valid_exts);
         file_valid_exts = NULL;
     }
@@ -95,7 +98,8 @@ static int creatValidFileExts()
 
     if (!exts)
         return -1;
-    AppLog("[RETRO] valid ext: %s\n", exts);
+
+    AppLog("[RETRO] Valid ext: %s\n", exts);
 
     exts_len = strlen(exts);
     if (exts_len == 0)
@@ -107,7 +111,7 @@ static int creatValidFileExts()
         if (exts[i] == '|')
             n_exts++;
     }
-    // AppLog("n_exts: %d\n", n_exts);
+    // printf("n_exts: %d\n", n_exts);
 
     if (file_valid_exts)
         freeValidFileExts();
@@ -135,7 +139,7 @@ static int creatValidFileExts()
     file_valid_exts[n_exts] = NULL;
 
     // for (i = 0; i < n_exts; i++)
-    //     AppLog("exts[%d]: %s\n", i, file_valid_exts[i]);
+    //     printf("exts[%d]: %s\n", i, file_valid_exts[i]);
 
     return ret;
 }
@@ -153,21 +157,18 @@ void Retro_SetControllerPortDevices()
 {
     int i;
     for (i = 0; i < 4; i++)
-        retro_set_controller_port_device(i, core_device);
+        retro_set_controller_port_device(i, emu_device_type);
 }
 
 int Retro_InitLib()
 {
-    AppLog("[RETRO] init retro lib...\n");
+    AppLog("[RETRO] Init retro lib...\n");
 
     pthread_init();
     rtime_init();
 
     makeCoreAssetsDirPath(core_assets_dir);
     makeCoreSystemDirPath(core_system_dir);
-
-    core_options_update_display_callback = NULL;
-    core_device = RETRO_DEVICE_JOYPAD;
 
     setRetroCallbacks();
     retro_get_system_info(&core_system_info);
@@ -177,19 +178,20 @@ int Retro_InitLib()
     copyInternalSystemDir();
 #endif
 
-    AppLog("[RETRO] init retro lib done\n");
+    AppLog("[RETRO] Init retro lib OK!\n");
 
     return 0;
 }
 
 int Retro_DeinitLib()
 {
-    AppLog("[RETRO] deinit retro lib...\n");
+    AppLog("[RETRO] Deinit retro lib...\n");
 
     rtime_deinit();
     pthread_terminate();
+    freeValidFileExts();
 
-    AppLog("[RETRO] deinit retro lib done\n");
+    AppLog("[RETRO] Deinit retro lib OK!\n");
 
     return 0;
 }

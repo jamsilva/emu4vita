@@ -5,7 +5,7 @@
 
 #include <psp2/kernel/threadmgr.h>
 
-#include "List/overlay_list.h"
+#include "list/overlay_list.h"
 #include "setting.h"
 #include "file.h"
 #include "config.h"

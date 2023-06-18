@@ -8,9 +8,9 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 
-#include "Activity/browser.h"
-#include "Emu/emu.h"
-#include "Gui/gui.h"
+#include "activity/browser.h"
+#include "emu/emu.h"
+#include "gui/gui.h"
 #include "setting.h"
 #include "utils.h"
 #include "config.h"
@@ -24,7 +24,7 @@
 #define STATE_ITEMVIEW_MARGIN 8.0f
 
 #define STATE_ITEMVIEW_COLOR_DEF_BG COLOR_ALPHA(COLOR_DARKGRAY, 0xAF)
-#define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEFALUT_COLOR_FOCUS_BG
+#define STATE_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS_BG
 
 #define STATE_LIST_LEN 30
 #define N_STATE_COUNTS_PER_LINE 2
@@ -226,7 +226,7 @@ int Setting_GetStatePreviewHeight()
     return state_preview_height;
 }
 
-void Settting_SetStateSelectId(int id)
+void Setting_SetStateSelectId(int id)
 {
     list_focus_pos = id;
     moveStateListPos(TYPE_MOVE_NONE);
@@ -241,10 +241,10 @@ int Setting_LoadState(int num)
 {
     if (!Emu_IsGameLoaded())
     {
-        char path[MAX_PATH_LENGTH];
-        MakeCurrentFilePath(path);
-        if (Emu_LoadGame(path) < 0)
-            return -1;
+        EmuGameInfo info;
+        MakeCurrentFilePath(info.path);
+        info.state_num = num;
+        return Emu_StartGame(&info);
     }
     
     return Emu_LoadState(num);
@@ -307,13 +307,13 @@ void Setting_DrawState()
             GetTimeString(time_string, time_format, &state_list[i].time);
             GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %s", date_string, time_string);
             info_sy -= (GUI_GetFontSize() + STATE_INFO_LINE_SPACE);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[SAVESTATE_EXIST], i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LABEL_EXISTENT_STATE], i);
         }
         else
         {
             // Empty
             GUI_DrawFillRectangle(preview_sx, preview_sy, state_preview_width, state_preview_height, STATE_PREVIEW_COLOR_BG);
-            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[SAVESTATE_NOEXIST], i);
+            GUI_DrawTextf(info_sx, info_sy, COLOR_LITEGRAY, "%s %d", cur_lang[LABEL_NON_EXISTENT_STATE], i);
         }
 
         // If open menu

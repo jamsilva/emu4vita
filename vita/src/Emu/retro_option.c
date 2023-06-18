@@ -3,10 +3,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "List/option_list.h"
-#include "Setting/setting.h"
-#include "Emu/emu.h"
-#include "retro.h"
+#include "list/option_list.h"
+#include "setting/setting.h"
+#include "emu/emu.h"
 #include "config.h"
 
 int Retro_GetVariable(struct retro_variable *var)
@@ -26,17 +25,18 @@ int Retro_GetVariable(struct retro_variable *var)
         entry = entry->next;
     }
 
+    if (entry == NULL)
+        return -1;
+
     return 0;
 }
 
-int Retro_SetCoreOptionDisplay(const struct retro_core_option_display *option_display)
+int Retro_SetCoreOptionsDisplay(const struct retro_core_option_display *option_display)
 {
-    if (!option_display || core_option_list.length <= 0)
+    if (!option_display || !option_display->key || core_option_list.length <= 0)
         return -1;
 
     OptionListEntry *entry = core_option_list.head;
-
-    // printf("Retro_SetCoreOptionDisplay: option_display->key = %s, option_display->visible = %d", option_display->key, option_display->visible);
 
     while (entry)
     {
@@ -49,9 +49,22 @@ int Retro_SetCoreOptionDisplay(const struct retro_core_option_display *option_di
     }
 
     if (entry != NULL)
-        Setting_RequestRefreshOptionDisplay();
+        Setting_PushUpdateOptionDisplay();
 
     return 0;
+}
+
+void Retro_UpdateCoreOptionsDisplay()
+{
+    if (core_options_update_display_callback && core_options_update_display_callback->callback)
+    {
+        core_options_update_display_callback->callback();
+        Setting_PushUpdateOptionDisplay();
+    }
+    else
+    {
+        Retro_PushUpdateOptionsDisplay();
+    }
 }
 
 int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)

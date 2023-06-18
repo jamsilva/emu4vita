@@ -5,8 +5,8 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "Activity/browser.h"
-#include "Retro/retro.h"
+#include "activity/browser.h"
+#include "emu/emu.h"
 #include "file.h"
 #include "utils.h"
 #include "config.h"
@@ -45,13 +45,13 @@ static int loadMemoryFile(int id)
     int64_t src_size = sceIoLseek(fd, 0, SCE_SEEK_END);
     if (src_size <= 0)
     {
-        AppLog("Emu_LoadSrm failed: get file size failed\n");
+        AppLog("[SAVE] Load memory file: get file size failed\n");
         sceIoClose(fd);
         return -1;
     }
     if (src_size > dst_size)
     {
-        AppLog("Emu_LoadSrm failed: SRAM is larger than implementation expects\n");
+        AppLog("[SAVE]] Load memory file: SRAM is larger than implementation expects\n");
         sceIoClose(fd);
         return -1;
     }
@@ -60,18 +60,19 @@ static int loadMemoryFile(int id)
     if (src_data == NULL)
     {
         sceIoClose(fd);
+        AppLog("[SAVE] Load memory file: alloc buf failed\n");
         return -1;
     }
 
     sceIoLseek(fd, 0, SCE_SEEK_SET);
     char *buf = (char *)src_data;
-    int64_t remain = src_size;
+    int64_t remaining = src_size;
     int64_t transfer = TRANSFER_SIZE;
 
-    while (remain > 0)
+    while (remaining > 0)
     {
-        if (remain < TRANSFER_SIZE)
-            transfer = remain;
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
         else
             transfer = TRANSFER_SIZE;
 
@@ -80,13 +81,14 @@ static int loadMemoryFile(int id)
         {
             free(src_data);
             sceIoClose(fd);
+            AppLog("[SAVE] Load memory file: read file failed\n");
             return -1;
         }
         if (read == 0)
             break;
 
         buf += read;
-        remain -= read;
+        remaining -= read;
     }
     sceIoClose(fd);
 
@@ -111,16 +113,19 @@ static int saveMemoryFile(int id)
     CreateFolder(CORE_SAVEFILES_DIR);
     SceUID fd = sceIoOpen(path, SCE_O_WRONLY | SCE_O_CREAT | SCE_O_TRUNC, 0777);
     if (fd < 0)
+    {
+        AppLog("[SAVE] Save memory file: open file failed\n");
         return fd;
+    }
 
     char *buf = (char *)data;
-    int64_t remain = size;
+    int64_t remaining = size;
     int64_t transfer = TRANSFER_SIZE;
 
-    while (remain > 0)
+    while (remaining > 0)
     {
-        if (remain < TRANSFER_SIZE)
-            transfer = remain;
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
         else
             transfer = TRANSFER_SIZE;
 
@@ -128,11 +133,12 @@ static int saveMemoryFile(int id)
         if (written < 0)
         {
             sceIoClose(fd);
+            AppLog("[SAVE] Save memory file: write file failed\n");
             return -1;
         }
 
         buf += written;
-        remain -= written;
+        remaining -= written;
     }
     sceIoClose(fd);
 

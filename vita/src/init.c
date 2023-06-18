@@ -19,10 +19,9 @@
 #include <psp2/touch.h>
 #include <psp2/common_dialog.h>
 
-#include "Setting/setting.h"
-#include "Retro/retro.h"
-#include "Emu/emu.h"
-#include "Gui/gui.h"
+#include "setting/setting.h"
+#include "gui/gui.h"
+#include "emu/emu.h"
 #include "init.h"
 #include "utils.h"
 #include "file.h"
@@ -33,6 +32,8 @@
 #ifdef SCE_LIBC_SIZE
 unsigned int sceLibcHeapSize = SCE_LIBC_SIZE;
 #endif
+
+extern GUI_Activity browser_activity;
 
 static int app_exit = 0;
 
@@ -65,6 +66,28 @@ int checkVitatvModel()
         is_vitatv_model = 1;
 
     return is_vitatv_model;
+}
+
+static void displaySafeMode()
+{
+    while (1)
+    {
+        int x = 30, y = 30;
+        GUI_StartDrawing();
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_0]);
+        y += GUI_GetFontSize();
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_1]);
+        y += GUI_GetFontSize() * 2;
+        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_2]);
+        GUI_EndDrawing();
+
+        SceCtrlData pad;
+        memset(&pad, 0, sizeof(SceCtrlData));
+        sceCtrlPeekBufferPositiveExt2(0, &pad, 1);
+
+        if (pad.buttons & ~SCE_CTRL_INTERCEPTED)
+            break;
+    }
 }
 
 static void initSceAppUtil()
@@ -114,7 +137,7 @@ int AppInit(int argc, char *const argv[])
     CreateFolder(APP_DATA_DIR);
 
     LoadAppConfig(TYPE_CONFIG_MAIN);
-    SetCurrentLang(app_config.app_lang);
+    SetCurrentLang(app_config.language);
 
     BootCheckParams(argc, argv);
 
@@ -143,9 +166,7 @@ int AppInit(int argc, char *const argv[])
 
     if (checkSafeMode())
     {
-        AppLog("[INIT] It's in safe mode, please change to unsafe mode for use this app!\n");
-        AppLog("[INIT] Init app failed\n");
-        GUI_DisplaySafeMode();
+        displaySafeMode();
         AppDeinit();
         sceKernelExitProcess(0);
     }
@@ -157,7 +178,10 @@ int AppInit(int argc, char *const argv[])
     // Lock USB connection and PS button
     sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_USB_CONNECTION | SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN_2);
 
-    AppLog("[INIT] Init app done\n");
+    // GUI_WaitInitEnd();
+    GUI_StartActivity(&browser_activity);
+
+    AppLog("[INIT] Init app OK!\n");
 
     if (exec_boot_mode == BOOT_MODE_GAME)
         BootLoadGame();

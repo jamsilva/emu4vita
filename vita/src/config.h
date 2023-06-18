@@ -5,17 +5,17 @@
 
 #include <psp2/ctrl.h>
 
-#include "List/config_list.h"
-#include "List/option_list.h"
-#include "List/overlay_list.h"
-#include "config_text.h"
+#include "list/config_list.h"
+#include "list/option_list.h"
+#include "list/overlay_list.h"
+#include "config_lib.h"
 #include "file.h"
 
 #define APP_CONFIG_VERSION 1
 #define GRAPHICS_CONFIG_VERSION 2
 #define CONTROL_CONFIG_VERSION 1
 #define CORE_CONFIG_VERSION 1
-#define MISC_CONFIG_VERSION 1
+#define MISC_CONFIG_VERSION 2
 
 #define APP_CONFIG_NAME "app.cfg"
 #define GRAPHICS_CONFIG_NAME "graphics.cfg"
@@ -55,8 +55,8 @@
 #define TURBO_KEY_BITMASK (1 << 30)
 #define RETRO_KEY_TO_BITMASK(id) (1 << id)
 
-#define GET_BITMASK_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
-#define GET_BITMASK_KEY_TURBO(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
+#define GET_RETRO_BITMASK_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
+#define GET_RETRO_BITMASK_KEY_TURBO(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
 
 #define EXIT_APP_HOT_KEY (SCE_CTRL_PSBUTTON | SCE_CTRL_SELECT)
 #define CHECK_EXIT_APP(key) ((key & EXIT_APP_HOT_KEY) == EXIT_APP_HOT_KEY)
@@ -86,13 +86,31 @@ enum TypeDisplaySize
 
 enum TypeDisplayRatio
 {
-    TYPE_DISPLAY_RATIO_DEFAULT,
-    TYPE_DISPLAY_RATIO_BY_GAME_RESOLUTION,
-    TYPE_DISPLAY_RATIO_BY_DEV_SCREEN,
-    TYPE_DISPLAY_RATIO_8_7,
-    TYPE_DISPLAY_RATIO_4_3,
-    TYPE_DISPLAY_RATIO_3_2,
-    TYPE_DISPLAY_RATIO_16_9,
+    TYPE_ASPECT_RATIO_DEFAULT,
+    TYPE_ASPECT_RATIO_BY_GAME_RESOLUTION,
+    TYPE_ASPECT_RATIO_BY_DEV_SCREEN,
+    TYPE_ASPECT_RATIO_8_7,
+    TYPE_ASPECT_RATIO_4_3,
+    TYPE_ASPECT_RATIO_3_2,
+    TYPE_ASPECT_RATIO_16_9,
+};
+
+enum TypeDisplayRotate
+{
+    TYPE_DISPLAY_ROTATE_DISABLE,
+    TYPE_DISPLAY_ROTATE_CW_90,
+    TYPE_DISPLAY_ROTATE_CW_180,
+    TYPE_DISPLAY_ROTATE_CW_270,
+    TYPE_DISPLAY_ROTATE_DEFAULT,
+};
+
+enum TypeGraphicsFiltering
+{
+    TYPE_GRAPHICS_SHADER_DEFAULT,
+    TYPE_GRAPHICS_SHADER_LCD3X,
+    TYPE_GRAPHICS_SHADER_SHARP_BILINEAR_SIMPLE,
+    TYPE_GRAPHICS_SHADER_SHARP_BILINEAR,
+    TYPE_GRAPHICS_SHADER_ADVANCED_AA,
 };
 
 enum TypePreviewPath
@@ -104,8 +122,10 @@ enum TypePreviewPath
 
 enum TypePreviewStyle
 {
-    TYPE_PREVIEW_STYLE_PRESERVE_FULL,
-    TYPE_PREVIEW_STYLE_STRETCH_FULL,
+    TYPE_PREVIEW_STYLE_FULL_PRESERVE,
+    TYPE_PREVIEW_STYLE_FULL_STRETCH,
+    TYPE_PREVIEW_STYLE_FULL_4_3,
+    TYPE_PREVIEW_STYLE_FULL_3_2,
 };
 
 enum TypeConfig
@@ -116,17 +136,17 @@ enum TypeConfig
 
 typedef struct
 {
-    uint32_t version;            // 0x00
-    uint32_t display_size;       // 0x04
-    uint32_t aspect_ratio;       // 0x08
-    uint32_t display_rotate;     // 0x0C
-    uint32_t graphics_filtering; // 0x10
-    uint32_t graphics_smooth;    // 0x14
-    uint32_t overlay_select;     // 0x18
-    uint32_t overlay_mode;       // 0x1C
-    uint32_t show_fps;           // 0x20
-    char reserved[0x44];         // 0x24
-} GraphicsConfig;                // 0x68
+    uint32_t version;         // 0x00
+    uint32_t display_size;    // 0x04
+    uint32_t aspect_ratio;    // 0x08
+    uint32_t display_rotate;  // 0x0C
+    uint32_t graphics_shader; // 0x10
+    uint32_t graphics_smooth; // 0x14
+    uint32_t overlay_select;  // 0x18
+    uint32_t overlay_mode;    // 0x1C
+    uint32_t show_fps;        // 0x20
+    char reserved[0x44];      // 0x24
+} GraphicsConfig;             // 0x68
 
 typedef struct
 {
@@ -152,7 +172,7 @@ typedef struct
     uint32_t front_touch_pad; // 0x4C
     uint32_t back_touch_pad;  // 0x50
     int32_t turbo_delay;      // 0x54
-    uint32_t map_port;        // 0x58
+    uint32_t ctrl_player;     // 0x58
     char reserved[0x24];      // 0x5C
 } ControlConfig;              // 0x80
 
@@ -160,10 +180,14 @@ typedef struct
 {
     uint32_t version;        // 0x00
     uint32_t auto_save_load; // 0x04
-    uint32_t reserved0;      // 0x08
-    uint32_t reserved1;      // 0x0C
-    uint32_t reserved2;      // 0x10
-    char reserved[0x54];     // 0x14
+    uint32_t hk_loadstate;   // 0x08
+    uint32_t hk_savestate;   // 0x0C
+    uint32_t hk_speed_up;    // 0x10
+    uint32_t hk_speed_down;  // 0x14
+    uint32_t hk_player_up;   // 0x18
+    uint32_t hk_player_down; // 0x1C
+    uint32_t hk_exit_game;   // 0x1C
+    char reserved[0x48];     // 0x20
 } MiscConfig;                // 0x68
 
 typedef struct
@@ -173,8 +197,8 @@ typedef struct
     uint32_t preview_style; // 0x08
     uint32_t app_log;       // 0x0C
     uint32_t core_log;      // 0x10
-    uint32_t print_log;     // 0x14
-    uint32_t app_lang;      // 0x18
+    uint32_t show_log;      // 0x14
+    uint32_t language;      // 0x18
     char reserved[0x4C];    // 0x1C
 } AppConfig;                // 0x68
 

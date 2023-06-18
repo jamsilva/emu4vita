@@ -5,11 +5,10 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "Activity/browser.h"
-#include "Setting/setting.h"
-#include "Retro/retro.h"
-#include "Emu/emu.h"
-#include "Gui/gui.h"
+#include "activity/browser.h"
+#include "setting/setting.h"
+#include "gui/gui.h"
+#include "emu/emu.h"
 #include "utils.h"
 #include "file.h"
 #include "config.h"
@@ -100,8 +99,8 @@ int Emu_LoadState(int num)
     int fd = -1;
     char path[MAX_PATH_LENGTH];
 
-    if (!Emu_IsGameLoaded())
-        return -1;
+    // if (!Emu_IsGameLoaded())
+    //     return -1;
 
     MakeSavestatePath(path, num);
 
@@ -121,35 +120,35 @@ int Emu_LoadState(int num)
 
     if (header.version != STATES_VERSION)
     {
-        AppLog("Emu_LoadState failed: state_version is different from app_version\n");
+        AppLog("[STATE] Load state: state version is different from internal version\n");
         ret = -1;
         goto END;
     }
-    
+
     state_buf = malloc(header.state_size);
     if (!state_buf)
     {
-        AppLog("Emu_LoadState failed: can't alloc state_buf\n");
+        AppLog("[STATE] Load state: alloc state buf failed\n");
         ret = -1;
         goto END;
     }
 
     char *buf = (char *)state_buf;
-    int64_t remain = header.state_size;
+    int64_t remaining = header.state_size;
     int64_t transfer = TRANSFER_SIZE;
     sceIoLseek(fd, header.state_offset, SCE_SEEK_SET);
 
-    while (remain > 0)
+    while (remaining > 0)
     {
-        if (remain < TRANSFER_SIZE)
-            transfer = remain;
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
         else
             transfer = TRANSFER_SIZE;
 
         int read = sceIoRead(fd, buf, transfer);
         if (read < 0)
         {
-            AppLog("Emu_LoadState failed: read file failed\n");
+            AppLog("[STATE] Load state: read file failed\n");
             ret = -1;
             goto END;
         }
@@ -157,12 +156,17 @@ int Emu_LoadState(int num)
             break;
 
         buf += read;
-        remain -= read;
+        remaining -= read;
     }
 
+    printf("[DISK] cur_index: %d, save_index: %d\n", Emu_DiskGetImageIndex(), header.disk_index);
+
+    if (Emu_HasDiskControl() && header.disk_index != Emu_DiskGetImageIndex())
+        Emu_DiskChangeImageIndex(header.disk_index);
+    
     if (!retro_unserialize(state_buf, header.state_size))
     {
-        AppLog("Emu_LoadState failed: retro_unserialize failed\n");
+        AppLog("[STATE] Load state: retro_unserialize failed\n");
         ret = -1;
         goto END;
     }
@@ -197,17 +201,18 @@ int Emu_SaveState(int num)
     uint64_t state_offset;
     char path[MAX_PATH_LENGTH];
 
-    if (!Emu_IsGameLoaded())
-        return -1;
+    // if (!Emu_IsGameLoaded())
+    //     return -1;
 
     MakeSavestateDir(path);
     CreateFolder(path);
     MakeSavestatePath(path, num);
 
     uint32_t base_width, base_height;
-    Emu_MakeVideoBaseWH(&base_width, &base_height);
+    Emu_GetVideoBaseWH(&base_width, &base_height);
 
-    if (graphics_config.display_rotate == 1 || graphics_config.display_rotate == 3)
+    int rotate = Emu_GetVideoDisplayRotate();
+    if (rotate == TYPE_DISPLAY_ROTATE_CW_90 || rotate == TYPE_DISPLAY_ROTATE_CW_270)
     {
         screenshot_width = base_height;
         screenshot_height = base_width;
@@ -220,10 +225,10 @@ int Emu_SaveState(int num)
 
     screenshot_size = 0;
     screenshot_offset = sizeof(EmuStateHeader);
-    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, graphics_config.display_rotate);
+    screenshot_buf = Emu_GetVideoScreenshotData(&screenshot_width, &screenshot_height, &screenshot_size, rotate);
     if (!screenshot_buf)
     {
-        AppLog("Emu_SaveState failed: make screenshot failed!\n");
+        AppLog("[STATE] Save state: make screenshot failed!\n");
         ret = -1;
         goto END;
     }
@@ -232,10 +237,10 @@ int Emu_SaveState(int num)
     preview_width = Setting_GetStatePreviewWidth();
     preview_height = Setting_GetStatePreviewHeight();
     preview_size = 0;
-    preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, graphics_config.display_rotate);
+    preview_buf = Emu_GetVideoScreenshotData(&preview_width, &preview_height, &preview_size, rotate);
     if (!preview_buf)
     {
-        AppLog("Emu_SaveState failed: make preview failed!\n");
+        AppLog("[STATE] Save state: make preview failed!\n");
         ret = -1;
         goto END;
     }
@@ -244,14 +249,14 @@ int Emu_SaveState(int num)
     state_size = retro_serialize_size();
     if (state_size == 0)
     {
-        AppLog("Emu_SaveState failed: retro_serialize_size failed!\n");
+        AppLog("[STATE] Save state: retro_serialize_size failed!\n");
         ret = -1;
         goto END;
     }
     state_buf = malloc(state_size);
     if (!state_buf)
     {
-        AppLog("Emu_SaveState failed: can't alloc state_buf!\n");
+        AppLog("[STATE] Save state: alloc state buf failed!\n");
         ret = -1;
         goto END;
     }
@@ -277,6 +282,8 @@ int Emu_SaveState(int num)
     header.preview_size = preview_size;
     header.state_offset = state_offset;
     header.state_size = state_size;
+    if (Emu_HasDiskControl())
+        header.disk_index = Emu_DiskGetImageIndex();
 
     sceIoLseek(fd, 0, SCE_SEEK_SET);
     sceIoWrite(fd, &header, sizeof(EmuStateHeader));
@@ -289,26 +296,26 @@ int Emu_SaveState(int num)
 
     sceIoLseek(fd, state_offset, SCE_SEEK_SET);
     char *buf = (char *)state_buf;
-    int64_t remain = state_size;
+    int64_t remaining = state_size;
     int64_t transfer = TRANSFER_SIZE;
 
-    while (remain > 0)
+    while (remaining > 0)
     {
-        if (remain < TRANSFER_SIZE)
-            transfer = remain;
+        if (remaining < TRANSFER_SIZE)
+            transfer = remaining;
         else
             transfer = TRANSFER_SIZE;
 
         int written = sceIoWrite(fd, buf, transfer);
         if (written < 0)
         {
-            AppLog("Emu_SaveState failed: write file failed\n");
+            AppLog("[STATE] Save state: write file failed\n");
             ret = -1;
             goto END;
         }
 
         buf += written;
-        remain -= written;
+        remaining -= written;
     }
 
 END:

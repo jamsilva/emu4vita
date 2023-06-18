@@ -156,7 +156,7 @@ void GUI_EndDrawing()
 
 int GUI_InitLib()
 {
-    vita2d_init_advanced(4 * 1024 * 1024);
+    vita2d_init();
     vita2d_ext_init(vita2d_get_context(), vita2d_get_shader_patcher());
     vita2d_set_vblank_wait(1);
 

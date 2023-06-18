@@ -7,90 +7,76 @@
 #include <psp2/power.h>
 #include <psp2/ctrl.h>
 
-#include "Emu/emu.h"
+#include "emu/emu.h"
 #include "gui.h"
 #include "utils.h"
 #include "lang.h"
 #include "init.h"
 
+// Status bar
+#define STATUS_BAR_PADDING_T 10
+#define STATUS_BAR_PADDING_L 10
+#define STATUS_BAR_WIDTH GUI_SCREEN_WIDTH
+#define STATUS_BAR_HEIGHT (GUI_GetFontSize() + STATUS_BAR_PADDING_T * 2)
+
 extern GUI_Activity browser_activity;
 extern GUI_Dialog setting_dialog;
 
-static GUI_Activity *main_activity = NULL;
 static GUI_Activity *current_activity = NULL;
-static GUI_Dialog *main_dialog = NULL;
-static GUI_Dialog *current_dialog = NULL;
+static GUI_Dialog *main_dialog = NULL, *current_dialog = NULL;
 
-// Images
-static GUI_Texture *wallpaper_texture = NULL;
-static float wallpaper_x_scale, wallpaper_y_scale;
-static GUI_Texture *splash_texture = NULL;
-static float splash_x_scale, splash_y_scale;
+static GUI_Texture *wallpaper_texture = NULL, *splash_texture = NULL;
 
-// Status bar
-#define STATUS_BAR_PADDING_T 10.0f
-#define STATUS_BAR_PADDING_L 10.0f
-static int statusbar_width, statusbar_height;
-
-// Free draw
-#define ACTIVITY_FREE_DRAW_PADDING_L 10.0f
-#define ACTIVITY_FREE_DRAW_PADDING_T 10.0f
-float ACTIVITY_FREE_DRAW_WIDTH, ACTIVITY_FREE_DRAW_HEIGHT;
-float ACTIVITY_FREE_DRAW_SX, ACTIVITY_FREE_DRAW_SY, ACTIVITY_FREE_DRAW_DX, ACTIVITY_FREE_DRAW_DY;
-
-void GUI_RefreshLayout()
-{
-    statusbar_width = GUI_SCREEN_WIDTH;
-    statusbar_height = STATUS_BAR_PADDING_T * 2 + GUI_GetFontSize();
-
-    ACTIVITY_FREE_DRAW_WIDTH = GUI_SCREEN_WIDTH - ACTIVITY_FREE_DRAW_PADDING_L * 2;
-    ACTIVITY_FREE_DRAW_HEIGHT = GUI_SCREEN_HEIGHT - statusbar_height * 2 - ACTIVITY_FREE_DRAW_PADDING_T * 2;
-    ACTIVITY_FREE_DRAW_SX = ACTIVITY_FREE_DRAW_PADDING_L;
-    ACTIVITY_FREE_DRAW_SY = statusbar_height + ACTIVITY_FREE_DRAW_PADDING_T;
-    ACTIVITY_FREE_DRAW_DX = ACTIVITY_FREE_DRAW_SX + ACTIVITY_FREE_DRAW_WIDTH;
-    ACTIVITY_FREE_DRAW_DY = ACTIVITY_FREE_DRAW_SY + ACTIVITY_FREE_DRAW_HEIGHT;
-}
-
-int GUI_BacktoMainActivity()
-{
-    if (!main_activity)
-        return -1;
-
-    main_activity->parent = NULL;
-    current_activity = main_activity;
-
-    return 0;
-}
-
-int GUI_EnterActivity(GUI_Activity *activity)
+int GUI_StartActivity(GUI_Activity *activity)
 {
     if (!activity || current_activity == activity)
         return -1;
 
     activity->parent = current_activity;
+    if (activity->startCallback)
+        activity->startCallback(activity);
+
     current_activity = activity;
-    if (!main_activity)
-        main_activity = current_activity;
-    if (current_activity->enterCallBack)
-        current_activity->enterCallBack(current_activity);
 
     return 0;
 }
 
 int GUI_ExitActivity(GUI_Activity *activity)
 {
-    if (!activity || !current_activity || current_activity != activity)
+    // Can not exit other activity
+    if (!activity || current_activity != activity)
         return -1;
 
-    // Must show one activity
-    if (current_activity->parent)
+    // Can not exit main activity
+    if (!activity->parent)
+        return -1;
+
+    GUI_Activity *parent = activity->parent;
+    activity->parent = NULL;
+    if (activity->exitCallback)
+        activity->exitCallback(activity);
+
+    current_activity = parent;
+
+    return 0;
+}
+
+int GUI_BackToMainActivity()
+{
+    GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
+
+    GUI_Activity *p = current_activity;
+
+    while (p && p->parent != NULL)
     {
-        GUI_Activity *parent = current_activity->parent;
-        current_activity->parent = NULL;
-        if (current_activity->exitCallback)
-            current_activity->exitCallback(current_activity);
-        current_activity = parent;
+        GUI_Activity *parent = p->parent;
+        p->parent = NULL;
+        if (p->exitCallback)
+            p->exitCallback(p);
+        p = parent;
     }
+
+    current_activity = p;
 
     return 0;
 }
@@ -102,139 +88,133 @@ int GUI_OpenDialog(GUI_Dialog *dialog)
 
     if (current_dialog)
         current_dialog->next = dialog;
-    dialog->previous = current_dialog;
+    dialog->prev = current_dialog;
     dialog->next = NULL;
+    if (dialog->openCallback)
+        dialog->openCallback(dialog);
+
     current_dialog = dialog;
     if (!main_dialog)
-        main_dialog = current_dialog;
-    if (current_dialog->openCallback)
-        current_dialog->openCallback(current_dialog);
+        main_dialog = dialog;
 
     return 0;
 }
 
 int GUI_CloseDialog(GUI_Dialog *dialog)
 {
-    if (!dialog || !current_dialog || current_dialog != dialog)
+    if (!dialog)
         return -1;
 
-    // If the main dialog, set main_dialog to null
-    if (main_dialog == current_dialog)
-        main_dialog = NULL;
+    if (main_dialog == dialog)
+        main_dialog = dialog->next;
+    if (current_dialog == dialog)
+        current_dialog = dialog->prev;
 
-    GUI_Dialog *previous = current_dialog->previous;
-    current_dialog->previous = NULL;
-    if (previous)
-        previous->next = NULL;
-    if (current_dialog->closeCallback)
-        current_dialog->closeCallback(current_dialog);
-    current_dialog = previous;
+    if (dialog->prev)
+        dialog->prev->next = dialog->next;
+    if (dialog->next)
+        dialog->next->prev = dialog->prev;
+
+    dialog->prev = NULL;
+    dialog->next = NULL;
+    if (dialog->closeCallback)
+        dialog->closeCallback(dialog);
 
     return 0;
 }
 
-void GUI_CloseAllDialogs()
+void GUI_CloseAllDialogs(int type)
 {
-    GUI_Dialog *colse_dialog = current_dialog;
+    GUI_Dialog *p = current_dialog;
 
-    while (colse_dialog)
+    while (p)
     {
-        GUI_Dialog *previous = colse_dialog->previous;
-        colse_dialog->previous = NULL;
-        if (previous)
-            previous->next = NULL;
-        if (colse_dialog->closeCallback)
-            colse_dialog->closeCallback(current_dialog);
-        colse_dialog = previous;
+        GUI_Dialog *prev = p->prev;
+        if (p->type & type)
+            GUI_CloseDialog(p);
+        p = prev;
     }
-
-    current_dialog = NULL;
-    main_dialog = NULL;
 }
 
-void GUI_ClosePreviousDialogs(GUI_Dialog *dialog)
+void GUI_CloseOtherDialogs(GUI_Dialog *dialog, int type)
 {
     if (!dialog)
         return;
-        
-    GUI_Dialog *colse_dialog = dialog->previous;
-    dialog->previous = NULL;
 
-    while (colse_dialog)
+    GUI_Dialog *p = dialog->prev;
+
+    while (p)
     {
-        GUI_Dialog *previous = colse_dialog->previous;
-        colse_dialog->previous = NULL;
-        if (previous)
-            previous->next = NULL;
-        if (colse_dialog->closeCallback)
-            colse_dialog->closeCallback(current_dialog);
-        colse_dialog = previous;
+        GUI_Dialog *prev = p->prev;
+        if (p->type & type)
+            GUI_CloseDialog(p);
+        p = prev;
     }
 
-    main_dialog = dialog;
-}
+    p = dialog->next;
 
-char *GUI_GetStringByLangId(int index)
-{
-    if (index >= 0)
+    while (p)
     {
-        return cur_lang[index];
-    }
-    else if (index == BUTTON_ENTER)
-    {
-        if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
-            return cur_lang[BUTTON_CIRCLE];
-        else
-            return cur_lang[BUTTON_CROSS];
-    }
-    else if (index == BUTTON_CANCEL)
-    {
-        if (enter_button == SCE_SYSTEM_PARAM_ENTER_BUTTON_CIRCLE)
-            return cur_lang[BUTTON_CROSS];
-        else
-            return cur_lang[BUTTON_CIRCLE];
-    }
-    else if (index == APP_TITLE)
-    {
-        return (APP_NAME_STR " v" APP_VER_STR);
-    }
-    else
-    {
-        return NULL;
+        GUI_Dialog *next = p->next;
+        if (p->type & type)
+            GUI_CloseDialog(p);
+        p = next;
     }
 }
 
-char **GUI_GetStringListByLangIdList(int *list, int list_len)
+char **GUI_GetStringArrayByIdArray(int *ids, int n_ids)
 {
-    if (!list || list_len <= 0)
+    if (!ids || n_ids <= 0)
         return NULL;
-    
-    char **str_list = calloc(list_len, sizeof(char *));
-    if (!str_list)
+
+    char **strs = calloc(n_ids, sizeof(char *));
+    if (!strs)
         return NULL;
 
     int i;
-    for (i = 0; i < list_len; i++)
+    for (i = 0; i < n_ids; i++)
     {
-        str_list[i] = cur_lang[list[i]];
+        strs[i] = cur_lang[ids[i]];
     }
 
-    return str_list;
+    return strs;
+}
+
+void GUI_GetActivityLayoutXY(GUI_Activity *activity, int *x, int *y)
+{
+    *x = 0;
+    if (activity->nostatusbar)
+        *y = 0;
+    else
+        *y = STATUS_BAR_HEIGHT;
+}
+
+void GUI_GetActivityLayoutWH(GUI_Activity *activity, int *w, int *h)
+{
+    *w = GUI_SCREEN_WIDTH;
+    if (activity->nostatusbar)
+        *h = GUI_SCREEN_HEIGHT;
+    else
+        *h = GUI_SCREEN_HEIGHT - STATUS_BAR_HEIGHT * 2;
 }
 
 void GUI_DrawTopStatusBar(char *title)
 {
-    float view_sx = 0;
-    float view_dx = GUI_SCREEN_WIDTH;
-    float view_sy = 0;
+    int statusbar_x = 0;
+    int statusbar_y = 0;
+    int statusbar_w = GUI_SCREEN_WIDTH;
+    int statusbar_h = STATUS_BAR_HEIGHT;
 
-    GUI_DrawFillRectangle(view_sx, view_sy, statusbar_width, statusbar_height, GUI_DEFALUT_BG_COLOR);
+    GUI_DrawFillRectangle(statusbar_x, statusbar_y, statusbar_w, statusbar_h, GUI_DEF_COLOR_BG);
 
-    int sx = view_sx + STATUS_BAR_PADDING_L;
-    int sy = view_sy + STATUS_BAR_PADDING_T;
-    GUI_DrawText(sx, sy, COLOR_WHITE, title);
+    int x, y;
+    char string[64];
 
-    sx = view_dx - STATUS_BAR_PADDING_L;
+    x = statusbar_x + STATUS_BAR_PADDING_L;
+    y = statusbar_y + STATUS_BAR_PADDING_T;
+    GUI_DrawText(x, y, COLOR_WHITE, title);
+
+    x = statusbar_x + statusbar_w - STATUS_BAR_PADDING_L;
     if (!is_vitatv_model)
     {
         uint32_t color;
@@ -246,11 +226,11 @@ void GUI_DrawTopStatusBar(char *title)
             color = COLOR_GREEN;
 
         int percent = scePowerGetBatteryLifePercent();
-        char battery_string[24];
-        snprintf(battery_string, sizeof(battery_string), "%d%%", percent);
-        float battery_x = sx - GUI_GetTextWidth(battery_string);
-        GUI_DrawText(battery_x, sy, color, battery_string);
-        sx = battery_x - STATUS_BAR_PADDING_L;
+        snprintf(string, sizeof(string), "%d%%", percent);
+
+        int battery_x = x - GUI_GetTextWidth(string);
+        GUI_DrawText(battery_x, y, color, string);
+        x = battery_x - STATUS_BAR_PADDING_L;
     }
 
     // Date & time
@@ -263,54 +243,57 @@ void GUI_DrawTopStatusBar(char *title)
     char time_string[16];
     GetTimeString(time_string, time_format, &time);
 
-    char string[64];
     snprintf(string, sizeof(string), "%s  %s", date_string, time_string);
-    float date_time_x = sx - GUI_GetTextWidth(string);
-    GUI_DrawText(date_time_x, sy, GUI_DEFALUT_TEXT_COLOR, string);
+    int date_time_x = x - GUI_GetTextWidth(string);
+    GUI_DrawText(date_time_x, y, GUI_DEF_COLOR_TEXT, string);
 }
 
 void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
 {
-    float view_sx = 0;
-    float view_sy = GUI_SCREEN_HEIGHT - statusbar_height;
+    int statusbar_w = GUI_SCREEN_WIDTH;
+    int statusbar_h = STATUS_BAR_HEIGHT;
+    int statusbar_x = 0;
+    int statusbar_y = GUI_SCREEN_HEIGHT - statusbar_h;
 
-    GUI_DrawFillRectangle(view_sx, view_sy, statusbar_width, statusbar_height, GUI_DEFALUT_BG_COLOR);
+    GUI_DrawFillRectangle(statusbar_x, statusbar_y, statusbar_w, statusbar_h, GUI_DEF_COLOR_BG);
 
-    float sx = view_sx + STATUS_BAR_PADDING_L;
-    float sy = view_sy + STATUS_BAR_PADDING_T;
+    int x = statusbar_x + STATUS_BAR_PADDING_L;
+    int y = statusbar_y + STATUS_BAR_PADDING_T;
+
     int i;
-    for (i = 0; instructions[i].button != LANG_DISABLE; i++)
+    for (i = 0; instructions[i].button != LANG_NULL; i++)
     {
-        sx += GUI_DrawTextf(sx, sy, COLOR_AZURE, "%s:", GUI_GetStringByLangId(instructions[i].button));
-        sx += GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[instructions[i].instruction]);
-        sx += STATUS_BAR_PADDING_L;
+        if (!instructions[i].visible)
+            continue;
+        x += GUI_DrawTextf(x, y, COLOR_AZURE, "%s:", cur_lang[instructions[i].button]);
+        x += GUI_DrawText(x, y, COLOR_WHITE, cur_lang[instructions[i].instruction]);
+        x += STATUS_BAR_PADDING_L;
     }
 }
 
 void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int list_len, int max_draw_len, int top_pos, int draw_track)
 {
-    if (list_len > max_draw_len)
-    {
-        // Draw scroll track
-        if (draw_track)
-            GUI_DrawFillRectangle(track_x, track_y, GUI_SCROLLBAR_SIZE, track_height, GUI_SCROLLBAR_TRACK_COLOR);
+    if (track_height <= 0 || max_draw_len <= 0 || list_len <= max_draw_len)
+        return;
 
-        // Draw scroll thumb
-        float size_per_item = (float)track_height / (float)list_len;
-        int thumb_height = (float)max_draw_len * size_per_item;
-        thumb_height = MAX(thumb_height, 1); // Fix
-        int thumb_y;
-        if (top_pos >= list_len - max_draw_len)
-        {
-            thumb_y = track_y + track_height - thumb_height;
-        }
-        else
-        {
-            thumb_y = track_y + (float)top_pos * size_per_item;
-            thumb_y = MIN(thumb_y, (track_y + track_height - thumb_height)); // Fix
-        }
-        GUI_DrawFillRectangle(track_x, thumb_y, GUI_SCROLLBAR_SIZE, thumb_height, GUI_SCROLLBAR_THUMB_COLOR);
-    }
+    // Draw scroll track
+    if (draw_track)
+        GUI_DrawFillRectangle(track_x, track_y, GUI_DEF_SCROLLBAR_SIZE, track_height, GUI_DEF_SCROLLBAR_COLOR_TRACK);
+
+    // Draw scroll thumb
+    float size_per_item = (float)track_height / (float)list_len;
+    int thumb_height = (float)max_draw_len * size_per_item;
+    thumb_height = MAX(thumb_height, 1); // Fix
+
+    int min_y = track_y;
+    int max_y = track_y + track_height - thumb_height;
+    int thumb_y = track_y + (float)top_pos * size_per_item;
+    if (thumb_y < min_y)
+        thumb_y = min_y;
+    else if (thumb_y > max_y)
+        thumb_y = max_y;
+
+    GUI_DrawFillRectangle(track_x, thumb_y, GUI_DEF_SCROLLBAR_SIZE, thumb_height, GUI_DEF_SCROLLBAR_COLOR_THUMB);
 }
 
 void GUI_SetWallpaperTexture(GUI_Texture *texture)
@@ -318,14 +301,7 @@ void GUI_SetWallpaperTexture(GUI_Texture *texture)
     GUI_WaitRenderDone();
     if (wallpaper_texture)
         vita2d_free_texture(wallpaper_texture);
-    wallpaper_texture = NULL;
-
-    if (texture)
-    {
-        wallpaper_x_scale = GUI_SCREEN_WIDTH / (float)GUI_GetTextureWidth(texture);
-        wallpaper_y_scale = GUI_SCREEN_HEIGHT / (float)GUI_GetTextureHeight(texture);
-        wallpaper_texture = texture;
-    }
+    wallpaper_texture = texture;
 }
 
 void GUI_SetSplashTexture(GUI_Texture *texture)
@@ -333,68 +309,45 @@ void GUI_SetSplashTexture(GUI_Texture *texture)
     GUI_WaitRenderDone();
     if (splash_texture)
         vita2d_free_texture(splash_texture);
-    splash_texture = NULL;
+    splash_texture = texture;
+}
 
+GUI_Texture *GUI_GetDefaultWallpaper()
+{
+    return wallpaper_texture;
+}
+
+GUI_Texture *GUI_GetDefaultSplash()
+{
+    return splash_texture;
+}
+
+void GUI_DrawWallpaper(GUI_Texture *texture)
+{
     if (texture)
     {
-        splash_x_scale = GUI_SCREEN_WIDTH / (float)GUI_GetTextureWidth(texture);
-        splash_y_scale = GUI_SCREEN_HEIGHT / (float)GUI_GetTextureHeight(texture);
-        splash_texture = texture;
+        float x_scale = (float)GUI_SCREEN_WIDTH / (float)GUI_GetTextureWidth(texture);
+        float y_scale = (float)GUI_SCREEN_HEIGHT / (float)GUI_GetTextureHeight(texture);
+        GUI_DrawTextureScale(texture, 0, 0, x_scale, y_scale);
     }
-}
-
-void GUI_DisplaySafeMode()
-{
-    while (1)
-    {
-        int x = 30, y = 30;
-        GUI_StartDrawing();
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_0]);
-        y += GUI_GetFontSize();
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_1]);
-        y += GUI_GetFontSize() * 2;
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_2]);
-        GUI_EndDrawing();
-
-        SceCtrlData pad;
-        memset(&pad, 0, sizeof(SceCtrlData));
-        sceCtrlPeekBufferPositiveExt2(0, &pad, 1);
-
-        if (pad.buttons & ~SCE_CTRL_INTERCEPTED)
-            break;
-    }
-}
-
-void GUI_DrawWallpaper()
-{
-    if (wallpaper_texture)
-        GUI_DrawTextureScale(wallpaper_texture, 0.0f, 0.0f, wallpaper_x_scale, wallpaper_y_scale);
-}
-
-void GUI_DrawSplash()
-{
-    if (splash_texture)
-        GUI_DrawTextureScale(splash_texture, 0.0f, 0.0f, splash_x_scale, splash_y_scale);
-}
-
-void GUI_DisplaySplash()
-{
-    GUI_StartDrawing();
-    GUI_DrawSplash();
-    GUI_EndDrawing();
 }
 
 static void drawActivity()
 {
-    if (!current_activity->nowallpaper)
-        GUI_DrawWallpaper();
+    if (!current_activity)
+        return;
+
+    if (current_activity->wallpaper)
+        GUI_DrawWallpaper(current_activity->wallpaper);
+    else
+        GUI_DrawWallpaper(wallpaper_texture);
 
     if (current_activity->drawCallback)
         current_activity->drawCallback(current_activity);
 
     if (!current_activity->nostatusbar)
     {
-        GUI_DrawTopStatusBar(GUI_GetStringByLangId(current_activity->title));
+        GUI_DrawTopStatusBar(cur_lang[current_activity->title]);
         GUI_DrawBottomStatusBar(current_activity->button_instructions);
     }
 }
@@ -402,6 +355,7 @@ static void drawActivity()
 static void drawDialogs()
 {
     GUI_Dialog *dialog = main_dialog;
+
     while (dialog)
     {
         if (dialog->drawCallback)
@@ -420,13 +374,13 @@ void GUI_DrawMain()
     drawDialogs();
 }
 
-static void ctrlCommon()
+static void onHomeButtonEvent()
 {
     if (released_pad[PAD_PSBUTTON])
     {
-        if (IsPSbuttonEventEnabled())
+        if (!Emu_IsGameLoading() && IsPSbuttonEventEnabled())
         {
-            if (current_activity == main_activity)
+            if (!current_activity->parent)
             {
                 if (current_dialog != &setting_dialog)
                 {
@@ -436,7 +390,7 @@ static void ctrlCommon()
             }
             else
             {
-                GUI_BacktoMainActivity();
+                GUI_BackToMainActivity();
             }
         }
     }
@@ -444,12 +398,18 @@ static void ctrlCommon()
 
 void GUI_CtrlMain()
 {
-    ctrlCommon();
+    onHomeButtonEvent();
 
-    if (current_dialog && current_dialog->ctrlCallBack)
-        current_dialog->ctrlCallBack(current_dialog);
-    else if (current_activity->ctrlCallBack)
-        current_activity->ctrlCallBack(current_activity);
+    if (current_dialog)
+    {
+        if (current_dialog->ctrlCallBack)
+            current_dialog->ctrlCallBack(current_dialog);
+    }
+    else if (current_activity)
+    {
+        if (current_activity->ctrlCallBack)
+            current_activity->ctrlCallBack(current_activity);
+    }
 }
 
 void GUI_RunMain()

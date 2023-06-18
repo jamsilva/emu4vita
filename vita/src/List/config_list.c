@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "config_list.h"
-#include "config_text.h"
+#include "config_lib.h"
 #include "file.h"
 
 void ConfigListFreeEntry(ConfigListEntry *entry)

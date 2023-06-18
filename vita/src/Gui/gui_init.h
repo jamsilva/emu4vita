@@ -3,5 +3,6 @@
 
 void GUI_Init();
 void GUI_Deinit();
+void GUI_WaitInitEnd();
 
 #endif

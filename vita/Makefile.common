@@ -66,50 +66,49 @@ LINKS := \
 	-L$(VITA_LIB_DIR)
 
 SRC_C += \
-	Activity/about.c \
-	Activity/browser.c
+	activity/about.c \
+	activity/browser.c \
+	activity/loading.c
 
 SRC_C += \
-	Emu/emu_audio.c \
-	Emu/emu_game.c \
-	Emu/emu_input.c \
-	Emu/emu_save.c \
-	Emu/emu_state.c \
-	Emu/emu_video.c
+	emu/emu_audio.c \
+	emu/emu_disk.c \
+	emu/emu_game.c \
+	emu/emu_input.c \
+	emu/emu_save.c \
+	emu/emu_state.c \
+	emu/emu_video.c \
+	emu/emu_retro.c \
+	emu/retro_environ.c \
+	emu/retro_option.c
 
 SRC_C += \
-	Gui/alert_dialog.c \
-	Gui/gui_ctrl.c \
-	Gui/gui_init.c \
-	Gui/gui_lib.c \
-	Gui/gui_shader.c \
-	Gui/gui.c
+	gui/alert_dialog.c \
+	gui/gui_ctrl.c \
+	gui/gui_init.c \
+	gui/gui_lib.c \
+	gui/gui_shader.c \
+	gui/gui.c
 
 SRC_C += \
-	List/config_list.c \
-	List/file_list.c \
-	List/option_list.c \
-	List/overlay_list.c \
-	List/text_list.c
+	list/config_list.c \
+	list/file_list.c \
+	list/option_list.c \
+	list/overlay_list.c \
+	list/string_list.c
 
 SRC_C += \
-	Retro/retro_environ.c \
-	Retro/retro_option.c \
-	Retro/retro.c
-
-SRC_C += \
-	Setting/setting_overlay.c \
-	Setting/setting_state.c \
-	Setting/setting.c
+	setting/setting_overlay.c \
+	setting/setting_state.c \
+	setting/setting.c
 
 SRC_C += \
 	boot.c \
-	config_text.c \
+	config_lib.c \
 	config.c \
 	file.c \
 	init.c \
 	lang.c \
-	log_scr.c \
 	main.c \
 	sbrk.c \
 	strnatcmp.c \

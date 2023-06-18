@@ -6,17 +6,16 @@
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 
-#include "Setting/setting.h"
-#include "Retro/retro.h"
-#include "Gui/gui.h"
-#include "emu.h"
+#include "setting/setting.h"
+#include "gui/gui.h"
+#include "emu/emu.h"
 #include "utils.h"
 #include "config.h"
 #include "init.h"
 
 typedef struct
 {
-    int map_key;
+    int mapping_key;
     int sx;
     int sy;
     int dx;
@@ -28,7 +27,7 @@ typedef struct
     uint32_t *enable;
     TouchMap *maps;
     int n_maps;
-} TouchMapOption;
+} TouchOption;
 
 #define RETRO_PAD_N_BUTTONS 16
 
@@ -40,8 +39,11 @@ typedef struct
 
 extern GUI_Dialog setting_dialog;
 
-static void changeMapPortUp();
-static void changeMapPortDown();
+static void saveStateEventCallback();
+static void loadStateEventCallback();
+static void exitGameEventCallback();
+static void changeMapPortUpCallback();
+static void changeMapPortDownCallback();
 
 TouchMap front_touch_maps[] = {
     {SCE_CTRL_L2, 0, 0, FRONT_TOUCH_WIDTH, FRONT_TOUCH_HEIGHT},
@@ -57,12 +59,13 @@ TouchMap back_touch_maps[] = {
     {SCE_CTRL_R3, GUI_SCREEN_WIDTH - BACK_TOUCH_PADDING_L - BACK_TOUCH_WIDTH, GUI_SCREEN_HEIGHT - BACK_TOUCH_HEIGHT, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT},
 };
 
-TouchMapOption touch_map_options[2] = {
+TouchOption touch_options[2] = {
     {&control_config.front_touch_pad, front_touch_maps, sizeof(front_touch_maps) / sizeof(TouchMap)},
     {&control_config.back_touch_pad, back_touch_maps, sizeof(back_touch_maps) / sizeof(TouchMap)},
 };
+#define N_TOUCH_OPTIONS 2 // (sizeof(touch_options) / sizeof(TouchOption))
 
-KeyMapOption key_map_options[] = {
+EmuKeyOption emu_key_options[] = {
     {&control_config.button_left, SCE_CTRL_LEFT, {0}, {0}},
     {&control_config.button_up, SCE_CTRL_UP, {0}, {0}},
     {&control_config.button_right, SCE_CTRL_RIGHT, {0}, {0}},
@@ -80,39 +83,55 @@ KeyMapOption key_map_options[] = {
     {&control_config.button_l3, SCE_CTRL_L3, {0}, {0}},
     {&control_config.button_r3, SCE_CTRL_R3, {0}, {0}},
 };
-#define N_KEY_MAP_OPTIONS 16 // (sizeof(key_map_options) / sizeof(KeyMapOption))
+#define N_EMU_KEY_OPTIONS 16 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE, Emu_RequestSaveState, {0}},
-    {SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE, Emu_RequestLoadState, {0}},
-    {SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS, Emu_RequestExitGame, {0}},
-    {SCE_CTRL_PSBUTTON | SCE_CTRL_L1, Emu_SpeedDownGame, {0}},
-    {SCE_CTRL_PSBUTTON | SCE_CTRL_R1, Emu_SpeedUpGame, {0}},
-    {SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT, changeMapPortDown, {0}},
-    {SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_RIGHT, changeMapPortUp, {0}},
+    {&misc_config.hk_loadstate, saveStateEventCallback, {0}},
+    {&misc_config.hk_savestate, loadStateEventCallback, {0}},
+    {&misc_config.hk_speed_up, Emu_SpeedUpGame, {0}},
+    {&misc_config.hk_speed_down, Emu_SpeedDownGame, {0}},
+    {&misc_config.hk_player_up, changeMapPortUpCallback, {0}},
+    {&misc_config.hk_player_down, changeMapPortDownCallback, {0}},
+    {&misc_config.hk_exit_game, exitGameEventCallback, {0}},
 };
-#define N_HOT_KEY_OPTIONS 7 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
+#define N_HOT_KEY_MAPPER_OPTIONS 7 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
 static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
 static uint32_t psbutton_hold_count[N_CTRL_PORTS];
-static uint32_t retro_keys[N_CTRL_PORTS];
+static uint32_t emu_mapping_keys[N_CTRL_PORTS]; // bitmask
+static int input_okay = 0;
 
-static void changeMapPortUp()
+static void saveStateEventCallback()
 {
-    if (control_config.map_port < N_CTRL_PORTS - 1)
-        control_config.map_port++;
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_SAVE_STATE);
+}
+
+static void loadStateEventCallback()
+{
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_LOAD_STATE);
+}
+
+static void exitGameEventCallback()
+{
+    Emu_SetGameRunEventAction(TYPE_GAME_RUN_EVENT_ACTION_EXIT);
+}
+
+static void changeMapPortUpCallback()
+{
+    if (control_config.ctrl_player < N_CTRL_PORTS - 1)
+        control_config.ctrl_player++;
     else
-        control_config.map_port = 0;
+        control_config.ctrl_player = 0;
     SaveControlConfig(TYPE_CONFIG_GAME);
     Emu_ReshowCtrlPlayer();
 }
 
-static void changeMapPortDown()
+static void changeMapPortDownCallback()
 {
-    if (control_config.map_port > 0)
-        control_config.map_port--;
+    if (control_config.ctrl_player > 0)
+        control_config.ctrl_player--;
     else
-        control_config.map_port = N_CTRL_PORTS - 1;
+        control_config.ctrl_player = N_CTRL_PORTS - 1;
     SaveControlConfig(TYPE_CONFIG_GAME);
     Emu_ReshowCtrlPlayer();
 }
@@ -121,16 +140,16 @@ static void cleanInputKeys()
 {
     int i, j;
 
-    for (i = 0; i < N_KEY_MAP_OPTIONS; i++)
+    for (i = 0; i < N_EMU_KEY_OPTIONS; i++)
     {
         for (j = 0; j < N_CTRL_PORTS; j++)
         {
-            key_map_options[i].old_presseds[j] = 0;
-            key_map_options[i].hold_counts[j] = 0;
+            emu_key_options[i].old_presseds[j] = 0;
+            emu_key_options[i].hold_counts[j] = 0;
         }
     }
 
-    for (i = 0; i < N_HOT_KEY_OPTIONS; i++)
+    for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
     {
         for (j = 0; j < N_CTRL_PORTS; j++)
         {
@@ -153,9 +172,9 @@ static void TouchToButtons(uint32_t *buttons)
     SceTouchData touch_data;
     int i, j, k;
     int x, y;
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < N_TOUCH_OPTIONS; i++)
     {
-        TouchMapOption *option = &touch_map_options[i];
+        TouchOption *option = &touch_options[i];
         if (!*(option->enable))
             continue;
 
@@ -171,7 +190,7 @@ static void TouchToButtons(uint32_t *buttons)
             for (k = 0; k < option->n_maps; k++)
             {
                 if ((x >= maps[k].sx) && (x <= maps[k].dx) && (y >= maps[k].sy) && (y <= maps[k].dy))
-                    *buttons |= maps[k].map_key;
+                    *buttons |= maps[k].mapping_key;
             }
         }
     }
@@ -210,7 +229,7 @@ static void AnalogToDpads(uint8_t analog_x, uint8_t analog_y, uint32_t *buttons)
         *buttons |= SCE_CTRL_DOWN;
 }
 
-static void LocalKeyToEmuKey(KeyMapOption *option, int local_port, int map_port, uint32_t buttons)
+static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_port, uint32_t buttons)
 {
     uint8_t cur_pressed = ((buttons & option->local_key) != 0);
     uint8_t old_pressed = option->old_presseds[local_port];
@@ -220,18 +239,18 @@ static void LocalKeyToEmuKey(KeyMapOption *option, int local_port, int map_port,
     {
         option->hold_counts[local_port]++;
 
-        uint32_t value = *(option->value);
-        int key_enabled = value & ENABLE_KEY_BITMASK;
-        if (!key_enabled)
+        uint32_t config_key = *(option->value);
+        int enabled = config_key & ENABLE_KEY_BITMASK;
+        if (!enabled)
             return;
 
-        int trubo_enabled = value & TURBO_KEY_BITMASK;
+        int trubo = config_key & TURBO_KEY_BITMASK;
         int hold_count = option->hold_counts[local_port];
 
-        if (!trubo_enabled || !old_pressed || (hold_count % (control_config.turbo_delay + 1) == 0))
+        if (!trubo || !old_pressed || (hold_count % (control_config.turbo_delay + 1) == 0))
         {
-            value &= 0x00FFFFFF;
-            retro_keys[map_port] |= value;
+            config_key &= 0x00FFFFFF;
+            emu_mapping_keys[mapping_port] |= config_key;
         }
     }
     else
@@ -240,17 +259,25 @@ static void LocalKeyToEmuKey(KeyMapOption *option, int local_port, int map_port,
     }
 }
 
-static int checkHotKey(int port, uint32_t buttons)
+static int onHotKeyEvent(int port, uint32_t buttons)
 {
     HotKeyOption *option;
+    uint32_t config_key;
     uint8_t cur_pressed;
     uint8_t old_pressed;
 
+    buttons |= ENABLE_KEY_BITMASK;
+
     int i;
-    for (i = 0; i < N_HOT_KEY_OPTIONS; i++)
+    for (i = 0; i < N_HOT_KEY_MAPPER_OPTIONS; i++)
     {
         option = &hot_key_options[i];
-        cur_pressed = ((buttons & option->key) == option->key);
+        config_key = *(option->value);
+        int enabled = config_key & ENABLE_KEY_BITMASK;
+        if (!enabled)
+            continue;
+
+        cur_pressed = ((buttons & config_key) == config_key);
         old_pressed = option->old_presseds[port];
         option->old_presseds[port] = cur_pressed;
 
@@ -270,7 +297,7 @@ static int checkHotKey(int port, uint32_t buttons)
     return 0;
 }
 
-static int checkPSbutton(int prot, uint32_t buttons)
+static int onPSbuttonEvent(int prot, uint32_t buttons)
 {
     uint8_t cur_pressed = ((buttons & SCE_CTRL_PSBUTTON) != 0);
     uint8_t old_pressed = psbutton_old_pressed[prot];
@@ -283,29 +310,32 @@ static int checkPSbutton(int prot, uint32_t buttons)
             SetPSbuttonEventEnabled(0);
         return 1;
     }
-    else if (old_pressed)
-    {
-        if (IsPSbuttonEventEnabled())
-        {
-            float speed = Emu_GetCurrentRunSpeed();
-            if (speed != 1.0f)
-            {
-                speed = 1.0f;
-                Emu_SetRunSpeed(speed);
-            }
-            else
-            {
-                Emu_PauseGame();
-                GUI_OpenDialog(&setting_dialog);
-                SetPSbuttonEventEnabled(0);
-                return 1;
-            }
-        }
-    }
     else
     {
         psbutton_hold_count[prot] = 0;
-        SetPSbuttonEventEnabled(1);
+        if (old_pressed)
+        {
+            if (IsPSbuttonEventEnabled())
+            {
+                float speed = Emu_GetCurrentRunSpeed();
+                if (speed != 1.0f)
+                {
+                    speed = 1.0f;
+                    Emu_SetRunSpeed(speed);
+                }
+                else
+                {
+                    Emu_PauseGame();
+                    GUI_OpenDialog(&setting_dialog);
+                    SetPSbuttonEventEnabled(0);
+                }
+                return 1;
+            }
+        }
+        else
+        {
+            SetPSbuttonEventEnabled(1);
+        }
     }
 
     return 0;
@@ -314,22 +344,22 @@ static int checkPSbutton(int prot, uint32_t buttons)
 void Emu_PollInput()
 {
     SceCtrlData ctrl_data;
-    int read_port, local_port, map_port;
+    int read_port, local_port, mapping_port;
     int i;
 
-    memset(retro_keys, 0, sizeof(retro_keys));
+    memset(emu_mapping_keys, 0, sizeof(emu_mapping_keys));
 
     for (local_port = 0; local_port < N_CTRL_PORTS; local_port++)
     {
         if (local_port == 0)
         {
             read_port = 0;
-            map_port = control_config.map_port;
+            mapping_port = control_config.ctrl_player;
         }
         else
         {
             read_port = local_port + 1;
-            map_port = local_port;
+            mapping_port = local_port;
         }
 
         memset(&ctrl_data, 0, sizeof(SceCtrlData));
@@ -342,10 +372,10 @@ void Emu_PollInput()
             TouchToButtons(&ctrl_data.buttons);
         AnalogToButtons(ctrl_data.lx, ctrl_data.ly, ctrl_data.rx, ctrl_data.ry, &ctrl_data.buttons);
 
-        if (checkHotKey(local_port, ctrl_data.buttons))
+        if (onHotKeyEvent(local_port, ctrl_data.buttons))
             return;
 
-        if (checkPSbutton(local_port, ctrl_data.buttons))
+        if (onPSbuttonEvent(local_port, ctrl_data.buttons))
             return;
 
         if (control_config.left_analog == 1)
@@ -354,39 +384,43 @@ void Emu_PollInput()
         if (control_config.right_analog == 1)
             AnalogToDpads(ctrl_data.rx, ctrl_data.ry, &ctrl_data.buttons);
 
-        for (i = 0; i < N_KEY_MAP_OPTIONS; i++)
-            LocalKeyToEmuKey(&key_map_options[i], local_port, map_port, ctrl_data.buttons);
+        for (i = 0; i < N_EMU_KEY_OPTIONS; i++)
+            LocalKeyToEmuKey(&emu_key_options[i], local_port, mapping_port, ctrl_data.buttons);
     }
 }
 
 int Emu_InitInput()
 {
     cleanInputKeys();
+    input_okay = 1;
     return 0;
 }
 
 int Emu_DeinitInput()
 {
+    input_okay = 0;
     return 0;
 }
 
 void Retro_InputPollCallback()
 {
+    // Do nothing, we use Emu_PollInput() to poll the input, because sometimes the retro core
+    // do not invoke this callback, that will make us failed to open the menu in game running.
 }
 
 int16_t Retro_InputStateCallback(unsigned port, unsigned device, unsigned index, unsigned id)
 {
-    if (port >= N_CTRL_PORTS)
+    if (!input_okay || port >= N_CTRL_PORTS)
         return 0;
 
     int16_t res = 0;
 
     if (device == RETRO_DEVICE_JOYPAD)
     {
-        if (retro_input_is_bitmasks)
-            res = retro_keys[port] & 0xFFFF;
+        if (core_input_supports_bitmasks)
+            res = emu_mapping_keys[port] & 0xFFFF;
         else
-            res = retro_keys[port] & RETRO_KEY_TO_BITMASK(id);
+            res = emu_mapping_keys[port] & RETRO_KEY_TO_BITMASK(id);
     }
 
     return res;

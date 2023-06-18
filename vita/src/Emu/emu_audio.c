@@ -9,8 +9,7 @@
 #include <psp2/audioout.h>
 #include <speex/speex_resampler.h>
 
-#include "Retro/retro.h"
-#include "emu.h"
+#include "emu/emu.h"
 #include "utils.h"
 
 #define AUDIO_MAX_VOLUME 0x8000
@@ -81,7 +80,7 @@ static void AudioResamplerDestroy(AudioResampler *resampler)
         memset(resampler, 0, sizeof(AudioResampler));
     }
 
-    AppLog("[AUDIO] Resampler destroy done\n");
+    AppLog("[AUDIO] Resampler destroy OK!\n");
 }
 
 static int AudioResamplerInit(AudioResampler *resampler)
@@ -99,7 +98,7 @@ static int AudioResamplerInit(AudioResampler *resampler)
         goto FAILED;
     speex_resampler_skip_zeros(resampler->resampler_state);
 
-    AppLog("[AUDIO] Audio resampler init done\n");
+    AppLog("[AUDIO] Audio resampler init OK!\n");
     return 0;
 
 FAILED:
@@ -236,7 +235,7 @@ int Emu_UpdateAudioSampleRate(uint32_t sample_rate)
     if (!audio_pause)
         Emu_ResumeAudio();
 
-    AppLog("[AUDIO] Update audio frequency done\n");
+    AppLog("[AUDIO] Update audio frequency OK!\n");
 
     return ret;
 }
@@ -337,7 +336,7 @@ static void AudioOutputShutdown()
     sound_buffer->write_pos = 0;
     sound_buffer->read_pos = 0;
 
-    AppLog("[AUDIO] Audio output shutdown done\n");
+    AppLog("[AUDIO] Audio output shutdown OK!\n");
 }
 
 static int AudioOutputInit()
@@ -387,7 +386,7 @@ static int AudioOutputInit()
     sound_buffer->read_pos = 0;
     sound_buffer->write_pos = 0;
 
-    AppLog("[AUDIO] Audio output init done\n");
+    AppLog("[AUDIO] Audio output init OK!\n");
     return 0;
 
 FAILED:
@@ -411,7 +410,7 @@ static void AudioThreadShutdown()
         game_audio_state.thread_handle = -1;
     }
 
-    AppLog("[AUDIO] Audio thread shutdown done\n");
+    AppLog("[AUDIO] Audio thread shutdown OK!\n");
 }
 
 static int AudioThreadInit()
@@ -434,7 +433,7 @@ static int AudioThreadInit()
     if (sceKernelStartThread(game_audio_state.thread_handle, 0, NULL) != 0)
         goto FAILED;
 
-    AppLog("[AUDIO] Audio thread init done\n");
+    AppLog("[AUDIO] Audio thread init OK!\n");
     return 0;
 
 FAILED:
@@ -471,7 +470,7 @@ int Emu_InitAudio()
 
     game_audio_state.okay = 1;
 
-    AppLog("[AUDIO] Audio init done\n");
+    AppLog("[AUDIO] Audio init OK!\n");
     return 0;
 
 FAILED:
@@ -493,7 +492,7 @@ int Emu_DeinitAudio()
     AudioOutputShutdown();
     AudioResamplerDestroy(&game_audio_state.resampler);
 
-    AppLog("[AUDIO] Audio deinit done\n");
+    AppLog("[AUDIO] Audio deinit OK!\n");
 
     return 0;
 }

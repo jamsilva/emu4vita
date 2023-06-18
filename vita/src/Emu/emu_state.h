@@ -1,7 +1,7 @@
 #ifndef __M_EMU_STATE_H__
 #define __M_EMU_STATE_H__
 
-#include "Gui/gui.h"
+#include "gui/gui.h"
 
 #define STATES_VERSION 1
 
@@ -18,7 +18,8 @@ typedef struct
     uint64_t preview_size;      // 0x2C
     uint64_t state_offset;      // 0x34
     uint64_t state_size;        // 0x3C
-    char reserved[0x24];        // 0x44
+    uint32_t disk_index;        // 0x44
+    char reserved[0x20];        // 0x48
 } EmuStateHeader;               // 0x68
 
 void MakeSavestateDir(char *path);

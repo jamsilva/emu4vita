@@ -9,7 +9,7 @@ int Setting_DeinitState();
 void Setting_DrawState();
 void Setting_CtrlState();
 
-void Settting_SetStateSelectId(int id);
+void Setting_SetStateSelectId(int id);
 int Setting_GetStateSelectId();
 
 int Setting_GetStatePreviewWidth();

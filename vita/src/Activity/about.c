@@ -3,120 +3,128 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "Gui/gui.h"
+#include "gui/gui.h"
 #include "about_text.h"
 #include "utils.h"
 #include "lang.h"
 
-static int enterActivityCallback(GUI_Activity *activity);
+static int startActivityCallback(GUI_Activity *activity);
 static void drawActivityCallback(GUI_Activity *activity);
 static void ctrlActivityCallback(GUI_Activity *activity);
 
 static GUI_ButtonInstruction button_instructions[] = {
-    {BUTTON_CANCEL, BACK_TO_BROWSER},
-    {LANG_DISABLE, LANG_DISABLE},
+    {BUTTON_CANCEL, BACK, 1},
+    {LANG_NULL, LANG_NULL, 1},
 };
 
 GUI_Activity about_activity = {
     ABOUT_TITLE,           // Title
     button_instructions,   // Button instructions
-    enterActivityCallback, // Init callback
+    NULL,                  // Wallpaper
+    startActivityCallback, // Start callback
     NULL,                  // Exit callback
     drawActivityCallback,  // Draw callback
     ctrlActivityCallback,  // Ctrl callback
     0,                     // Disable draw statusbar
-    0,                     // Disable draw wallpaper
     NULL,                  // Parent activity
     NULL,                  // User data
 };
 
-#define LISTVIEW_PADDING_L 4.0f
-#define LISTVIEW_PADDING_T 4.0f
-#define ITEMVIEW_PADDING_L 3.0f
-#define ITEMVIEW_PADDING_T 3.0f
+#define LISTVIEW_PADDING_L 4
+#define LISTVIEW_PADDING_T 4
+#define ITEMVIEW_PADDING_L 3
+#define ITEMVIEW_PADDING_T 3
+#define ITEMVIEW_HEIGHT (GUI_GetFontSize() + ITEMVIEW_PADDING_T * 2)
 
 #define TEXT_COLOR COLOR_ORANGE
 
-static int listview_width, listview_height;
-static int listview_sx, listview_sy, listview_dx, listview_dy;
-static int itemview_width, itemview_height;
-static int list_max_draw_len;
-static int scrollbar_track_x, scrollbar_track_y, scrollbar_track_height;
+static int listview_top_pos = 0;
 
-static int list_top_pos = 0;
+static int layout_x, layout_y;
+static int layout_w, layout_h;
+
+static int listview_x, listview_y;
+static int listview_w, listview_h;
+static int itemview_w, itemview_h;
+static int listview_n_draw_items;
+
+static int scrollbar_track_x, scrollbar_track_y;
+static int scrollbar_track_height;
 
 static void refreshLayout()
 {
-    listview_width = ACTIVITY_FREE_DRAW_WIDTH;
-    listview_height = ACTIVITY_FREE_DRAW_HEIGHT;
-    listview_sx = ACTIVITY_FREE_DRAW_SX;
-    listview_sy = ACTIVITY_FREE_DRAW_SY;
-    listview_dx = ACTIVITY_FREE_DRAW_DX;
-    listview_dy = ACTIVITY_FREE_DRAW_DY;
+    GUI_GetActivityLayoutXY(&about_activity, &layout_x, &layout_y);
+    GUI_GetActivityLayoutWH(&about_activity, &layout_w, &layout_h);
 
-    itemview_width = listview_width - LISTVIEW_PADDING_L * 2;
-    itemview_height = GUI_GetFontSize() + ITEMVIEW_PADDING_T * 2;
-    list_max_draw_len = (listview_height - LISTVIEW_PADDING_T * 2) / itemview_height;
+    listview_x = layout_x + GUI_DEF_MAIN_LAYOUT_PADDING;
+    listview_y = layout_y + GUI_DEF_MAIN_LAYOUT_PADDING;
+    listview_w = layout_w - GUI_DEF_MAIN_LAYOUT_PADDING * 2;
+    listview_h = layout_h - GUI_DEF_MAIN_LAYOUT_PADDING * 2;
 
-    scrollbar_track_x = listview_dx - GUI_SCROLLBAR_SIZE - 2;
-    scrollbar_track_y = listview_sy + 2;
-    scrollbar_track_height = listview_height - 4;
+    itemview_w = listview_w - LISTVIEW_PADDING_L * 2;
+    itemview_h = ITEMVIEW_HEIGHT;
+    listview_n_draw_items = (listview_h - LISTVIEW_PADDING_T * 2) / itemview_h;
+
+    scrollbar_track_x = listview_x + listview_w - GUI_DEF_SCROLLBAR_SIZE - 2;
+    scrollbar_track_y = listview_y + 2;
+    scrollbar_track_height = listview_h - 4;
 }
 
-static int enterActivityCallback(GUI_Activity *activity)
+static int startActivityCallback(GUI_Activity *activity)
 {
+    about_activity.wallpaper = GUI_GetDefaultWallpaper();
     refreshLayout();
     return 0;
 }
 
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    // Listview bg
-    GUI_DrawFillRectangle(listview_sx, listview_sy, listview_width, listview_height, GUI_DEFALUT_BG_COLOR);
+    // ListView bg
+    GUI_DrawFillRectangle(listview_x, listview_y, listview_w, listview_h, GUI_DEF_COLOR_BG);
 
-    // List
-    int itemview_sx = listview_sx + LISTVIEW_PADDING_L;
-    int itemview_sy = listview_sy + LISTVIEW_PADDING_T;
-    int sx = itemview_sx + ITEMVIEW_PADDING_L;
-    int sy;
-    int drawn_len = 0;
+    // ItemView
+    int itemview_x = listview_x + LISTVIEW_PADDING_L;
+    int itemview_y = listview_y + LISTVIEW_PADDING_T;
+    int itemview_max_dy = listview_y + listview_h - LISTVIEW_PADDING_T;
+    int list_len = N_ABOUT_TEXTS;
+    int x, y;
 
     int i;
-    for (i = list_top_pos; i < N_ABOUT_TEXTS; i++)
+    for (i = listview_top_pos; i < list_len; i++)
     {
-        if (drawn_len >= list_max_draw_len)
+        if (itemview_y >= itemview_max_dy)
             break;
 
-        sy = itemview_sy + ITEMVIEW_PADDING_T;
-        GUI_DrawText(sx, sy, TEXT_COLOR, about_texts[i]);
-        itemview_sy += itemview_height;
-        drawn_len++;
+        x = itemview_x + ITEMVIEW_PADDING_L;
+        y = itemview_y + ITEMVIEW_PADDING_T;
+        GUI_DrawText(x, y, TEXT_COLOR, about_texts[i]);
+        itemview_y += itemview_h;
     }
 
     // Scrollbar
-    GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, N_ABOUT_TEXTS, list_max_draw_len, list_top_pos, 0);
+    GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, list_len, listview_n_draw_items, listview_top_pos, 0);
 }
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
-        MoveListPosNoFocus(TYPE_MOVE_UP, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_UP, &listview_top_pos, N_ABOUT_TEXTS, listview_n_draw_items);
     }
     else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
     {
-        MoveListPosNoFocus(TYPE_MOVE_DOWN, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_DOWN, &listview_top_pos, N_ABOUT_TEXTS, listview_n_draw_items);
     }
     else if (hold_pad[PAD_LEFT])
     {
-        MoveListPosNoFocus(TYPE_MOVE_LEFT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_LEFT, &listview_top_pos, N_ABOUT_TEXTS, listview_n_draw_items);
     }
     else if (hold_pad[PAD_RIGHT])
     {
-        MoveListPosNoFocus(TYPE_MOVE_RIGHT, &list_top_pos, N_ABOUT_TEXTS, list_max_draw_len);
+        MoveListPosNoFocus(TYPE_MOVE_RIGHT, &listview_top_pos, N_ABOUT_TEXTS, listview_n_draw_items);
     }
 
-    if (pressed_pad[PAD_CANCEL])
+    if (released_pad[PAD_CANCEL])
     {
         GUI_ExitActivity(&about_activity);
     }
