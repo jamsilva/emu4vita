@@ -37,7 +37,7 @@
 #define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xBF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 
-#define MAX_DIALOG_SCALE_COUNT 12
+#define MAX_DIALOG_SCALE_COUNT 10
 
 static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);

@@ -7,7 +7,7 @@
 
 int Emu_HasDiskControl()
 {
-    return core_disk_control_ext_callback != NULL ? 1 : 0;
+    return (core_disk_control_ext_callback != NULL);
 }
 
 int Emu_DiskSetEjectState(int ejected)
@@ -128,16 +128,13 @@ int Emu_DiskChangeImageIndex(int index)
     if (!Emu_HasDiskControl())
         return -1;
     
-    printDiskInfo();
     if (!Emu_DiskGetEjectState())
     {
         Emu_DiskSetEjectState(1);
         retro_run();
     }
     Emu_DiskSetImageIndex(index);
-    printDiskInfo();
     Emu_DiskSetEjectState(0);
-    printDiskInfo();
     
     return 0;
 }

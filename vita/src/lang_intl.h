@@ -230,6 +230,13 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_EXIT_APP
     "Exit app",
 
+    // TITLE_SWITCH_DISK
+    "Switch disk",
+    // LABEL_DISK
+    "Disk",
+    // CURRENT
+    "current",
+
     /**************  Menu grahics  *****************/
     // LABEL_DISPLAY_SIZE
     "Display size",
@@ -596,6 +603,13 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "返回前端",
     // LABEL_EXIT_APP
     "退出程序",
+
+    // TITLE_SWITCH_DISK
+    "更换光盘",
+    // LABEL_DISK
+    "光盘",
+    // CURRENT
+    "当前",
 
     /**************  Menu grahics  *****************/
     // LABEL_DISPLAY_SIZE

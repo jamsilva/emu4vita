@@ -44,13 +44,6 @@ static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
         return;
 
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
-    int cur_index = Emu_DiskGetImageIndex();
-    if (data->focus_pos == cur_index)
-    {
-        AlertDialog_ShowSimpleTipDialog(cur_lang[TITLE_TIP], "已在当前光盘，无需更换");
-        return;
-    }
-
     Emu_DiskChangeImageIndex(data->focus_pos);
     GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
 }
@@ -58,15 +51,19 @@ static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
 static void diskControlCallback()
 {
     GUI_Dialog *dialog = AlertDialog_Creat();
-    AlertDialog_SetTitle(dialog, "更换光盘");
+    AlertDialog_SetTitle(dialog, cur_lang[TITLE_SWITCH_DISK]);
     int n_items = Emu_DiskGetNumImages();
     char **items = (char **)malloc(n_items * sizeof(char *));
     char string[MAX_NAME_LENGTH];
+    int cur_index = Emu_DiskGetImageIndex();
 
     int i;
     for (i = 0; i < n_items; i++)
     {
-        snprintf(string, MAX_NAME_LENGTH, "光盘 %d", i + 1);
+        if (i == cur_index)
+            snprintf(string, MAX_NAME_LENGTH, "%s %d (%s)", cur_lang[LABEL_DISK], i + 1, cur_lang[CURRENT]);
+        else
+            snprintf(string, MAX_NAME_LENGTH, "%s %d", cur_lang[LABEL_DISK], i + 1);
         items[i] = (char *)malloc(strlen(string) + 1);
         strcpy(items[i], string);
     }

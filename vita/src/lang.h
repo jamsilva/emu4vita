@@ -131,6 +131,10 @@ enum LanguageContainer
     LABEL_EXIT_TO_ARCH,
     LABEL_EXIT_APP,
 
+    TITLE_SWITCH_DISK,
+    LABEL_DISK,
+    CURRENT,
+
     // Menu grahics
     LABEL_DISPLAY_SIZE,
     LABEL_ASPECT_RATIO,
