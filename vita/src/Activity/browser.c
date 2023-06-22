@@ -667,6 +667,12 @@ static void deleteGameCallback(GUI_Dialog *dialog)
         return;
 
     sceIoRemove(path);
+#ifdef FBA_BUILD
+    char base_name[MAX_NAME_LENGTH];
+    MakeBaseName(base_name, path, MAX_NAME_LENGTH);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s.dat", file_list.path, base_name);
+    sceIoRemove(path);
+#endif
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
     refreshFileList(&file_list);

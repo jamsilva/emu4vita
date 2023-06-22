@@ -104,7 +104,11 @@ void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height)
 
     if (overlay_config && overlay_config->viewport_width && overlay_config->viewport_height)
     {
-        aspect_ratio = (float)*(overlay_config->viewport_width) / (float)*(overlay_config->viewport_height);
+        int rotate = Emu_GetVideoDisplayRotate();
+        if (rotate == TYPE_DISPLAY_ROTATE_CW_90 || rotate == TYPE_DISPLAY_ROTATE_CW_270)
+            aspect_ratio = (float)*(overlay_config->viewport_height) / (float)*(overlay_config->viewport_width);
+        else
+            aspect_ratio = (float)*(overlay_config->viewport_width) / (float)*(overlay_config->viewport_height);
     }
     else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_BY_GAME_RESOLUTION)
     {

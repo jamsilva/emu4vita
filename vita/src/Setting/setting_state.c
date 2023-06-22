@@ -441,21 +441,21 @@ static void ctrlOption()
         {
         case 0:
         {
-            Setting_LoadState(list_focus_pos);
             option_open = 0;
             GUI_CloseDialog(&setting_dialog);
+            Setting_LoadState(list_focus_pos);
             break;
         }
         case 1:
         {
-            Setting_SaveState(list_focus_pos);
             option_open = 0;
+            Setting_SaveState(list_focus_pos);
             break;
         }
         case 2:
         {
-            Setting_DeleteState(list_focus_pos);
             option_open = 0;
+            Setting_DeleteState(list_focus_pos);
             break;
         }
         case 3:

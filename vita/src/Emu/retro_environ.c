@@ -61,26 +61,25 @@ void retroLogCallback(enum retro_log_level level, const char *fmt, ...)
 
 static bool setPixelFormat(enum retro_pixel_format format)
 {
-    GuiPixelFormat loacle_format = core_video_pixel_format;
     core_pixel_format = format;
 
     switch (format)
     {
     case RETRO_PIXEL_FORMAT_0RGB1555:
     {
-        loacle_format = GUI_PIXEL_FORMAT_X1U5U5U5_1RGB;
+        core_video_pixel_format = GUI_PIXEL_FORMAT_X1U5U5U5_1RGB;
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: 0RGB1555\n");
     }
     break;
     case RETRO_PIXEL_FORMAT_RGB565:
     {
-        loacle_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
+        core_video_pixel_format = GUI_PIXEL_FORMAT_U5U6U5_RGB;
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: RGB565\n");
     }
     break;
     case RETRO_PIXEL_FORMAT_XRGB8888:
     {
-        loacle_format = GUI_PIXEL_FORMAT_X8U8U8U8_1RGB;
+        core_video_pixel_format = GUI_PIXEL_FORMAT_X8U8U8U8_1RGB;
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: XRGB8888\n");
     }
     break;
@@ -89,12 +88,6 @@ static bool setPixelFormat(enum retro_pixel_format format)
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT: %d is unknow!\n", format);
         return false;
     }
-    }
-
-    if (loacle_format != core_video_pixel_format)
-    {
-        AppLog("[RETRO] pixel_format is changed, video will refresh!\n");
-        core_video_pixel_format = loacle_format;
     }
 
     return true;

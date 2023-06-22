@@ -198,13 +198,13 @@ SettingMenuItem control_menu_items[] = {
 // 杂项 (菜单选项)
 static SettingMenuItem misc_menu_items[] = {
     {LABEL_AUTO_SAVE_LOAD_STATE, NULL, 1, TYPE_OPTION_STR_INDEXS, &auto_save_load_option}, // 0
-    {LABEL_HK_SAVESTATE, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_loadstate_option},          // 1
-    {LABEL_HK_LOADSTATE, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_savestate_option},          // 2
-    {LABEL_HK_SPEED_UP, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_speed_up_option},            // 3
-    {LABEL_HK_SPEED_DOWN, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_speed_down_option},        // 4
-    {LABEL_HK_PLAYER_UP, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_player_up_option},          // 5
-    {LABEL_HK_PLAYER_DOWN, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_player_down_option},      // 6
-    {LABEL_HK_EXIT_GAME, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_exit_game_option},          // 7
+    {LABEL_HK_SAVESTATE, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_loadstate_option},           // 1
+    {LABEL_HK_LOADSTATE, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_savestate_option},           // 2
+    {LABEL_HK_SPEED_UP, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_speed_up_option},             // 3
+    {LABEL_HK_SPEED_DOWN, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_speed_down_option},         // 4
+    {LABEL_HK_PLAYER_UP, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_player_up_option},           // 5
+    {LABEL_HK_PLAYER_DOWN, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_player_down_option},       // 6
+    {LABEL_HK_EXIT_GAME, NULL, 1, TYPE_OPTION_KEY_MAPPER, &hk_exit_game_option},           // 7
     {LABEL_SAVE_SCREENSHOT, NULL, 0, TYPE_OPTION_CALLBACK, saveScreenshotCallback},        // 8
     {LABEL_SAVE_PREVIEW, NULL, 0, TYPE_OPTION_CALLBACK, saveScreenshotForPreviewCallback}, // 9
     {LABEL_RESET_CONFIGS, NULL, 1, TYPE_OPTION_CALLBACK, resetMiscConfigCallback},         // 10

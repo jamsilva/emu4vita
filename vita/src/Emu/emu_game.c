@@ -251,6 +251,10 @@ int Emu_StartGame(EmuGameInfo *info)
     Loading_ExitActivityThread();
 
     AppLog("[GAME] Start game OK!\n");
+    
+    char free_str[16];
+    GetSizeString(free_str, GetFreeHeadMemSize());
+    AppLog("[GAME] FreeHeadMemSize: %s\n", free_str);
 
     return 0;
 }

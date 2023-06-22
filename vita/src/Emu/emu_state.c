@@ -125,6 +125,14 @@ int Emu_LoadState(int num)
         goto END;
     }
 
+    size_t serialize_size = retro_serialize_size();
+    if (header.state_size > serialize_size)
+    {
+        AppLog("[STATE] Load state: state size is larger than implementation expects\n");
+        ret = -1;
+        goto END;
+    }
+
     state_buf = malloc(header.state_size);
     if (!state_buf)
     {
@@ -159,11 +167,9 @@ int Emu_LoadState(int num)
         remaining -= read;
     }
 
-    printf("[DISK] cur_index: %d, save_index: %d\n", Emu_DiskGetImageIndex(), header.disk_index);
-
     if (Emu_HasDiskControl() && header.disk_index != Emu_DiskGetImageIndex())
         Emu_DiskChangeImageIndex(header.disk_index);
-    
+
     if (!retro_unserialize(state_buf, header.state_size))
     {
         AppLog("[STATE] Load state: retro_unserialize failed\n");
