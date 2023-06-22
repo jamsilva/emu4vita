@@ -205,6 +205,7 @@ static int startActivityCallback(GUI_Activity *activity)
 
 static int exitActivityCallback(GUI_Activity *activity)
 {
+    loading_thread_run = 0;
     StringListEmpty(&log_list);
     sceKernelDeleteLwMutex(&laoding_mutex);
     return 0;
@@ -237,6 +238,7 @@ void Loading_WaitActivityThreadEnd()
 
 int Loading_StartActivityThread()
 {
+    loading_thread_run = 0;
     Loading_WaitActivityThreadEnd();
 
     loading_thid = sceKernelCreateThread("loading_thread", loadingThreadFunc, 0x10000100, 0x10000, 0, 0, NULL);
