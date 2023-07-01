@@ -31,13 +31,13 @@
 #define TIP_ITEMVIEW_HEIGHT (GUI_GetFontSize() + TIP_ITEMVIEW_PADDING_T * 2)
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2)
 
-#define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x3F)
-#define STATEBAR_COLOR_BG COLOR_ALPHA(0xFF473800, 0xFF)
-#define DIALOG_COLOR_BG COLOR_ALPHA(0xFF2B2100, 0xFF)
-#define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_ORANGE, 0xBF)
+#define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x5F)
+#define STATEBAR_COLOR_BG 0xFF323232
+#define DIALOG_COLOR_BG 0xFF1E1E1E
+#define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_AZURE, 0xDF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 
-#define MAX_DIALOG_SCALE_COUNT 10
+#define MAX_DIALOG_GRADUAL_COUNT 10
 
 static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
@@ -367,15 +367,13 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 {
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
 
-    float percent = ((float)data->dialog_scale_count / (float)MAX_DIALOG_SCALE_COUNT);
-
-    int dialog_w = data->dialog_width * percent;
-    int dialog_h = data->dialog_height * percent;
+    int dialog_w = data->dialog_width;
+    int dialog_h = data->dialog_height;
     int dialog_x = (GUI_SCREEN_WIDTH - dialog_w) / 2;
     int dialog_y = (GUI_SCREEN_HEIGHT - dialog_h) / 2;
 
     int statebar_w = dialog_w;
-    int statebar_h = STATEBAR_HEIGHT * percent;
+    int statebar_h = STATEBAR_HEIGHT;
 
     int top_bar_x = dialog_x;
     int top_bar_y = dialog_y;
@@ -388,11 +386,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     int bottom_bar_x = dialog_x;
     int bottom_bar_y = listview_y + listview_h;
 
-    uint32_t overlay_color;
-    if (data->dialog_scale_count < MAX_DIALOG_SCALE_COUNT)
-        overlay_color = getGradualColor(OVERLAY_COLOR, data->dialog_scale_count, MAX_DIALOG_SCALE_COUNT);
-    else
-        overlay_color = OVERLAY_COLOR;
+    uint32_t overlay_color = getGradualColor(OVERLAY_COLOR, data->gradual_count, MAX_DIALOG_GRADUAL_COUNT);
     uint32_t dialog_color = DIALOG_COLOR_BG;
     uint32_t statebar_color = STATEBAR_COLOR_BG;
     uint32_t text_color = DIALOG_COLOR_TEXT;
@@ -403,29 +397,30 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 
     // Draw overlay
     GUI_DrawFillRectangle(0, 0, GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, overlay_color);
+
+    if (data->status == TYPE_DIALOG_STATUS_SHOW)
+    {
+        if (data->gradual_count < MAX_DIALOG_GRADUAL_COUNT)
+        {
+            data->gradual_count++;
+            return;
+        }
+    }
+    else
+    {
+        if (data->gradual_count > 0)
+            data->gradual_count--;
+        else
+            GUI_CloseDialog(dialog);
+        return;
+    }
+
     // Draw dialog bg
     GUI_DrawFillRectangle(dialog_x, dialog_y, dialog_w, dialog_h, dialog_color);
     // Draw top bar bg
     GUI_DrawFillRectangle(top_bar_x, top_bar_y, statebar_w, statebar_h, statebar_color);
     // Draw bottom bar bg
     GUI_DrawFillRectangle(bottom_bar_x, bottom_bar_y, statebar_w, statebar_h, statebar_color);
-
-    if (data->status == TYPE_DIALOG_STATUS_SHOW)
-    {
-        if (data->dialog_scale_count < MAX_DIALOG_SCALE_COUNT)
-        {
-            data->dialog_scale_count++;
-            return;
-        }
-    }
-    else
-    {
-        if (data->dialog_scale_count > 0)
-            data->dialog_scale_count--;
-        else
-            GUI_CloseDialog(dialog);
-        return;
-    }
 
     // Draw title
     if (data->title)
@@ -578,7 +573,7 @@ static int openDialogCallback(GUI_Dialog *dialog)
     AlertDialogData *data = (AlertDialogData *)dialog->userdata;
     data->opened = 1;
     data->status = TYPE_DIALOG_STATUS_SHOW;
-    data->dialog_scale_count = 0;
+    data->gradual_count = 0;
 
     return 0;
 }

@@ -95,7 +95,7 @@ static void Gui_InitLang()
     }
 }
 
-void GUI_WaitGuiInitEnd()
+void GUI_WaitInitEnd()
 {
     if (gui_images_thid >= 0)
     {

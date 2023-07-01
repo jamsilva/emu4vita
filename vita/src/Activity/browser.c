@@ -123,8 +123,8 @@ static void refreshLayout()
     int layout_w, layout_h;
     int layout_dx, layout_dy;
 
-    GUI_GetActivityLayoutXY(&about_activity, &layout_x, &layout_y);
-    GUI_GetActivityLayoutWH(&about_activity, &layout_w, &layout_h);
+    GUI_GetActivityLayoutXY(&browser_activity, &layout_x, &layout_y);
+    GUI_GetActivityLayoutWH(&browser_activity, &layout_w, &layout_h);
 
     layout_x = layout_x + GUI_DEF_MAIN_LAYOUT_PADDING;
     layout_y = layout_y + GUI_DEF_MAIN_LAYOUT_PADDING;
@@ -644,7 +644,7 @@ static void drawActivityCallback(GUI_Activity *activity)
             x = itemview_x + NAME_ITEMVIEW_PADDING_L;
             y = itemview_y + NAME_ITEMVIEW_PADDING_T;
             clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
-            GUI_SetClipRectangle(x, y, clip_w, clip_h);
+            GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
             GUI_DrawText(x, y, color, file_entry->name);
 
             GUI_DisableClipping();

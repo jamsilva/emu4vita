@@ -36,7 +36,7 @@ typedef struct AlertDialogData
     int status;
     int dialog_width;
     int dialog_height;
-    int dialog_scale_count;
+    int gradual_count;
     int listview_n_draw_items;
     void *userdata;
 } AlertDialogData;

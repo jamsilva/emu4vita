@@ -408,3 +408,8 @@ uint64_t GetFreeHeadMemSize()
 {
     return _newlib_heap_end - _newlib_heap_cur;
 }
+
+uint64_t GetUsedHeadMemSize()
+{
+    return _newlib_heap_cur - _newlib_heap_base;
+}

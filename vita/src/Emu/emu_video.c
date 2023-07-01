@@ -513,11 +513,11 @@ static void refreshFps()
 static void drawHeadMemInfo()
 {
     char total_string[16];
-    char free_string[16];
+    char used_string[16];
     GetSizeString(total_string, GetTotalHeadMemSize());
-    GetSizeString(free_string, GetFreeHeadMemSize());
+    GetSizeString(used_string, GetUsedHeadMemSize());
 
-    GUI_DrawTextf( 0, GUI_GetFontSize(), COLOR_WHITE, "Mem:%s/%s", free_string, total_string);
+    GUI_DrawTextf( 0, GUI_GetFontSize(), COLOR_GREEN, "Mem:%s/%s", used_string, total_string);
 }
 */
 static void checkFrameDelay()

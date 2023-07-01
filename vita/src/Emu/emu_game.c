@@ -195,7 +195,7 @@ static int loadGame(const char *path)
 
 int Emu_StartGame(EmuGameInfo *info)
 {
-    if (!info || !info->path)
+    if (!info)
         return -1;
 
     game_loading = 1;
@@ -252,10 +252,6 @@ int Emu_StartGame(EmuGameInfo *info)
 
     AppLog("[GAME] Start game OK!\n");
     
-    char free_str[16];
-    GetSizeString(free_str, GetFreeHeadMemSize());
-    AppLog("[GAME] FreeHeadMemSize: %s\n", free_str);
-
     return 0;
 }
 

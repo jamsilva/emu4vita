@@ -175,14 +175,14 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_DELETE_SAVEFILE
     "Delete savefile",
 
-    // MESSAGE_START_GAME_FAILED
-    "Failed to start game!",
     // MESSAGE_ASK_DELETE_GAME
-    "Are you sure to delete this game?",
+    "Are you sure you want to delete this game?",
     // MESSAGE_ASK_DELETE_AUTO_STATE
-    "Are you sure to delete the auto state of this game?",
+    "Are you sure you want to delete the auto state of this game?",
     // MESSAGE_ASK_DELETE_SAVEFILE
-    "Are you sure to delete the save file of this game?",
+    "Are you sure you want to delete the save file of this game?",
+    // MESSAGE_START_GAME_FAILED
+    "Failed to start this game!",
 
     /**************  About  *****************/
     // ABOUT_TITLE

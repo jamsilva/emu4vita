@@ -88,6 +88,7 @@ static void drawActivityCallback(GUI_Activity *activity)
     int itemview_max_dy = listview_y + listview_h - LISTVIEW_PADDING_T;
     int list_len = N_ABOUT_TEXTS;
     int x, y;
+    int clip_w, clip_h;
 
     int i;
     for (i = listview_top_pos; i < list_len; i++)
@@ -97,7 +98,14 @@ static void drawActivityCallback(GUI_Activity *activity)
 
         x = itemview_x + ITEMVIEW_PADDING_L;
         y = itemview_y + ITEMVIEW_PADDING_T;
+        clip_w = itemview_w - ITEMVIEW_PADDING_L * 2;
+        clip_h = itemview_h;
+        if (clip_h > itemview_max_dy - itemview_y)
+            clip_h = itemview_max_dy - itemview_y;
+        GUI_EnableClipping();
+        GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
         GUI_DrawText(x, y, TEXT_COLOR, about_texts[i]);
+        GUI_DisableClipping();
         itemview_y += itemview_h;
     }
 

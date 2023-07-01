@@ -66,5 +66,6 @@ int IsPSbuttonEventEnabled();
 
 uint64_t GetTotalHeadMemSize();
 uint64_t GetFreeHeadMemSize();
+uint64_t GetUsedHeadMemSize();
 
 #endif
