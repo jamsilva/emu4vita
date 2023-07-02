@@ -18,12 +18,12 @@
 #define STATEBAR_PADDING_T 6
 
 #define TIP_LISTVIEW_PADDING_L 6
-#define TIP_LISTVIEW_PADDING_T 9
-#define MENU_LISTVIEW_PADDING_L 6
-#define MENU_LISTVIEW_PADDING_T 6
-
+#define TIP_LISTVIEW_PADDING_T 13
 #define TIP_ITEMVIEW_PADDING_L 10
 #define TIP_ITEMVIEW_PADDING_T 3
+
+#define MENU_LISTVIEW_PADDING_L 6
+#define MENU_LISTVIEW_PADDING_T 10
 #define MENU_ITEMVIEW_PADDING_L 10
 #define MENU_ITEMVIEW_PADDING_T 6
 
@@ -32,9 +32,9 @@
 #define MENU_ITEMVIEW_HEIGHT (GUI_GetFontSize() + MENU_ITEMVIEW_PADDING_T * 2)
 
 #define OVERLAY_COLOR COLOR_ALPHA(COLOR_BLACK, 0x5F)
-#define STATEBAR_COLOR_BG 0xFF323232
+#define STATEBAR_COLOR_BG 0xFF252525
 #define DIALOG_COLOR_BG 0xFF1E1E1E
-#define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_AZURE, 0xDF)
+#define ITEMVIEW_COLOR_FOCUS_BG COLOR_ALPHA(0xFF5D5D5D, 0xDF)
 #define DIALOG_COLOR_TEXT COLOR_WHITE
 
 #define MAX_DIALOG_GRADUAL_COUNT 10
@@ -432,7 +432,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
         clip_w = statebar_w - STATEBAR_PADDING_L * 2;
         clip_h = statebar_h;
         GUI_EnableClipping();
-        GUI_SetClipRectangle(x, y, clip_w, clip_h);
+        GUI_SetClipRectangle(x, top_bar_y, clip_w, clip_h);
         GUI_DrawText(x, y, text_color, data->title);
         GUI_DisableClipping();
     }
@@ -479,7 +479,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 
             GUI_EnableClipping();
 
-            GUI_SetClipRectangle(itemview_x, itemview_y, itemview_w, clip_h);
+            GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
             if (data->type == TYPE_ALERT_DIALOG_MENU && i == data->focus_pos)
                 GUI_DrawFillRectangle(itemview_x, itemview_y, clip_w, clip_h, focus_color);
 

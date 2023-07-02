@@ -147,7 +147,7 @@ static void drawActivityCallback(GUI_Activity *activity)
             if (clip_h > itemview_max_dy - itemview_y)
                 clip_h = itemview_max_dy - itemview_y;
             GUI_EnableClipping();
-            GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
+            GUI_SetClipRectangle(x, itemview_y, clip_w, clip_h);
             GUI_DrawText(x, y, TEXT_COLOR, entry->string);
             GUI_DisableClipping();
             itemview_y += itemview_h;

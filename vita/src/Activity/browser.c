@@ -585,7 +585,7 @@ static void drawActivityCallback(GUI_Activity *activity)
     clip_w = path_textview_w - PATH_VIEW_PADDING_L * 2;
     clip_h = path_textview_h;
     GUI_EnableClipping();
-    GUI_SetClipRectangle(x, y, clip_w, clip_h);
+    GUI_SetClipRectangle(x, path_textview_y, clip_w, clip_h);
     GUI_DrawText(x, y, PATH_TEXT_COLOR, file_list.path);
     GUI_DisableClipping();
 
@@ -644,7 +644,7 @@ static void drawActivityCallback(GUI_Activity *activity)
             x = itemview_x + NAME_ITEMVIEW_PADDING_L;
             y = itemview_y + NAME_ITEMVIEW_PADDING_T;
             clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
-            GUI_SetClipRectangle(itemview_x, itemview_y, clip_w, clip_h);
+            GUI_SetClipRectangle(x, itemview_y, clip_w, clip_h);
             GUI_DrawText(x, y, color, file_entry->name);
 
             GUI_DisableClipping();
