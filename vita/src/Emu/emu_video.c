@@ -73,8 +73,8 @@ static int converRotateCWToCCW(int rotate_cw)
     int rotate_ccw = rotate_cw;
     if (rotate_cw == 1)
         rotate_ccw = 3;
-    else if (rotate_cw == 1)
-        rotate_ccw = 3;
+    else if (rotate_cw == 3)
+        rotate_ccw = 1;
     return rotate_ccw;
 }
 
