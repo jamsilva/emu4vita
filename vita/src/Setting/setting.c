@@ -919,7 +919,7 @@ static int openDialogCallback(GUI_Dialog *dialog)
             main_menu_items[0].visible = 1; // 继续游戏
             main_menu_items[1].visible = 1; // 重置游戏
             main_menu_items[2].visible = 1; // 退出游戏
-            if (core_disk_control_ext_callback)
+            if (Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0)
                 main_menu_items[3].visible = 1; // 光盘控制
             else
                 main_menu_items[3].visible = 0; // 光盘控制

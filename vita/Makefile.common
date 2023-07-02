@@ -148,8 +148,6 @@ LIBS := \
 	-lSceHid_stub \
 	-lSceFiber_stub
 
-SCE_LIBC_SIZE := 20*1024*1024
-
 DEFINES := \
 	-DAPP_NAME_STR=\"$(APP_NAME_STR)\" \
 	-DAPP_NAME_EXT_STR=\"$(APP_NAME_EXT_STR)\" \
@@ -159,8 +157,8 @@ DEFINES := \
 	-DBUILD_DATE=\"$(BUILD_DATE)\" \
 	-DCORE_SOFTWARE=\"$(CORE_SOFTWARE)\"
 
+#SCE_LIBC_SIZE := 4194304
 #DEFINES += -DSCE_LIBC_SIZE=$(SCE_LIBC_SIZE)
-
 DEFINES += $(CORE_DEFINES)
 
 ifeq ($(WANT_DISPLAY_ROTATE), 1)
@@ -183,13 +181,11 @@ FLAGS    := $(WARNINGS) $(INCDIRS) $(DEFINES)
 
 ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard
 CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+ASFLAGS   := $(CFLAGS)
 
-ASFLAGS  := $(CFLAGS)
-LDFLAGS  := -Wl,-q
-
-CFLAGS   += -O3 -ffast-math $(FLAGS)
-CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
-LDFLAGS  := -Wl,-q $(LINKS)
+CFLAGS    += -O2 $(FLAGS) -ffast-math
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LINKS)
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc

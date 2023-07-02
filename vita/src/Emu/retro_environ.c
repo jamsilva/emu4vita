@@ -222,6 +222,13 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     switch (cmd)
     {
+    case RETRO_ENVIRONMENT_GET_OVERSCAN:
+    {
+        AppLog("[RETRO] RETRO_ENVIRONMENT_GET_OVERSCAN\n");
+        if (data)
+            *(bool *)data = true;
+    }
+    break;
     case RETRO_ENVIRONMENT_GET_CAN_DUPE:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_GET_CAN_DUPE\n");

@@ -32,7 +32,7 @@ int Emu_DiskGetEjectState()
 int Emu_DiskGetImageIndex()
 {
     if (!core_disk_control_ext_callback || !core_disk_control_ext_callback->get_image_index)
-        return -1;
+        return 0;
     
     return core_disk_control_ext_callback->get_image_index();
 }
