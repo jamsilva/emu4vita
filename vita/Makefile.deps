@@ -11,7 +11,7 @@ BUILD_DIR                  := $(ROOT_DIR)/../build/libretro
 
 TARGET_PATH                := $(ROOT_DIR)/deps/lib/$(TARGET).a
 
-LINKS := 
+LIBDIRS := 
 
 INCDIRS := \
 	-I$(LIBRETRO_COMM_DIR) \
@@ -105,7 +105,7 @@ ASFLAGS   := $(CFLAGS) $(INCDIRS)
 
 CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
-LDFLAGS   := -Wl,-q $(LINKS)
+LDFLAGS   := -Wl,-q $(LIBDIRS)
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc

@@ -34,27 +34,18 @@ LIBRETRO_DEPS_DIR          := $(LIBRETRO_DIR)/deps
 
 RELEASES_DIR               := $(ROOT_DIR)/../../releases
 
-VPK_NAME                   := $(TARGET)_v$(VPK_VER_STR).vpk
-DEFAULT_VPK_PATH           := $(VITA_BUILD_DIR)/$(VPK_NAME)
-DEFAULT_EBOOT_PATH         := $(APP_PKG_DIR)/eboot.bin
-SFO_BUILD_PATH             := $(APP_PKG_DIR)/sce_sys/param.sfo
-
-CLEAN_FILES                := $(VPK_BUILD_PATH) $(DEFAULT_EBOOT_PATH) $(SFO_BUILD_PATH)
+VPK_NAME           := $(TARGET)_v$(VPK_VER_STR).vpk
+VPK_PATH           := $(VITA_BUILD_DIR)/$(VPK_NAME)
+EBOOT_PATH         := $(APP_PKG_DIR)/eboot.bin
+SFO_PATH           := $(APP_PKG_DIR)/sce_sys/param.sfo
 
 ifeq ($(main_build), 1)
-	MAIN_BUILD_DIR := $(ROOT_DIR)/../../releases/Emu4Vita_v$(VPK_VER_STR)
-	VPK_BUILD_PATH := $(MAIN_BUILD_DIR)/$(VPK_NAME)
-	CLEAN_FILES    += $(VPK_BUILD_PATH)
-else
-	VPK_BUILD_PATH := $(DEFAULT_VPK_PATH)
+	RELEASE_DIR    := $(RELEASES_DIR)/Emu4Vita_v$(VPK_VER_STR)
+	VPK_PATH       := $(RELEASE_DIR)/$(VPK_NAME)
 endif
-
 ifeq ($(arch_build), 1)
-	ARCH_CORES_DIR   := $(ROOT_DIR)/../../arch/cores
-	EBOOT_BUILD_PATH := $(ARCH_CORES_DIR)/$(CORE_FILE_NAME).self
-	CLEAN_FILES      += $(EBOOT_BUILD_PATH)
-else
-	EBOOT_BUILD_PATH := $(DEFAULT_EBOOT_PATH)
+	ARCH_CORES_DIR := $(ROOT_DIR)/../../arch/cores
+	EBOOT_PATH     := $(ARCH_CORES_DIR)/$(CORE_FILE_NAME).self
 endif
 
 INCDIRS := \
@@ -62,7 +53,7 @@ INCDIRS := \
 	-I$(VITA_INCLUDE_DIR) \
 	-I$(LIBRETRO_COMM_INCLUDE_DIR)
 
-LINKS := \
+LIBDIRS := \
 	-L$(VITA_LIB_DIR)
 
 SRC_C += \
@@ -184,7 +175,7 @@ ASFLAGS   := $(CFLAGS) $(INCDIRS)
 
 CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
-LDFLAGS   := -Wl,-q $(LINKS)
+LDFLAGS   := -Wl,-q $(LIBDIRS)
 
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc
@@ -199,7 +190,7 @@ LD      := $(CXX)
 all: clean_files create_dirs build-deps build-core build-vita
 
 clean_files:
-	@rm -rf $(VPK_BUILD_PATH) $(EBOOT_BUILD_PATH) $(SFO_BUILD_PATH) $(VITA_BUILD_DIR)/$(TARGET).velf $(VITA_BUILD_DIR)/$(TARGET).elf
+	@rm -rf $(VPK_PATH) $(EBOOT_PATH) $(SFO_PATH) $(VITA_BUILD_DIR)/$(TARGET).velf $(VITA_BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(VITA_BUILD_DIR)
@@ -210,21 +201,21 @@ build-deps:
 build-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) $(CORE_ARGS)
 
-build-self: clean_files create_dirs build-deps build-core $(EBOOT_BUILD_PATH)
+build-self: clean_files create_dirs build-deps build-core $(EBOOT_PATH)
 
-build-vita: $(EBOOT_BUILD_PATH) $(SFO_BUILD_PATH)
-	@rm -rf $(VPK_BUILD_PATH)
-	@mkdir -p $(dir $(VPK_BUILD_PATH))
-	cd $(VITA_PKG_DIR) && zip -r $(VPK_BUILD_PATH) ./*
-	cd $(APP_PKG_DIR) && zip -r $(VPK_BUILD_PATH) ./*
+build-vita: $(EBOOT_PATH) $(SFO_PATH)
+	@rm -rf $(VPK_PATH)
+	@mkdir -p $(dir $(VPK_PATH))
+	cd $(VITA_PKG_DIR) && zip -r $(VPK_PATH) ./*
+	cd $(APP_PKG_DIR) && zip -r $(VPK_PATH) ./*
 
-$(SFO_BUILD_PATH):
+$(SFO_PATH):
 	@mkdir -p $(dir $@)
 	vita-mksfoex -s APP_VER="$(SFO_APP_VER)" \
 		-s TITLE_ID="$(SFO_TITLE_ID)" "$(SFO_TITLE_NAME)" \
 		-d ATTRIBUTE2=12 $@
 
-$(EBOOT_BUILD_PATH): $(VITA_BUILD_DIR)/$(TARGET).velf
+$(EBOOT_PATH): $(VITA_BUILD_DIR)/$(TARGET).velf
 	@mkdir -p $(dir $@)
 	vita-make-fself -c -a 0x2800000000000001 $< $@
 
@@ -251,7 +242,7 @@ clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)
 	
 clean-vita:
-	rm -rf $(VITA_BUILD_DIR) $(CLEAN_FILES)
+	rm -rf $(VITA_BUILD_DIR) $(VPK_PATH) $(EBOOT_PATH) $(SFO_PATH)
 
 clean: clean-vita
 

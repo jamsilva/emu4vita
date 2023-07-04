@@ -2,10 +2,11 @@ MAKE_ARGS = main_build=1
 
 BUBBLE_DIR  = ./bubble
 VITA_DIR    = ./vita
+ARCH_DIR    = ./arch
 
-all: build-vita
+all: build-vita build-arch
 
-clean: clean-vita
+clean: clean-vita clean-arch
 
 build-deps:
 	cd $(VITA_DIR) && make -f Makefile.deps
@@ -66,3 +67,9 @@ clean-all:
 	cd $(BUBBLE_DIR)/snes9x2005 && make clean-all $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/snes9x2005_plus && make clean-all $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/vba_next && make clean-all $(MAKE_ARGS)
+
+build-arch:
+	cd $(ARCH_DIR) && make $(MAKE_ARGS)
+
+clean-arch:
+	cd $(ARCH_DIR) && make clean $(MAKE_ARGS)
