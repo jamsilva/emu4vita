@@ -119,7 +119,7 @@ OBJS := $(addprefix $(VITA_BUILD_DIR)/, $(OBJS))
 
 LIBS := \
 	$(CORE_MAKEFILE_DIR)/$(CORE_FILE_NAME)_libretro_vita.a \
-	-lretro \
+	-lretro_comm\
 	-lvitashaders \
 	-lvita2d \
 	-lvita2d_ext \
@@ -177,13 +177,12 @@ WARNINGS := \
 	-Wno-unused-but-set-variable \
 	-Wno-format-truncation
 
-FLAGS    := $(WARNINGS) $(INCDIRS) $(DEFINES)
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(INCDIRS)
 
-ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard
-CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
-ASFLAGS   := $(CFLAGS)
-
-CFLAGS    += -O2 $(FLAGS) -ffast-math
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
 CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
 LDFLAGS   := -Wl,-q $(LINKS)
 

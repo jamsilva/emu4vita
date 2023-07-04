@@ -574,10 +574,10 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
     if (!video_okay || video_pause)
         return;
 
-    if (!data || pitch <= 0 || !video_texture || GUI_GetTextureDatap(video_texture) == data)
+    if (!data || pitch <= 0 || (video_texture && GUI_GetTextureDatap(video_texture) == data))
         goto DISPLAY_VIDEO;
 
-    if (video_width != width || video_height != height ||
+    if (video_width != width || video_height != height || !video_texture ||
         GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
     {
         Emu_UpdateVideoTexture(width, height);

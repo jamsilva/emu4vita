@@ -1,4 +1,4 @@
-TARGET = libretro
+TARGET = libretro_comm
 
 DEBUG ?= 0
 
@@ -8,6 +8,10 @@ LIBRETRO_COMM_DIR          := $(LIBRETRO_DIR)/libretro-common
 LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
 DEPS_DIR                   := $(LIBRETRO_DIR)/deps
 BUILD_DIR                  := $(ROOT_DIR)/../build/libretro
+
+TARGET_PATH                := $(ROOT_DIR)/deps/lib/$(TARGET).a
+
+LINKS := 
 
 INCDIRS := \
 	-I$(LIBRETRO_COMM_DIR) \
@@ -91,6 +95,18 @@ DEFINES := \
 	-DHAVE_ZLIB \
 	-DHAVE_COMPRESSION
 
+WARNINGS := \
+	-Wall
+
+ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
+CFLAGS    += -O3
+ASFLAGS   := $(CFLAGS) $(INCDIRS)
+
+CFLAGS    += -ffast-math $(WARNINGS) $(INCDIRS) $(DEFINES)
+CXXFLAGS  := $(CFLAGS) -fno-rtti -fno-exceptions
+LDFLAGS   := -Wl,-q $(LINKS)
+
 PREFIX  := arm-vita-eabi
 CC      := $(PREFIX)-gcc
 CXX     := $(PREFIX)-g++
@@ -100,17 +116,6 @@ OBJCOPY := $(PREFIX)-objcopy
 STRIP   := $(PREFIX)-strip
 NM      := $(PREFIX)-nm
 LD      := $(CXX)
-
-ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
-CFLAGS    += $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
-
-ASFLAGS := $(CFLAGS)
-LDFLAGS := -Wl,-q
-
-CFLAGS   += -O3 -Wall -ffast-math $(DEFINES)
-CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
-
-TARGET_PATH := $(ROOT_DIR)/deps/lib/$(TARGET).a
 
 all: $(TARGET_PATH)
 

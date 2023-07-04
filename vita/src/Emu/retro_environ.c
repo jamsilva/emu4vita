@@ -282,9 +282,9 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     case RETRO_ENVIRONMENT_GET_LANGUAGE:
     {
         int value = GetLangValue(app_config.language);
+        AppLog("[RETRO] RETRO_ENVIRONMENT_GET_LANGUAGE: %u\n", value);
         if (data)
             *(unsigned *)data = value;
-        AppLog("[RETRO] RETRO_ENVIRONMENT_GET_LANGUAGE: %u\n", value);
     }
     break;
 
@@ -360,7 +360,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_GEOMETRY:
     {
-        AppLog("[RETRO] RETRO_ENVIRONMENT_SET_GEOMETRY\n");
+        // AppLog("[RETRO] RETRO_ENVIRONMENT_SET_GEOMETRY\n");
         if (data)
             memcpy(&core_system_av_info.geometry, data, sizeof(struct retro_game_geometry));
     }
@@ -368,7 +368,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
 
     case RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO:
     {
-        AppLog("[RETRO] RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO\n");
+        // AppLog("[RETRO] RETRO_ENVIRONMENT_SET_SYSTEM_AV_INFO\n");
         struct retro_system_av_info *info = (struct retro_system_av_info *)data;
         return setSystemAvInfo(info);
     }
