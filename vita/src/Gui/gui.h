@@ -17,7 +17,7 @@ typedef struct
 {
     int button;
     int instruction;
-    int visible;
+    int visibility;
 } GUI_ButtonInstruction;
 
 typedef struct GUI_Activity

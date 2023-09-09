@@ -13,13 +13,15 @@
 
 #define APP_CONFIG_VERSION 1
 #define GRAPHICS_CONFIG_VERSION 2
-#define CONTROL_CONFIG_VERSION 1
+#define CONTROL_CONFIG_VERSION 2
 #define CORE_CONFIG_VERSION 1
-#define MISC_CONFIG_VERSION 2
+#define HOTKEY_CONFIG_VERSION 1
+#define MISC_CONFIG_VERSION 1
 
 #define APP_CONFIG_NAME "app.cfg"
 #define GRAPHICS_CONFIG_NAME "graphics.cfg"
 #define CONTROL_CONFIG_NAME "control.cfg"
+#define HOTKEY_CONFIG_NAME "hotkey.cfg"
 #define CORE_CONFIG_NAME "core.cfg"
 #define MISC_CONFIG_NAME "misc.cfg"
 #define OVERLAYS_CONFIG_NAME "overlays.cfg"
@@ -61,7 +63,7 @@
 #define EXIT_APP_HOT_KEY (SCE_CTRL_PSBUTTON | SCE_CTRL_SELECT)
 #define CHECK_EXIT_APP(key) ((key & EXIT_APP_HOT_KEY) == EXIT_APP_HOT_KEY)
 
-#define DISABLE_PSBUTTON_EVENT_HOLD_COUNT 20
+#define DISABLE_PSBUTTON_EVENT_HOLD_MICROS (500000llu) // 0.5 second
 
 enum ExtCtrlButtons
 {
@@ -145,50 +147,62 @@ typedef struct
     uint32_t overlay_select;  // 0x18
     uint32_t overlay_mode;    // 0x1C
     uint32_t show_fps;        // 0x20
-    char reserved[0x44];      // 0x24
-} GraphicsConfig;             // 0x68
+    char reserved[0x5C];      // 0x24
+} GraphicsConfig;             // 0x80
 
 typedef struct
 {
-    uint32_t version;         // 0x00
-    uint32_t button_up;       // 0x04
-    uint32_t button_down;     // 0x08
-    uint32_t button_left;     // 0x0C
-    uint32_t button_right;    // 0x10
-    uint32_t button_triangle; // 0x14
-    uint32_t button_circle;   // 0x18
-    uint32_t button_cross;    // 0x1C
-    uint32_t button_square;   // 0x20
-    uint32_t button_select;   // 0x24
-    uint32_t button_start;    // 0x28
-    uint32_t button_l;        // 0x2C
-    uint32_t button_r;        // 0x30
-    uint32_t button_l2;       // 0x34
-    uint32_t button_r2;       // 0x38
-    uint32_t button_l3;       // 0x3C
-    uint32_t button_r3;       // 0x40
-    uint32_t left_analog;     // 0x44
-    uint32_t right_analog;    // 0x48
-    uint32_t front_touch_pad; // 0x4C
-    uint32_t back_touch_pad;  // 0x50
-    int32_t turbo_delay;      // 0x54
-    uint32_t ctrl_player;     // 0x58
-    char reserved[0x24];      // 0x5C
-} ControlConfig;              // 0x80
+    uint32_t version;            // 0x00
+    uint32_t button_up;          // 0x04
+    uint32_t button_down;        // 0x08
+    uint32_t button_left;        // 0x0C
+    uint32_t button_right;       // 0x10
+    uint32_t button_triangle;    // 0x14
+    uint32_t button_circle;      // 0x18
+    uint32_t button_cross;       // 0x1C
+    uint32_t button_square;      // 0x20
+    uint32_t button_select;      // 0x24
+    uint32_t button_start;       // 0x28
+    uint32_t button_l;           // 0x2C
+    uint32_t button_r;           // 0x30
+    uint32_t button_l2;          // 0x34
+    uint32_t button_r2;          // 0x38
+    uint32_t button_l3;          // 0x3C
+    uint32_t button_r3;          // 0x40
+    uint32_t left_analog_left;   // 0x44
+    uint32_t left_analog_up;     // 0x48
+    uint32_t left_analog_right;  // 0x4C
+    uint32_t left_analog_down;   // 0x50
+    uint32_t right_analog_left;  // 0x54
+    uint32_t right_analog_up;    // 0x58
+    uint32_t right_analog_right; // 0x5C
+    uint32_t right_analog_down;  // 0x60
+    uint32_t front_touch_pad;    // 0x64
+    uint32_t back_touch_pad;     // 0x68
+    int32_t turbo_delay;         // 0x6C
+    uint32_t ctrl_player;        // 0x70
+    char reserved[0x0C];         // 0x74
+} ControlConfig;                 // 0x80
+
+typedef struct
+{
+    uint32_t version;        // 0x00
+    uint32_t hk_loadstate;   // 0x04
+    uint32_t hk_savestate;   // 0x08
+    uint32_t hk_speed_up;    // 0x0C
+    uint32_t hk_speed_down;  // 0x10
+    uint32_t hk_player_up;   // 0x14
+    uint32_t hk_player_down; // 0x18
+    uint32_t hk_exit_game;   // 0x1C
+    char reserved[0x60];     // 0x20
+} HotkeyConfig;              // 0x80
 
 typedef struct
 {
     uint32_t version;        // 0x00
     uint32_t auto_save_load; // 0x04
-    uint32_t hk_loadstate;   // 0x08
-    uint32_t hk_savestate;   // 0x0C
-    uint32_t hk_speed_up;    // 0x10
-    uint32_t hk_speed_down;  // 0x14
-    uint32_t hk_player_up;   // 0x18
-    uint32_t hk_player_down; // 0x1C
-    uint32_t hk_exit_game;   // 0x1C
-    char reserved[0x48];     // 0x20
-} MiscConfig;                // 0x68
+    char reserved[0x78];     // 0x08
+} MiscConfig;                // 0x80
 
 typedef struct
 {
@@ -199,20 +213,20 @@ typedef struct
     uint32_t core_log;      // 0x10
     uint32_t show_log;      // 0x14
     uint32_t language;      // 0x18
-    char reserved[0x4C];    // 0x1C
-} AppConfig;                // 0x68
+    char reserved[0x64];    // 0x1C
+} AppConfig;                // 0x80
 
 extern AppConfig app_config;
 extern GraphicsConfig graphics_config;
 extern ControlConfig control_config;
+extern HotkeyConfig hotkey_config;
 extern MiscConfig misc_config;
 
 extern char *private_assets_dir;
 extern char *public_assets_dir;
 
-extern ConfigList core_config_list;
-extern OptionList core_option_list;
-extern OverlayList setting_overlay_list;
+extern LinkedList *core_option_list;
+extern LinkedList *graphics_overlay_list;
 
 void MakeConfigPath(char *path, char *config_name, int type);
 
@@ -221,16 +235,19 @@ int ResetControlConfig();
 #if defined(WSC_BUILD)
 int ResetVControlConfig();
 #endif
+int ResetHotkeyConfig();
 int ResetMiscConfig();
 int ResetAppConfig();
 
 int LoadGraphicsConfig(int type);
 int LoadControlConfig(int type);
+int LoadHotkeyConfig(int type);
 int LoadMiscConfig(int type);
 int LoadAppConfig(int type);
 
 int SaveGraphicsConfig(int type);
 int SaveControlConfig(int type);
+int SaveHotkeyConfig(int type);
 int SaveMiscConfig(int type);
 int SaveAppConfig(int type);
 

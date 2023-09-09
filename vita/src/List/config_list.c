@@ -4,170 +4,44 @@
 #include <stdio.h>
 
 #include "config_list.h"
+#include "linked_list.h"
 #include "config_lib.h"
 #include "file.h"
 
-void ConfigListFreeEntry(ConfigListEntry *entry)
+static void freeEntryData(void *data)
 {
-    if (!entry)
-        return;
-
-    if (entry->key)
-        free(entry->key);
-    if (entry->value)
-        free(entry->value);
-    free(entry);
-}
-
-ConfigListEntry *ConfigListGetEntryByNumber(ConfigList *list, int n)
-{
-    if (!list)
-        return NULL;
-
-    ConfigListEntry *entry = list->head;
-
-    while (n > 0 && entry)
+    ConfigListEntryData *e_data = (ConfigListEntryData *)data;
+    if (e_data)
     {
-        n--;
-        entry = entry->next;
+        if (e_data->key)
+            free(e_data->key);
+        if (e_data->value)
+            free(e_data->value);
+        free(e_data);
     }
-
-    if (n != 0)
-        return NULL;
-
-    return entry;
 }
 
-ConfigListEntry *ConfigListGetEntryByKey(ConfigList *list, char *key)
+LinkedListEntry *ConfigListFindEntryByKey(LinkedList *list, const char *key)
 {
     if (!list || !key)
         return NULL;
 
-    ConfigListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     while (entry)
     {
-        if (entry->key && strcmp(entry->key, key) == 0)
+        ConfigListEntryData *data = (ConfigListEntryData *)LinkedListGetEntryData(entry);
+
+        if (data->key && strcmp(data->key, key) == 0)
             return entry;
 
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     return NULL;
 }
 
-int ConfigListRemoveEntry(ConfigList *list, ConfigListEntry *entry)
-{
-    if (!list || !entry)
-        return 0;
-
-    if (entry->previous)
-    {
-        entry->previous->next = entry->next;
-    }
-    else
-    {
-        list->head = entry->next;
-    }
-
-    if (entry->next)
-    {
-        entry->next->previous = entry->previous;
-    }
-    else
-    {
-        list->tail = entry->previous;
-    }
-
-    ConfigListFreeEntry(entry);
-
-    list->length--;
-
-    if (list->length == 0)
-    {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-
-    return 1;
-}
-
-void ConfigListAddEntry(ConfigList *list, ConfigListEntry *entry)
-{
-    if (!list || !entry)
-        return;
-
-    entry->next = NULL;
-    entry->previous = NULL;
-
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        ConfigListEntry *tail = list->tail;
-        tail->next = entry;
-        entry->previous = tail;
-        list->tail = entry;
-    }
-
-    list->length++;
-}
-
-void ConfigListAddEntryEx(ConfigList *list, char *key, char *value, int copy)
-{
-    if (!list)
-        return;
-
-    ConfigListEntry *entry = (ConfigListEntry *)malloc(sizeof(ConfigListEntry));
-    memset(entry, 0, sizeof(ConfigListEntry));
-
-    if (!copy)
-    {
-        entry->key = key;
-        entry->value = value;
-    }
-    else
-    {
-        if (key)
-        {
-            entry->key = (char *)malloc(strlen(key) + 1);
-            if (entry->key)
-                strcpy(entry->key, key);
-        }
-        if (value)
-        {
-            entry->value = (char *)malloc(strlen(value) + 1);
-            if (entry->value)
-                strcpy(entry->value, value);
-        }
-    }
-
-    ConfigListAddEntry(list, entry);
-}
-
-void ConfigListEmpty(ConfigList *list)
-{
-    if (!list)
-        return;
-
-    ConfigListEntry *entry = list->head;
-
-    while (entry)
-    {
-        ConfigListEntry *next = entry->next;
-        ConfigListFreeEntry(entry);
-        entry = next;
-    }
-
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
-}
-
-int ConfigListGetEntriesFromBuffer(ConfigList *list, void *buffer, int size)
+int ConfigListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 {
     if (!list)
         return -1;
@@ -183,7 +57,7 @@ int ConfigListGetEntriesFromBuffer(ConfigList *list, void *buffer, int size)
         size -= 3;
     }
 
-    ConfigListEntry *entry = NULL;
+    ConfigListEntryData *data = NULL;
     char *line = NULL;
     char *name = NULL, *value = NULL;
 
@@ -196,12 +70,15 @@ int ConfigListGetEntriesFromBuffer(ConfigList *list, void *buffer, int size)
             if (ConfigReadLine(line, &name, &value) >= 0)
             {
                 // printf("ConfigGetLine: name = %s, value = %s\n", name, value);
-                entry = (ConfigListEntry *)calloc(1, sizeof(ConfigListEntry));
-                ConfigListAddEntry(list, entry);
-                entry->key = name;
-                entry->value = value;
-                name = NULL;
-                value = NULL;
+                data = (ConfigListEntryData *)calloc(1, sizeof(ConfigListEntryData));
+                if (data)
+                {
+                    LinkedListAdd(list, data);
+                    data->key = name;
+                    data->value = value;
+                    name = NULL;
+                    value = NULL;
+                }
             }
 
             if (line)
@@ -222,7 +99,7 @@ int ConfigListGetEntriesFromBuffer(ConfigList *list, void *buffer, int size)
     return 0;
 }
 
-int ConfigListGetEntries(ConfigList *list, const char *path)
+int ConfigListGetEntries(LinkedList *list, const char *path)
 {
     if (!list)
         return -1;
@@ -237,4 +114,14 @@ int ConfigListGetEntries(ConfigList *list, const char *path)
     free(buffer);
 
     return 0;
+}
+
+LinkedList *ConfigListCreat()
+{
+    LinkedList *list = LinkedListCreat();
+    if (!list)
+        return NULL;
+
+    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
+    return list;
 }

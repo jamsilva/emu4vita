@@ -8,7 +8,7 @@ void Emu_SetMicrosPerFrame(uint64_t micros);
 
 void Emu_PauseVideo();
 void Emu_ResumeVideo();
-void Emu_PushUpdateVideoDisplay();
+void Emu_RequestUpdateVideoDisplay();
 
 void Emu_DrawVideo();
 
@@ -16,9 +16,9 @@ int Emu_InitVideo();
 int Emu_DeinitVideo();
 
 GUI_Texture *Emu_GetVideoTexture();
-GUI_Texture *Emu_UpdateVideoTexture(int width, int height);
+GUI_Texture *Emu_CreateVideoTexture(int width, int height);
 
-void Emu_ReshowCtrlPlayer();
+void Emu_ShowCtrlPlayerToast();
 
 int Emu_GetVideoDisplayRotate();
 void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height);

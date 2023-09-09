@@ -98,7 +98,7 @@ DEFINES := \
 WARNINGS := \
 	-Wall
 
-ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
+CFLAGS    := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls
 CFLAGS    += -O3
 ASFLAGS   := $(CFLAGS) $(INCDIRS)

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/processmgr.h>
 #include <psp2/ctrl.h>
 #include <psp2/touch.h>
 
@@ -82,22 +83,30 @@ EmuKeyOption emu_key_options[] = {
     {&control_config.button_r2, SCE_CTRL_R2, {0}, {0}},
     {&control_config.button_l3, SCE_CTRL_L3, {0}, {0}},
     {&control_config.button_r3, SCE_CTRL_R3, {0}, {0}},
+    {&control_config.left_analog_left, EXT_CTRL_LEFT_ANLOG_LEFT, {0}, {0}},
+    {&control_config.left_analog_up, EXT_CTRL_LEFT_ANLOG_UP, {0}, {0}},
+    {&control_config.left_analog_right, EXT_CTRL_LEFT_ANLOG_RIGHT, {0}, {0}},
+    {&control_config.left_analog_down, EXT_CTRL_LEFT_ANLOG_DOWN, {0}, {0}},
+    {&control_config.right_analog_left, EXT_CTRL_RIGHT_ANLOG_LEFT, {0}, {0}},
+    {&control_config.right_analog_up, EXT_CTRL_RIGHT_ANLOG_UP, {0}, {0}},
+    {&control_config.right_analog_right, EXT_CTRL_RIGHT_ANLOG_RIGHT, {0}, {0}},
+    {&control_config.right_analog_down, EXT_CTRL_RIGHT_ANLOG_DOWN, {0}, {0}},
 };
-#define N_EMU_KEY_OPTIONS 16 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
+#define N_EMU_KEY_OPTIONS 24 // (sizeof(emu_key_options) / sizeof(EmuKeyOption))
 
 HotKeyOption hot_key_options[] = {
-    {&misc_config.hk_loadstate, saveStateEventCallback, {0}},
-    {&misc_config.hk_savestate, loadStateEventCallback, {0}},
-    {&misc_config.hk_speed_up, Emu_SpeedUpGame, {0}},
-    {&misc_config.hk_speed_down, Emu_SpeedDownGame, {0}},
-    {&misc_config.hk_player_up, changeMapPortUpCallback, {0}},
-    {&misc_config.hk_player_down, changeMapPortDownCallback, {0}},
-    {&misc_config.hk_exit_game, exitGameEventCallback, {0}},
+    {&hotkey_config.hk_loadstate, saveStateEventCallback, {0}},
+    {&hotkey_config.hk_savestate, loadStateEventCallback, {0}},
+    {&hotkey_config.hk_speed_up, Emu_SpeedUpGame, {0}},
+    {&hotkey_config.hk_speed_down, Emu_SpeedDownGame, {0}},
+    {&hotkey_config.hk_player_up, changeMapPortUpCallback, {0}},
+    {&hotkey_config.hk_player_down, changeMapPortDownCallback, {0}},
+    {&hotkey_config.hk_exit_game, exitGameEventCallback, {0}},
 };
 #define N_HOT_KEY_MAPPER_OPTIONS 7 // (sizeof(hot_key_options) / sizeof(HotKeyOption))
 
 static uint8_t psbutton_old_pressed[N_CTRL_PORTS];
-static uint32_t psbutton_hold_count[N_CTRL_PORTS];
+static uint64_t disable_psbutton_micros[N_CTRL_PORTS];
 static uint32_t emu_mapping_keys[N_CTRL_PORTS]; // bitmask
 static int input_okay = 0;
 
@@ -123,7 +132,7 @@ static void changeMapPortUpCallback()
     else
         control_config.ctrl_player = 0;
     SaveControlConfig(TYPE_CONFIG_GAME);
-    Emu_ReshowCtrlPlayer();
+    Emu_ShowCtrlPlayerToast();
 }
 
 static void changeMapPortDownCallback()
@@ -133,7 +142,7 @@ static void changeMapPortDownCallback()
     else
         control_config.ctrl_player = N_CTRL_PORTS - 1;
     SaveControlConfig(TYPE_CONFIG_GAME);
-    Emu_ReshowCtrlPlayer();
+    Emu_ShowCtrlPlayerToast();
 }
 
 static void cleanInputKeys()
@@ -160,7 +169,6 @@ static void cleanInputKeys()
     for (i = 0; i < N_CTRL_PORTS; i++)
     {
         psbutton_old_pressed[i] = 0;
-        psbutton_hold_count[i] = 0;
     }
 }
 
@@ -215,18 +223,6 @@ static void AnalogToButtons(uint8_t lanalog_x, uint8_t lanalog_y, uint8_t ranalo
         *buttons |= EXT_CTRL_RIGHT_ANLOG_UP;
     else if (ranalog_y > ANALOG_CENTER + ANALOG_THRESHOLD)
         *buttons |= EXT_CTRL_RIGHT_ANLOG_DOWN;
-}
-
-static void AnalogToDpads(uint8_t analog_x, uint8_t analog_y, uint32_t *buttons)
-{
-    if (analog_x < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= SCE_CTRL_LEFT;
-    else if (analog_x > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= SCE_CTRL_RIGHT;
-    if (analog_y < ANALOG_CENTER - ANALOG_THRESHOLD)
-        *buttons |= SCE_CTRL_UP;
-    else if (analog_y > ANALOG_CENTER + ANALOG_THRESHOLD)
-        *buttons |= SCE_CTRL_DOWN;
 }
 
 static void LocalKeyToEmuKey(EmuKeyOption *option, int local_port, int mapping_port, uint32_t buttons)
@@ -305,14 +301,14 @@ static int onPSbuttonEvent(int prot, uint32_t buttons)
 
     if (cur_pressed)
     {
-        psbutton_hold_count[prot]++;
-        if (psbutton_hold_count[prot] >= DISABLE_PSBUTTON_EVENT_HOLD_COUNT)
+        if (!old_pressed)
+            disable_psbutton_micros[prot] = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_EVENT_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros[prot])
             SetPSbuttonEventEnabled(0);
         return 1;
     }
     else
     {
-        psbutton_hold_count[prot] = 0;
         if (old_pressed)
         {
             if (IsPSbuttonEventEnabled())
@@ -377,12 +373,6 @@ void Emu_PollInput()
 
         if (onPSbuttonEvent(local_port, ctrl_data.buttons))
             return;
-
-        if (control_config.left_analog == 1)
-            AnalogToDpads(ctrl_data.lx, ctrl_data.ly, &ctrl_data.buttons);
-
-        if (control_config.right_analog == 1)
-            AnalogToDpads(ctrl_data.rx, ctrl_data.ry, &ctrl_data.buttons);
 
         for (i = 0; i < N_EMU_KEY_OPTIONS; i++)
             LocalKeyToEmuKey(&emu_key_options[i], local_port, mapping_port, ctrl_data.buttons);

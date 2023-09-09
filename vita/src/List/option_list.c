@@ -6,149 +6,116 @@
 #include <psp2/io/fcntl.h>
 
 #include "option_list.h"
+#include "linked_list.h"
+#include "config_list.h"
 
-void OptionListFreeEntry(OptionListEntry *entry)
+static void freeEntryData(void *data)
 {
-    if (!entry)
-        return;
-
-    if (entry->key)
-        free(entry->key);
-    if (entry->desc)
-        free(entry->desc);
-    if (entry->default_value)
-        free(entry->default_value);
-    if (entry->values)
+    OptionListEntryData *e_data = (OptionListEntryData *)data;
+    if (e_data)
     {
-        int i;
-        for (i = 0; i < entry->n_values; i++)
+        if (e_data->key)
+            free(e_data->key);
+        if (e_data->desc)
+            free(e_data->desc);
+        if (e_data->values)
         {
-            if (entry->values[i].value)
-                free(entry->values[i].value);
-            if (entry->values[i].label)
-                free(entry->values[i].label);
+            int i;
+            for (i = 0; i < e_data->n_values; i++)
+            {
+                if (e_data->values[i].value)
+                    free(e_data->values[i].value);
+                if (e_data->values[i].label)
+                    free(e_data->values[i].label);
+            }
         }
+        free(e_data);
     }
-    free(entry);
 }
 
-OptionListEntry *OptionListGetEntryByNumber(OptionList *list, int n)
-{
-    if (!list)
-        return NULL;
-
-    OptionListEntry *entry = list->head;
-
-    while (n > 0 && entry)
-    {
-        n--;
-        entry = entry->next;
-    }
-
-    if (n != 0)
-        return NULL;
-
-    return entry;
-}
-
-OptionListEntry *OptionListGetEntryByKey(OptionList *list, char *key)
+LinkedListEntry *OptionListFindEntryByKey(LinkedList *list, const char *key)
 {
     if (!list || !key)
         return NULL;
 
-    OptionListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     while (entry)
     {
-        if (entry->key && strcmp(entry->key, key) == 0)
+        OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+
+        if (data->key && strcmp(data->key, key) == 0)
             return entry;
 
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     return NULL;
 }
 
-int OptionListRemoveEntry(OptionList *list, OptionListEntry *entry)
-{
-    if (!list || !entry)
-        return 0;
-
-    if (entry->previous)
-    {
-        entry->previous->next = entry->next;
-    }
-    else
-    {
-        list->head = entry->next;
-    }
-
-    if (entry->next)
-    {
-        entry->next->previous = entry->previous;
-    }
-    else
-    {
-        list->tail = entry->previous;
-    }
-
-    OptionListFreeEntry(entry);
-
-    list->length--;
-
-    if (list->length == 0)
-    {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-
-    return 1;
-}
-
-void OptionListAddEntry(OptionList *list, OptionListEntry *entry)
-{
-    if (!list || !entry)
-        return;
-
-    entry->next = NULL;
-    entry->previous = NULL;
-
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        OptionListEntry *tail = list->tail;
-        tail->next = entry;
-        entry->previous = tail;
-        list->tail = entry;
-    }
-
-    list->length++;
-}
-
-void OptionListEmpty(OptionList *list)
+int OptionListResetConfig(LinkedList *list)
 {
     if (!list)
-        return;
+        return -1;
 
-    OptionListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     while (entry)
     {
-        OptionListEntry *next = entry->next;
-        OptionListFreeEntry(entry);
-        entry = next;
+        OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+        data->select = data->default_select;
+        entry = LinkedListNext(entry);
     }
 
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
+    return 0;
 }
 
-int OptionListSaveConfig(OptionList *list, const char *path)
+int OptionListLoadConfig(LinkedList *list, const char *path)
+{
+    if (!list)
+        return -1;
+
+    LinkedList *config_list = ConfigListCreat();
+    if (!config_list)
+        return -1;
+    ConfigListGetEntries(config_list, path);
+
+    LinkedListEntry *entry = LinkedListHead(list);
+
+    while (entry)
+    {
+        OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+
+        if (data->key)
+        {
+            LinkedListEntry *find = ConfigListFindEntryByKey(config_list, data->key);
+            if (find)
+            {
+                ConfigListEntryData *c_data = (ConfigListEntryData *)LinkedListGetEntryData(find);
+                int i;
+                for (i = 0; i < data->n_values; i++)
+                {
+                    if (data->values[i].value && strcmp(data->values[i].value, c_data->value) == 0)
+                    {
+                        data->select = i;
+                        // printf("Option get config value: %s\n", c_data->value);
+                        break;
+                    }
+                }
+
+                break;
+            }
+        }
+
+        entry = LinkedListNext(entry);
+    }
+
+    LinkedListDestroy(config_list);
+
+    return 0;
+}
+
+int OptionListSaveConfig(LinkedList *list, const char *path)
 {
     if (!list)
         return -1;
@@ -158,27 +125,39 @@ int OptionListSaveConfig(OptionList *list, const char *path)
         return fd;
 
     int ret = 0;
-    OptionListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     while (entry)
     {
-        if ((ret = sceIoWrite(fd, entry->key, strlen(entry->key))) < 0)
+        OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+
+        if ((ret = sceIoWrite(fd, data->key, strlen(data->key))) < 0)
             break;
 
         if ((ret = sceIoWrite(fd, " = \"", 4)) < 0)
             break;
 
-        if ((ret = sceIoWrite(fd, entry->values[entry->sel_pos].value, strlen(entry->values[entry->sel_pos].value))) < 0)
+        if ((ret = sceIoWrite(fd, data->values[data->select].value, strlen(data->values[data->select].value))) < 0)
             break;
 
         if ((ret = sceIoWrite(fd, "\"\n", 2)) < 0)
             break;
 
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     sceIoClose(fd);
     if (ret < 0)
         sceIoRemove(path);
     return ret;
+}
+
+LinkedList *OptionListCreat()
+{
+    LinkedList *list = LinkedListCreat();
+    if (!list)
+        return NULL;
+
+    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
+    return list;
 }

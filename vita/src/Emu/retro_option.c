@@ -10,46 +10,32 @@
 
 int Retro_GetVariable(struct retro_variable *var)
 {
-    if (!var || core_option_list.length <= 0)
+    if (!var || !core_option_list)
         return -1;
 
-    OptionListEntry *entry = core_option_list.head;
-
-    while (entry)
-    {
-        if (strcmp(var->key, entry->key) == 0)
-        {
-            var->value = entry->values[entry->sel_pos].value;
-            break;
-        }
-        entry = entry->next;
-    }
-
-    if (entry == NULL)
+    LinkedListEntry *entry = OptionListFindEntryByKey(core_option_list, var->key);
+    if (!entry)
         return -1;
+
+    OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+    var->value = data->values[data->select].value;
+    Setting_RequestUpdateMenuItems();
 
     return 0;
 }
 
 int Retro_SetCoreOptionsDisplay(const struct retro_core_option_display *option_display)
 {
-    if (!option_display || !option_display->key || core_option_list.length <= 0)
+    if (!option_display || !core_option_list)
         return -1;
 
-    OptionListEntry *entry = core_option_list.head;
+    LinkedListEntry *entry = OptionListFindEntryByKey(core_option_list, option_display->key);
+    if (!entry)
+        return -1;
 
-    while (entry)
-    {
-        if (strcmp(option_display->key, entry->key) == 0)
-        {
-            *(entry->visible) = option_display->visible;
-            break;
-        }
-        entry = entry->next;
-    }
-
-    if (entry != NULL)
-        Setting_PushUpdateOptionDisplay();
+    OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+    data->visibility = option_display->visible;
+    Setting_RequestUpdateMenuItems();
 
     return 0;
 }
@@ -59,35 +45,42 @@ void Retro_UpdateCoreOptionsDisplay()
     if (core_options_update_display_callback && core_options_update_display_callback->callback)
     {
         core_options_update_display_callback->callback();
-        Setting_PushUpdateOptionDisplay();
+        Setting_RequestUpdateMenuItems();
     }
     else
     {
-        Retro_PushUpdateOptionsDisplay();
+        Retro_RequestUpdateOptionsDisplay();
     }
 }
 
-int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
+int Retro_SetOptionListFromVariables(struct retro_variable *varialbes)
 {
     Setting_SetCoreMenu(NULL);
-    OptionListEmpty(&core_option_list);
+    if (core_option_list)
+        LinkedListDestroy(core_option_list);
 
     if (!varialbes)
         return -1;
 
-    int i, j, k;
+    core_option_list = OptionListCreat();
+    if (!core_option_list)
+        return -1;
+
+    int i, j;
     for (i = 0; varialbes[i].key; i++)
     {
-        OptionListEntry *entry = (OptionListEntry *)calloc(1, sizeof(OptionListEntry));
-        if (!entry)
+        OptionListEntryData *data = (OptionListEntryData *)calloc(1, sizeof(OptionListEntryData));
+        if (!data)
             continue;
-        OptionListAddEntry(&core_option_list, entry);
+        LinkedListAdd(core_option_list, data);
+
+        data->visibility = 1;
 
         // Get key
-        entry->key = (char *)malloc(strlen(varialbes[i].key) + 1);
-        if (entry->key)
-            strcpy(entry->key, varialbes[i].key);
-        // printf("Option key: %s\n", entry->key);
+        data->key = (char *)malloc(strlen(varialbes[i].key) + 1);
+        if (data->key)
+            strcpy(data->key, varialbes[i].key);
+        // printf("Option key: %s\n", data->key);
 
         if (!varialbes[i].value)
             continue;
@@ -108,10 +101,10 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
         if (sub)
         {
             len = sub - p;
-            entry->desc = (char *)malloc(len + 1);
-            strncpy(entry->desc, p, len);
-            entry->desc[len] = '\0';
-            TrimString(entry->desc);
+            data->desc = (char *)malloc(len + 1);
+            strncpy(data->desc, p, len);
+            data->desc[len] = '\0';
+            TrimString(data->desc);
             p = sub + 1;
             while (*p == ' ')
                 p++;
@@ -125,10 +118,13 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
                 n_values++;
         }
 
-        entry->values = (OptionValue *)calloc(n_values, sizeof(OptionValue));
-        if (!entry->values)
+        if (n_values == 0)
             continue;
-        entry->n_values = n_values;
+
+        data->values = (OptionValue *)calloc(n_values, sizeof(OptionValue));
+        if (!data->values)
+            continue;
+        data->n_values = n_values;
 
         for (j = 0; j < n_values; j++)
         {
@@ -136,22 +132,21 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
             if (!sub)
                 sub = values + values_len;
             len = sub - p;
-            entry->values[j].value = (char *)malloc(len + 1);
-            strncpy(entry->values[j].value, p, len);
-            entry->values[j].value[len] = '\0';
-            TrimString(entry->values[j].value);
+            data->values[j].value = (char *)malloc(len + 1);
+            strncpy(data->values[j].value, p, len);
+            data->values[j].value[len] = '\0';
+            TrimString(data->values[j].value);
             p = sub + 1;
             while (*p == ' ')
                 p++;
         }
 
         // Get default value, in the index 0 of values
-        entry->default_value = malloc(strlen(entry->values[0].value + 1));
-        if (entry->default_value)
-            strcpy(entry->default_value, entry->values[0].value);
+        data->default_select = 0;
+        data->select = data->default_select;
     }
 
-    Setting_SetCoreMenu(&core_option_list);
+    Setting_SetCoreMenu(core_option_list);
     if (!Emu_IsGameLoading())
         Retro_UpdateCoreOptionsDisplay();
 
@@ -163,133 +158,125 @@ int Retro_GetOptionListFromVariables(struct retro_variable *varialbes)
     return 0;
 }
 
-int Retro_GetOptionListFromOptions(void *options, int type)
+int Retro_SetOptionListFromOptions(void *options, int type)
 {
     Setting_SetCoreMenu(NULL);
-    OptionListEmpty(&core_option_list);
+    if (core_option_list)
+        LinkedListDestroy(core_option_list);
 
     if (!options)
         return -1;
 
-    int option_version = 0;
-    void *option_definition = NULL;
-    int n_options = 0;
+    core_option_list = OptionListCreat();
+    if (!core_option_list)
+        return -1;
 
-    if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS || type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL)
+    int i, j, k;
+    for (i = 0;; i++)
     {
-        option_version = 1;
-        struct retro_core_option_definition *option_v1_definition = NULL;
-        if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL)
-        {
-            struct retro_core_options_intl *options_v1_intl = (struct retro_core_options_intl *)options;
-            if (options_v1_intl->local)
-                option_v1_definition = options_v1_intl->local;
-            else if (options_v1_intl->us)
-                option_v1_definition = options_v1_intl->us;
-        }
-        else
-        {
-            option_v1_definition = (struct retro_core_option_definition *)options;
-        }
+        const char *key = NULL;
+        const char *desc = NULL;
+        const char *default_value = NULL;
+        struct retro_core_option_value *values = NULL;
+        struct retro_core_option_value *local_values = NULL;
 
-        if (!option_v1_definition)
-            return -1;
-
-        while (option_v1_definition[n_options].key)
+        if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS)
         {
-            n_options++;
-        }
+            struct retro_core_option_definition *definitions = (struct retro_core_option_definition *)options;
+            if (!definitions[i].key)
+                break;
 
-        option_definition = option_v1_definition;
-    }
-    else if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2 || type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL)
-    {
-        option_version = 2;
-        struct retro_core_option_v2_definition *option_v2_definition = NULL;
-        if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL)
-        {
-            struct retro_core_options_v2_intl *options_v2_intl = (struct retro_core_options_v2_intl *)options;
-            if (options_v2_intl->local && options_v2_intl->local->definitions)
-                option_v2_definition = options_v2_intl->local->definitions;
-            else if (options_v2_intl->us && options_v2_intl->us->definitions)
-                option_v2_definition = options_v2_intl->us->definitions;
+            key = definitions[i].key;
+            desc = definitions[i].desc;
+            default_value = definitions[i].default_value;
+            values = definitions[i].values;
         }
-        else
+        else if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL)
+        {
+            struct retro_core_options_intl *options_intl = (struct retro_core_options_intl *)options;
+            struct retro_core_option_definition *us_definitions = options_intl->us;
+            struct retro_core_option_definition *local_definitions = options_intl->local;
+            if (!us_definitions[i].key)
+                break;
+
+            key = us_definitions[i].key;
+            desc = us_definitions[i].desc;
+            default_value = us_definitions[i].default_value;
+            values = us_definitions[i].values;
+            if (local_definitions)
+            {
+                for (j = 0; local_definitions[j].key; j++)
+                {
+                    if (strcmp(local_definitions[j].key, us_definitions[i].key) == 0)
+                    {
+                        if (local_definitions[j].desc)
+                            desc = local_definitions[j].desc;
+                        local_values = local_definitions[j].values;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2)
         {
             struct retro_core_options_v2 *options_v2 = (struct retro_core_options_v2 *)options;
-            option_v2_definition = options_v2->definitions;
+            struct retro_core_option_v2_definition *definitions = options_v2->definitions;
+            if (!definitions[i].key)
+                break;
+
+            key = definitions[i].key;
+            desc = definitions[i].desc;
+            default_value = definitions[i].default_value;
+            values = definitions[i].values;
         }
-
-        if (!option_v2_definition)
-            return -1;
-
-        while (option_v2_definition[n_options].key)
+        else if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL)
         {
-            n_options++;
+            struct retro_core_options_v2_intl *options_v2_intl = (struct retro_core_options_v2_intl *)options;
+            struct retro_core_option_v2_definition *us_definitions = options_v2_intl->us->definitions;
+            struct retro_core_option_v2_definition *local_definitions = options_v2_intl->local->definitions;
+            if (!us_definitions[i].key)
+                break;
+
+            key = us_definitions[i].key;
+            desc = us_definitions[i].desc;
+            default_value = us_definitions[i].default_value;
+            values = us_definitions[i].values;
+            if (local_definitions)
+            {
+                for (j = 0; local_definitions[j].key; j++)
+                {
+                    if (strcmp(local_definitions[j].key, us_definitions[i].key) == 0)
+                    {
+                        if (local_definitions[j].desc)
+                            desc = local_definitions[j].desc;
+                        local_values = local_definitions[j].values;
+                        break;
+                    }
+                }
+            }
         }
 
-        option_definition = option_v2_definition;
-    }
-    else
-    {
-        return -1;
-    }
+        if (!key)
+            break;
 
-    if (option_definition == NULL || n_options == 0 || option_version == 0)
-        return -1;
-
-    int i, j;
-    for (i = 0; i < n_options; i++)
-    {
-        OptionListEntry *entry = (OptionListEntry *)calloc(1, sizeof(OptionListEntry));
-        if (!entry)
+        OptionListEntryData *data = (OptionListEntryData *)calloc(1, sizeof(OptionListEntryData));
+        if (!data)
             continue;
-        OptionListAddEntry(&core_option_list, entry);
+        LinkedListAdd(core_option_list, data);
 
-        const char *key;
-        const char *desc;
-        const char *default_value;
-        struct retro_core_option_value *values;
+        data->visibility = 1;
 
-        if (option_version == 1)
-        {
-            struct retro_core_option_definition *options = (struct retro_core_option_definition *)option_definition;
-            key = options[i].key;
-            desc = options[i].desc;
-            default_value = options[i].default_value;
-            values = options[i].values;
-        }
-        else
-        {
-            struct retro_core_option_v2_definition *options = (struct retro_core_option_v2_definition *)option_definition;
-            key = options[i].key;
-            desc = options[i].desc;
-            default_value = options[i].default_value;
-            values = options[i].values;
-        }
-
-        if (key)
-        {
-            // printf("Option key: %s\n", key);
-            entry->key = (char *)malloc(strlen(key) + 1);
-            if (entry->key)
-                strcpy(entry->key, key);
-        }
+        // printf("Option key: %s\n", key);
+        data->key = (char *)malloc(strlen(key) + 1);
+        if (data->key)
+            strcpy(data->key, key);
 
         if (desc)
         {
             // printf("Option desc: %s\n", desc);
-            entry->desc = (char *)malloc(strlen(desc) + 1);
-            if (entry->desc)
-                strcpy(entry->desc, desc);
-        }
-
-        if (default_value)
-        {
-            // printf("Option default_value: %s\n", default_value);
-            entry->default_value = (char *)malloc(strlen(default_value) + 1);
-            if (entry->default_value)
-                strcpy(entry->default_value, default_value);
+            data->desc = (char *)malloc(strlen(desc) + 1);
+            if (data->desc)
+                strcpy(data->desc, desc);
         }
 
         if (!values)
@@ -298,45 +285,59 @@ int Retro_GetOptionListFromOptions(void *options, int type)
         int n_values = 0;
         while (values[n_values].value)
             n_values++;
-
         // printf("Option n_values: %d\n", n_values);
 
         if (n_values == 0)
             continue;
 
-        entry->values = (OptionValue *)calloc(n_values, sizeof(OptionValue));
-        if (!entry->values)
+        data->values = (OptionValue *)calloc(n_values, sizeof(OptionValue));
+        if (!data->values)
             continue;
-        entry->n_values = n_values;
+        data->n_values = n_values;
 
-        int sel_pos_geted = 0;
+        int select_got = 0;
 
-        for (j = 0; j < n_values; j++)
+        for (k = 0; k < n_values; k++)
         {
-            if (values[j].value)
-            {
-                // printf("Core option value: value: %s\n", values[j].value);
-                if (!sel_pos_geted && default_value && strcmp(values[j].value, default_value) == 0)
-                {
-                    sel_pos_geted = 1;
-                    entry->sel_pos = j;
-                }
+            if (!values[k].value)
+                continue;
 
-                entry->values[j].value = (char *)malloc(strlen(values[j].value) + 1);
-                if (entry->values[j].value)
-                    strcpy(entry->values[j].value, values[j].value);
+            // printf("Core option value: value: %s\n", values[k].value);
+            if (!select_got && default_value && strcmp(values[k].value, default_value) == 0)
+            {
+                data->default_select = k;
+                data->select = data->default_select;
+                select_got = 1;
             }
 
-            if (values[j].label)
+            data->values[k].value = (char *)malloc(strlen(values[k].value) + 1);
+            if (data->values[k].value)
+                strcpy(data->values[k].value, values[k].value);
+
+            char *label = values[k].label;
+            if (local_values)
             {
-                entry->values[j].label = (char *)malloc(strlen(values[j].label) + 1);
-                if (entry->values[j].label)
-                    strcpy(entry->values[j].label, values[j].label);
+                int l;
+                for (l = 0; local_values[l].value; l++)
+                {
+                    if (strcmp(local_values[l].value, values[k].value) == 0)
+                    {
+                        if (local_values[l].label)
+                            label = local_values[l].label;
+                        break;
+                    }
+                }
+            }
+            if (label)
+            {
+                data->values[k].label = (char *)malloc(strlen(label) + 1);
+                if (data->values[k].label)
+                    strcpy(data->values[k].label, label);
             }
         }
     }
 
-    Setting_SetCoreMenu(&core_option_list);
+    Setting_SetCoreMenu(core_option_list);
     if (!Emu_IsGameLoading())
         Retro_UpdateCoreOptionsDisplay();
 

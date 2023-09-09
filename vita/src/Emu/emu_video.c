@@ -53,12 +53,12 @@ void Emu_ResumeVideo()
     GUI_SetVblankWait(0);
 }
 
-void Emu_PushUpdateVideoDisplay()
+void Emu_RequestUpdateVideoDisplay()
 {
     video_display_need_update = 1;
 }
 
-void Emu_ReshowCtrlPlayer()
+void Emu_ShowCtrlPlayerToast()
 {
     show_player_micros = sceKernelGetProcessTimeWide() + SHOW_PLAYER_DURATION_MICROS;
 }
@@ -80,9 +80,15 @@ static int converRotateCWToCCW(int rotate_cw)
 
 int Emu_GetVideoDisplayRotate()
 {
-    OverlayListEntry *overlay_config = OverlayListGetEntryByNumber(&setting_overlay_list, graphics_config.overlay_select - 1);
-    if (overlay_config && overlay_config->viewport_rotate)
-        return converRotateCWToCCW(*(overlay_config->viewport_rotate));
+    OverlayListEntryData *overlay_data = NULL;
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
+    {
+        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+    }
+
+    if (overlay_data && overlay_data->viewport_rotate)
+        return converRotateCWToCCW(*(overlay_data->viewport_rotate));
     else if (graphics_config.display_rotate == TYPE_DISPLAY_ROTATE_DEFAULT)
         return core_display_rotate;
     else
@@ -94,21 +100,24 @@ void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height)
     if (!width || !height)
         return;
 
-    OverlayListEntry *overlay_config = NULL;
+    OverlayListEntryData *overlay_data = NULL;
     uint32_t base_width = core_system_av_info.geometry.base_width;
     uint32_t base_height = core_system_av_info.geometry.base_height;
     float aspect_ratio = 0;
 
-    if (graphics_config.overlay_select > 0)
-        overlay_config = OverlayListGetEntryByNumber(&setting_overlay_list, graphics_config.overlay_select - 1);
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
+    {
+        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+    }
 
-    if (overlay_config && overlay_config->viewport_width && overlay_config->viewport_height)
+    if (overlay_data && overlay_data->viewport_width && overlay_data->viewport_height)
     {
         int rotate = Emu_GetVideoDisplayRotate();
         if (rotate == TYPE_DISPLAY_ROTATE_CW_90 || rotate == TYPE_DISPLAY_ROTATE_CW_270)
-            aspect_ratio = (float)*(overlay_config->viewport_height) / (float)*(overlay_config->viewport_width);
+            aspect_ratio = (float)*(overlay_data->viewport_height) / (float)*(overlay_data->viewport_width);
         else
-            aspect_ratio = (float)*(overlay_config->viewport_width) / (float)*(overlay_config->viewport_height);
+            aspect_ratio = (float)*(overlay_data->viewport_width) / (float)*(overlay_data->viewport_height);
     }
     else if (graphics_config.aspect_ratio == TYPE_ASPECT_RATIO_BY_GAME_RESOLUTION)
     {
@@ -157,15 +166,18 @@ void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height)
 
 void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height)
 {
-    if (graphics_config.overlay_select > 0)
+    OverlayListEntryData *overlay_data = NULL;
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        OverlayListEntry *overlay_config = OverlayListGetEntryByNumber(&setting_overlay_list, graphics_config.overlay_select - 1);
-        if (overlay_config && overlay_config->viewport_width && overlay_config->viewport_height)
-        {
-            *width = *(overlay_config->viewport_width);
-            *height = *(overlay_config->viewport_height);
-            return;
-        }
+        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+    }
+
+    if (overlay_data && overlay_data->viewport_width && overlay_data->viewport_height)
+    {
+        *width = *(overlay_data->viewport_width);
+        *height = *(overlay_data->viewport_height);
+        return;
     }
 
     uint32_t base_width = 0, base_height = 0;
@@ -279,7 +291,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
                                       video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
     GUI_SetRendertarget(NULL);
-    GUI_WaitRenderDone();
+    GUI_WaitRenderingDone();
 
     // Malloc and copy data for return
     uint64_t conver_size = conver_width * conver_height * 4;
@@ -345,11 +357,11 @@ int Emu_SaveVideoScreenshot(char *path)
     return ret;
 }
 
-GUI_Texture *Emu_UpdateVideoTexture(int width, int height)
+GUI_Texture *Emu_CreateVideoTexture(int width, int height)
 {
     if (video_texture) // Free old
     {
-        GUI_WaitRenderDone();
+        GUI_WaitRenderingDone();
         GUI_DestroyTexture(video_texture);
         video_texture = NULL;
     }
@@ -369,29 +381,30 @@ static int updateOverlayTexture()
 {
     if (overlay_texture) // Free old
     {
-        GUI_WaitRenderDone();
+        GUI_WaitRenderingDone();
         GUI_DestroyTexture(overlay_texture);
         overlay_texture = NULL;
     }
 
-    video_overlay_select = graphics_config.overlay_select;
+    OverlayListEntryData *overlay_data = NULL;
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
+    {
+        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+    }
 
-    if (graphics_config.overlay_select < 1) // No selected
-        return 0;
-
-    OverlayListEntry *overlay_config = OverlayListGetEntryByNumber(&setting_overlay_list, graphics_config.overlay_select - 1);
-    if (!overlay_config || !overlay_config->image_name) // No find
+    if (!overlay_data || !overlay_data->image_name) // No find
         return -1;
 
     char path[MAX_PATH_LENGTH];
     if (private_assets_dir) // Try load image from private assets dir
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", private_assets_dir, OVERLAYS_DIR_NAME, overlay_config->image_name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", private_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
     }
     if (!overlay_texture) // Try load image from public assets dir
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, overlay_config->image_name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
     }
     if (!overlay_texture)
@@ -404,7 +417,7 @@ static int updateOverlayTexture()
 
 static int updateVideoDisplay()
 {
-    OverlayListEntry *overlay_config = NULL;
+    OverlayListEntryData *overlay_data = NULL;
     uint32_t width = 0, height = 0;
     int rotate = 0;
 
@@ -416,8 +429,11 @@ static int updateVideoDisplay()
         updateOverlayTexture();
 
     // Overlay config
-    if (graphics_config.overlay_select > 0)
-        overlay_config = OverlayListGetEntryByNumber(&setting_overlay_list, graphics_config.overlay_select - 1);
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
+    {
+        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+    }
 
     // Rotate
     rotate = Emu_GetVideoDisplayRotate();
@@ -430,12 +446,12 @@ static int updateVideoDisplay()
     // Coord
     video_x = GUI_SCREEN_HALF_WIDTH;
     video_y = GUI_SCREEN_HALF_HEIGHT;
-    if (overlay_config)
+    if (overlay_data)
     {
-        if (overlay_config->viewport_x)
-            video_x = *(overlay_config->viewport_x) + width / 2;
-        if (overlay_config->viewport_y)
-            video_y = *(overlay_config->viewport_y) + height / 2;
+        if (overlay_data->viewport_x)
+            video_x = *(overlay_data->viewport_x) + width / 2;
+        if (overlay_data->viewport_y)
+            video_y = *(overlay_data->viewport_y) + height / 2;
     }
 
     // Scale
@@ -580,7 +596,7 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
     if (video_width != width || video_height != height || !video_texture ||
         GUI_GetTextureFormat(video_texture) != core_video_pixel_format)
     {
-        Emu_UpdateVideoTexture(width, height);
+        Emu_CreateVideoTexture(width, height);
     }
 
     if (video_texture)
@@ -610,13 +626,13 @@ int Emu_InitVideo()
     video_okay = 0;
     video_pause = 1;
 
-    if (!video_texture && Emu_UpdateVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height) == NULL)
+    if (!video_texture && Emu_CreateVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height) == NULL)
         return -1;
 
     updateOverlayTexture();
 
     if (control_config.ctrl_player != 0)
-        Emu_ReshowCtrlPlayer();
+        Emu_ShowCtrlPlayerToast();
 
     AppLog("[VIDEO] max width: %d, max height: %d\n", core_system_av_info.geometry.max_width, core_system_av_info.geometry.max_height);
     AppLog("[VIDEO] base width: %d, base height: %d\n", core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height);
@@ -635,7 +651,7 @@ int Emu_DeinitVideo()
     video_okay = 0;
     video_pause = 1;
 
-    GUI_WaitRenderDone();
+    GUI_WaitRenderingDone();
     if (video_texture)
     {
         GUI_DestroyTexture(video_texture);

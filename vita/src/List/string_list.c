@@ -3,129 +3,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "linked_list.h"
 #include "string_list.h"
 
-static void freeEntry(StringListEntry *entry)
+int StringListAdd(LinkedList *list, const char *text)
 {
-    if (!entry)
-        return;
-
-    if (entry->string)
-        free(entry->string);
-    free(entry);
-}
-
-StringListEntry *StringListGetEntryByNumber(StringList *list, int n)
-{
-    if (!list)
-        return NULL;
-
-    StringListEntry *entry = list->head;
-
-    while (n > 0 && entry)
-    {
-        n--;
-        entry = entry->next;
-    }
-
-    if (n != 0)
-        return NULL;
-
-    return entry;
-}
-
-int StringListRemoveEntry(StringList *list, StringListEntry *entry)
-{
-    if (!list || !entry)
+    if (!list || !text)
         return 0;
+    
+    char *string = malloc(strlen(text) + 1);
+    strcpy(string, text);
 
-    if (entry->prev)
-    {
-        entry->prev->next = entry->next;
-    }
-    else
-    {
-        list->head = entry->next;
-    }
-
-    if (entry->next)
-    {
-        entry->next->prev = entry->prev;
-    }
-    else
-    {
-        list->tail = entry->prev;
-    }
-
-    freeEntry(entry);
-
-    list->length--;
-
-    if (list->length == 0)
-    {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-
-    return 1;
+    return LinkedListAdd(list, string);
 }
 
-void StringListAddEntry(StringList *list, StringListEntry *entry)
+LinkedList *StringListCreate()
 {
-    if (!list || !entry)
-        return;
-
-    entry->next = NULL;
-    entry->prev = NULL;
-
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        StringListEntry *tail = list->tail;
-        tail->next = entry;
-        entry->prev = tail;
-        list->tail = entry;
-    }
-
-    list->length++;
-}
-
-void StringListAdd(StringList *list, const char *string)
-{
+    LinkedList *list = LinkedListCreat();
     if (!list)
-        return;
+        return NULL;
 
-    StringListEntry *entry = (StringListEntry *)malloc(sizeof(StringListEntry));
-    memset(entry, 0, sizeof(StringListEntry));
-    if (string)
-    {
-        entry->string = (char *)malloc(strlen(string) + 1);
-        if (entry->string)
-            strcpy(entry->string, string);
-    }
-
-    StringListAddEntry(list, entry);
-}
-
-void StringListEmpty(StringList *list)
-{
-    if (!list)
-        return;
-
-    StringListEntry *entry = list->head;
-
-    while (entry)
-    {
-        StringListEntry *next = entry->next;
-        freeEntry(entry);
-        entry = next;
-    }
-
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
+    LinkedListSetFreeEntryDataCallback(list, free);
+    return list;
 }

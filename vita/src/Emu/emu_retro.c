@@ -81,7 +81,7 @@ static void freeValidFileExts()
     if (file_valid_exts)
     {
         int i;
-        for (int i = 0; file_valid_exts[i]; i++)
+        for (i = 0; file_valid_exts[i]; i++)
             free(file_valid_exts[i]);
         free(file_valid_exts);
         file_valid_exts = NULL;
@@ -91,10 +91,10 @@ static void freeValidFileExts()
 static int creatValidFileExts()
 {
     int ret = 0;
-    int i, j;
     const char *exts = core_system_info.valid_extensions;
     int exts_len;
     int n_exts;
+    int i;
 
     if (!exts)
         return -1;

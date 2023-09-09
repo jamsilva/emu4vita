@@ -145,7 +145,7 @@ static void cleanStateItem(int num)
 
     if (state_list[num].tex)
     {
-        GUI_WaitRenderDone();
+        GUI_WaitRenderingDone();
         GUI_DestroyTexture(state_list[num].tex);
         state_list[num].tex = NULL;
     }
@@ -157,7 +157,7 @@ static void freeStateList()
     if (!state_list)
         return;
 
-    GUI_WaitRenderDone();
+    GUI_WaitRenderingDone();
     int i;
     for (i = 0; i < STATE_LIST_LEN; i++)
     {

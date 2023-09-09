@@ -112,6 +112,7 @@ enum LanguageContainer
     TAB_STATE,
     TAB_GRAPHICS,
     TAB_CONTROL,
+    TAB_HOTKEY,
     TAB_CORE,
     TAB_MISC,
     TAB_APP,

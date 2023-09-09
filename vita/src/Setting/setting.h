@@ -13,29 +13,20 @@ enum TypeSettingOption
     TYPE_OPTION_NONE,
     TYPE_OPTION_CALLBACK,
     TYPE_OPTION_STR_ARRAY,
-    TYPE_OPTION_STR_INDEXS,
     TYPE_OPTION_INT_ARRAY,
-    TYPE_OPTION_INT_STEP,
-    TYPE_OPTION_KEY_MAPPER,
+    TYPE_OPTION_INT_RANGE,
+    TYPE_OPTION_CHECK_BOX,
 };
 
 typedef struct StrArrayOption
 {
     uint32_t *value;
+    int *langs;
     char **names;
     int n_names;
     void (*updateCallback)(struct StrArrayOption *option);
     void *userdata;
 } StrArrayOption;
-
-typedef struct StrIndexsOption
-{
-    uint32_t *value;
-    int *langs;
-    int n_langs;
-    void (*updateCallback)(struct StrIndexsOption *option);
-    void *userdata;
-} StrIndexsOption;
 
 typedef struct IntArrayOption
 {
@@ -47,40 +38,42 @@ typedef struct IntArrayOption
     void *userdata;
 } IntArrayOption;
 
-typedef struct IntStepOption
+typedef struct IntRangeOption
 {
     int32_t *value;
     int32_t min;
     int32_t max;
     int32_t step;
     char *format;
-    void (*updateCallback)(struct IntStepOption *option);
+    void (*updateCallback)(struct IntRangeOption *option);
     void *userdata;
-} IntStepOption;
+} IntRangeOption;
 
-typedef struct KeyMapperOptionMenuItem
+typedef struct CheckBoxOptionMenuItem
 {
     int lang;
-    void *userdata;
-    int selected;
-} KeyMapperOptionMenuItem;
-
-typedef struct KeyMapperOptionMenu
-{
     char *name;
-    KeyMapperOptionMenuItem *items;
-    int n_items;
-    void (*openCallback)(struct KeyMapperOptionMenu *option);
-    void (*closeCallback)(struct KeyMapperOptionMenu *option);
-    void (*updateCallback)(struct KeyMapperOptionMenu *option);
+    int selected;
     void *userdata;
-} KeyMapperOptionMenu;
+} CheckBoxOptionMenuItem;
+
+typedef struct CheckBoxOptionMenu
+{
+    int lang;
+    char *name;
+    CheckBoxOptionMenuItem *items;
+    int n_items;
+    void (*openCallback)(struct CheckBoxOptionMenu *option);
+    void (*closeCallback)(struct CheckBoxOptionMenu *option);
+    void (*updateCallback)(struct CheckBoxOptionMenu *option);
+    void *userdata;
+} CheckBoxOptionMenu;
 
 typedef struct SettingMenuItem
 {
     int lang;
     char *name;
-    int visible;
+    int *visibility;
     int option_type;
     void *option;
 } SettingMenuItem;
@@ -88,7 +81,8 @@ typedef struct SettingMenuItem
 typedef struct SettingMenu
 {
     int lang;
-    int visible;
+    char *name;
+    int *visibility;
     SettingMenuItem *items;
     int n_items;
     void (*enterCallback)(struct SettingMenu *menu);
@@ -101,13 +95,13 @@ extern int SETTING_FREE_DRAW_SX, SETTING_FREE_DRAW_SY, SETTING_FREE_DRAW_DX, SET
 int Setting_Init();
 int Setting_Deinit();
 
-int Setting_SetCoreMenu(OptionList *list);
-int Setting_SetOverlayOption(OverlayList *list);
+int Setting_SetCoreMenu(LinkedList *list);
+int Setting_SetOverlayOption(LinkedList *list);
 int Setting_SetAppLangOption();
 void Setting_UpdataLangOption();
 
 void Setting_UpdateKeyMapperMenu(int idx);
-void Setting_PushUpdateMenu();
-void Setting_PushUpdateOptionDisplay();
+void Setting_RequestUpdateMenu();
+void Setting_RequestUpdateMenuItems();
 
 #endif

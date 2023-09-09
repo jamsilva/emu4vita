@@ -1,7 +1,7 @@
 #ifndef __M_ALERT_DIALOG_H__
 #define __M_ALERT_DIALOG_H__
 
-#include "list/string_list.h"
+#include "list/Linked_list.h"
 #include "gui/gui.h"
 
 enum TypeAlertDialog
@@ -23,7 +23,7 @@ typedef struct AlertDialogData
     int auto_free;
     int type;
     char *title;
-    StringList list;
+    LinkedList *list;
     int top_pos;
     int focus_pos;
     char *positive_text;

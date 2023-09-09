@@ -169,6 +169,7 @@ static int loadGame(const char *path)
     {
         LoadGraphicsConfig(TYPE_CONFIG_GAME);
         LoadControlConfig(TYPE_CONFIG_GAME);
+        LoadHotkeyConfig(TYPE_CONFIG_GAME);
         LoadMiscConfig(TYPE_CONFIG_GAME);
         LoadCoreConfig(TYPE_CONFIG_GAME);
     }
@@ -238,9 +239,9 @@ int Emu_StartGame(EmuGameInfo *info)
         Emu_LoadState(state_num);
 
     GUI_CleanPad();
-    Emu_PushUpdateVideoDisplay();
+    Emu_RequestUpdateVideoDisplay();
     Retro_UpdateCoreOptionsDisplay();
-    Setting_PushUpdateMenu();
+    Setting_RequestUpdateMenu();
 
     Emu_InitAudio();
     Emu_InitVideo();
@@ -251,7 +252,7 @@ int Emu_StartGame(EmuGameInfo *info)
     Loading_ExitActivityThread();
 
     AppLog("[GAME] Start game OK!\n");
-    
+
     return 0;
 }
 
@@ -266,7 +267,7 @@ void Emu_ExitGame()
         if (!game_reloading && misc_config.auto_save_load)
         { // Auto save state
             Emu_SaveState(-1);
-            Browser_PushRefreshPreview(1);
+            Browser_RequestRefreshPreview(1);
         }
         retro_unload_game();
         retro_deinit();
@@ -279,10 +280,11 @@ void Emu_ExitGame()
         {
             LoadGraphicsConfig(TYPE_CONFIG_MAIN);
             LoadControlConfig(TYPE_CONFIG_MAIN);
+            LoadHotkeyConfig(TYPE_CONFIG_MAIN);
             LoadMiscConfig(TYPE_CONFIG_MAIN);
             LoadCoreConfig(TYPE_CONFIG_MAIN);
             Retro_UpdateCoreOptionsDisplay();
-            Setting_PushUpdateMenu();
+            Setting_RequestUpdateMenu();
         }
     }
 

@@ -11,7 +11,7 @@ int MakeScreenshotPath(char *path);
 
 GUI_Texture *GetDefaultPreviewTexture();
 
-void Browser_PushRefreshPreview(int urgent);
+void Browser_RequestRefreshPreview(int urgent);
 
 int Browser_ChangeDirByPath(const char *path);
 int Browser_ChangeDirByFile(const char *path);

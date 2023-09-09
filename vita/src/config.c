@@ -5,7 +5,6 @@
 
 #include <psp2/io/fcntl.h>
 
-#include "list/config_list.h"
 #include "list/option_list.h"
 #include "list/overlay_list.h"
 #include "activity/browser.h"
@@ -16,16 +15,16 @@
 #include "utils.h"
 
 AppConfig app_config;
-MiscConfig misc_config;
 GraphicsConfig graphics_config;
 ControlConfig control_config;
+HotkeyConfig hotkey_config;
+MiscConfig misc_config;
 
 char *private_assets_dir = NULL;
 char *public_assets_dir = NULL;
 
-ConfigList core_config_list = {0};
-OptionList core_option_list = {0};
-OverlayList setting_overlay_list = {0};
+LinkedList *core_option_list = NULL;
+LinkedList *graphics_overlay_list = NULL;
 
 void MakeConfigPath(char *path, char *config_name, int type)
 {
@@ -149,8 +148,10 @@ int ResetControlConfig()
     control_config.button_select = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT);
 #endif
     control_config.button_start = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START);
-    control_config.left_analog = 1;
-    control_config.right_analog = 0;
+    control_config.left_analog_up = control_config.button_up;
+    control_config.left_analog_down = control_config.button_down;
+    control_config.left_analog_left = control_config.button_left;
+    control_config.left_analog_right = control_config.button_right;
 #if defined(PS_BUILD)
     control_config.front_touch_pad = 1;
     control_config.back_touch_pad = 1;
@@ -163,7 +164,7 @@ int ResetControlConfig()
     control_config.back_touch_pad = 0;
 #endif
 
-    control_config.turbo_delay = 5;
+    control_config.turbo_delay = 4;
 #if defined(WSC_BUILD)
     graphics_config.display_rotate = 0;
 #endif
@@ -189,8 +190,10 @@ int ResetVControlConfig()
     control_config.button_r = 0;
     control_config.button_select = 0;
     control_config.button_start = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START);
-    control_config.left_analog = 1;
-    control_config.right_analog = 0;
+    control_config.left_analog_up = control_config.button_up;
+    control_config.left_analog_down = control_config.button_down;
+    control_config.left_analog_left = control_config.button_left;
+    control_config.left_analog_right = control_config.button_right;
     control_config.front_touch_pad = 0;
     control_config.back_touch_pad = 0;
     control_config.turbo_delay = 5;
@@ -200,18 +203,26 @@ int ResetVControlConfig()
 }
 #endif
 
+int ResetHotkeyConfig()
+{
+    memset(&hotkey_config, 0, sizeof(HotkeyConfig));
+    hotkey_config.version = HOTKEY_CONFIG_VERSION;
+    hotkey_config.hk_loadstate = (SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_savestate = (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_speed_up = (SCE_CTRL_PSBUTTON | SCE_CTRL_R1 | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_speed_down = (SCE_CTRL_PSBUTTON | SCE_CTRL_L1 | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_player_up = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_RIGHT | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_player_down = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT | ENABLE_KEY_BITMASK);
+    hotkey_config.hk_exit_game = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
+
+    return 0;
+}
+
 int ResetMiscConfig()
 {
     memset(&misc_config, 0, sizeof(MiscConfig));
     misc_config.version = MISC_CONFIG_VERSION;
     misc_config.auto_save_load = 1;
-    misc_config.hk_loadstate = (SCE_CTRL_PSBUTTON | SCE_CTRL_SQUARE | ENABLE_KEY_BITMASK);
-    misc_config.hk_savestate = (SCE_CTRL_PSBUTTON | SCE_CTRL_TRIANGLE | ENABLE_KEY_BITMASK);
-    misc_config.hk_speed_up = (SCE_CTRL_PSBUTTON | SCE_CTRL_R1 | ENABLE_KEY_BITMASK);
-    misc_config.hk_speed_down = (SCE_CTRL_PSBUTTON | SCE_CTRL_L1 | ENABLE_KEY_BITMASK);
-    misc_config.hk_player_up = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_RIGHT | ENABLE_KEY_BITMASK);
-    misc_config.hk_player_down = (SCE_CTRL_PSBUTTON | EXT_CTRL_RIGHT_ANLOG_LEFT | ENABLE_KEY_BITMASK);
-    misc_config.hk_exit_game = (SCE_CTRL_PSBUTTON | SCE_CTRL_CROSS | ENABLE_KEY_BITMASK);
 
     return 0;
 }
@@ -242,8 +253,6 @@ int LoadGraphicsConfig(int type)
     char path[MAX_PATH_LENGTH];
     MakeConfigPath(path, GRAPHICS_CONFIG_NAME, type);
 
-    int overlay_select = graphics_config.overlay_select;
-
     int ret = ReadFile(path, &config, sizeof(GraphicsConfig));
     if (ret < 0 || ret != sizeof(GraphicsConfig) || config.version != GRAPHICS_CONFIG_VERSION)
     {
@@ -254,8 +263,12 @@ int LoadGraphicsConfig(int type)
 
     memcpy(&graphics_config, &config, sizeof(GraphicsConfig));
 
-    if (graphics_config.overlay_select > setting_overlay_list.length)
-        graphics_config.overlay_select = setting_overlay_list.length;
+    if (graphics_overlay_list && graphics_config.overlay_select > 0)
+    {
+        int l_length = LinkedListGetLength(graphics_overlay_list);
+        if (graphics_config.overlay_select > l_length)
+            graphics_config.overlay_select = l_length;
+    }
 
     return 0;
 }
@@ -277,6 +290,27 @@ int LoadControlConfig(int type)
     }
 
     memcpy(&control_config, &config, sizeof(ControlConfig));
+
+    return 0;
+}
+
+int LoadHotkeyConfig(int type)
+{
+    HotkeyConfig config;
+    memset(&config, 0, sizeof(HotkeyConfig));
+
+    char path[MAX_PATH_LENGTH];
+    MakeConfigPath(path, HOTKEY_CONFIG_NAME, type);
+
+    int ret = ReadFile(path, &config, sizeof(HotkeyConfig));
+    if (ret < 0 || ret != sizeof(HotkeyConfig) || config.version != HOTKEY_CONFIG_VERSION)
+    {
+        if (type == TYPE_CONFIG_MAIN)
+            ResetHotkeyConfig();
+        return -1;
+    }
+
+    memcpy(&hotkey_config, &config, sizeof(HotkeyConfig));
 
     return 0;
 }
@@ -347,6 +381,18 @@ int SaveControlConfig(int type)
     return WriteFile(path, &control_config, sizeof(ControlConfig));
 }
 
+int SaveHotkeyConfig(int type)
+{
+    char path[MAX_PATH_LENGTH];
+    MakeConfigPath(path, HOTKEY_CONFIG_NAME, type);
+
+    char parent_path[MAX_PATH_LENGTH];
+    MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
+    CreateFolder(parent_path);
+
+    return WriteFile(path, &hotkey_config, sizeof(HotkeyConfig));
+}
+
 int SaveMiscConfig(int type)
 {
     char path[MAX_PATH_LENGTH];
@@ -373,83 +419,26 @@ int SaveAppConfig(int type)
 
 int ResetCoreConfig()
 {
-    if (core_option_list.length <= 0)
+    if (!core_option_list)
         return -1;
 
-    OptionListEntry *option_entry = core_option_list.head;
-
-    while (option_entry)
-    {
-        if (option_entry->key)
-        {
-            option_entry->sel_pos = 0;
-
-            int i;
-            for (i = 0; i < option_entry->n_values; i++)
-            {
-                if (strcmp(option_entry->values[i].value, option_entry->default_value) == 0)
-                {
-                    option_entry->sel_pos = i;
-                    break;
-                }
-            }
-        }
-        option_entry = option_entry->next;
-    }
-
-    return 0;
+    return OptionListResetConfig(core_option_list);
 }
 
 int LoadCoreConfig(int type)
 {
-    if (core_option_list.length <= 0)
+    if (!core_option_list)
         return -1;
 
     char path[MAX_PATH_LENGTH];
     MakeConfigPath(path, CORE_CONFIG_NAME, type);
 
-    ConfigListEmpty(&core_config_list);
-    ConfigListGetEntries(&core_config_list, path);
-
-    if (core_config_list.length <= 0)
-        return -1;
-
-    ConfigListEntry *config_entry;
-    OptionListEntry *option_entry = core_option_list.head;
-
-    while (option_entry)
-    {
-        if (option_entry->key)
-        {
-            config_entry = core_config_list.head;
-            while (config_entry)
-            {
-                if (strcmp(option_entry->key, config_entry->key) == 0)
-                {
-                    int i;
-                    for (i = 0; i < option_entry->n_values; i++)
-                    {
-                        if (strcmp(option_entry->values[i].value, config_entry->value) == 0)
-                        {
-                            option_entry->sel_pos = i;
-                            // printf("Option get default value: %s\n", config_entry->value);
-                            break;
-                        }
-                    }
-                    break;
-                }
-                config_entry = config_entry->next;
-            }
-        }
-        option_entry = option_entry->next;
-    }
-
-    return 0;
+    return OptionListLoadConfig(core_option_list, path);
 }
 
 int SaveCoreConfig(int type)
 {
-    if (core_option_list.length <= 0)
+    if (!core_option_list)
         return -1;
 
     char path[MAX_PATH_LENGTH];
@@ -459,6 +448,5 @@ int SaveCoreConfig(int type)
     MakeBaseDirectory(parent_path, path, MAX_PATH_LENGTH);
     CreateFolder(parent_path);
 
-    int ret = OptionListSaveConfig(&core_option_list, path);
-    return ret;
+    return OptionListSaveConfig(core_option_list, path);
 }

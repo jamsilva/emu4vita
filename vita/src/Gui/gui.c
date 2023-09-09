@@ -263,7 +263,7 @@ void GUI_DrawBottomStatusBar(GUI_ButtonInstruction *instructions)
     int i;
     for (i = 0; instructions[i].button != LANG_NULL; i++)
     {
-        if (!instructions[i].visible)
+        if (!instructions[i].visibility)
             continue;
         x += GUI_DrawTextf(x, y, COLOR_AZURE, "%s:", cur_lang[instructions[i].button]);
         x += GUI_DrawText(x, y, COLOR_WHITE, cur_lang[instructions[i].instruction]);
@@ -298,7 +298,7 @@ void GUI_DrawVerticalScrollbar(int track_x, int track_y, int track_height, int l
 
 void GUI_SetWallpaperTexture(GUI_Texture *texture)
 {
-    GUI_WaitRenderDone();
+    GUI_WaitRenderingDone();
     if (wallpaper_texture)
         vita2d_free_texture(wallpaper_texture);
     wallpaper_texture = texture;
@@ -306,7 +306,7 @@ void GUI_SetWallpaperTexture(GUI_Texture *texture)
 
 void GUI_SetSplashTexture(GUI_Texture *texture)
 {
-    GUI_WaitRenderDone();
+    GUI_WaitRenderingDone();
     if (splash_texture)
         vita2d_free_texture(splash_texture);
     splash_texture = texture;

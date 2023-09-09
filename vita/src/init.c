@@ -172,6 +172,7 @@ int AppInit(int argc, char *const argv[])
     }
 
     LoadControlConfig(TYPE_CONFIG_MAIN);
+    LoadHotkeyConfig(TYPE_CONFIG_MAIN);
     LoadMiscConfig(TYPE_CONFIG_MAIN);
     LoadGraphicsConfig(TYPE_CONFIG_MAIN);
 

@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 #include "gui/gui.h"
-#include "about_text.h"
 #include "utils.h"
 #include "lang.h"
+
+#include "about_text.c"
 
 static int startActivityCallback(GUI_Activity *activity);
 static void drawActivityCallback(GUI_Activity *activity);

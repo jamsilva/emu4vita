@@ -625,7 +625,8 @@ int WritePngFile(const char *path, unsigned char *pixels, int width, int height,
     png_set_packing(png_ptr);
 
     png_bytepp row_ptr = (png_bytepp)png_malloc(png_ptr, height * sizeof(png_bytep));
-    for (int i = 0; i < height; i++)
+    int i;
+    for (i = 0; i < height; i++)
     {
         row_ptr[i] = (png_bytep)(pixels + i * width * 4);
     }

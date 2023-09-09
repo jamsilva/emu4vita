@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <psp2/kernel/processmgr.h>
 #include <psp2/system_param.h>
 #include <psp2/ctrl.h>
 
@@ -13,6 +14,7 @@
 
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
 Pad hold_count, hold2_count, real_hold_count;
+static uint64_t disable_psbutton_micros = 0;
 
 void GUI_ReadPad()
 {
@@ -164,7 +166,9 @@ void GUI_ReadPad()
 
     if (current_pad[PAD_PSBUTTON])
     {
-        if (real_hold_count[PAD_PSBUTTON] >= DISABLE_PSBUTTON_EVENT_HOLD_COUNT)
+        if (!old_pad[PAD_PSBUTTON])
+            disable_psbutton_micros = sceKernelGetProcessTimeWide() + DISABLE_PSBUTTON_EVENT_HOLD_MICROS;
+        else if (sceKernelGetProcessTimeWide() >= disable_psbutton_micros)
             SetPSbuttonEventEnabled(0);
     }
     else

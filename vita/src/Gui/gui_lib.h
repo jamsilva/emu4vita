@@ -19,7 +19,7 @@ void GUI_StartDrawing();
 void GUI_EndDrawing();
 void GUI_SetRendertarget(GUI_Texture *texture);
 #define GUI_SetVblankWait(enable) vita2d_set_vblank_wait(enable)
-#define GUI_WaitRenderDone vita2d_wait_rendering_done
+#define GUI_WaitRenderingDone vita2d_wait_rendering_done
 
 #define GUI_EnableClipping vita2d_enable_clipping
 #define GUI_SetClipRectangle(x, y, w, h) vita2d_set_clip_rectangle(x, y, x + w, y + h)

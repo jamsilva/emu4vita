@@ -54,7 +54,7 @@ GUI_Activity loading_activity = {
 static SceUID loading_thid = -1;
 static int loading_thread_run = 0;
 static SceKernelLwMutexWork laoding_mutex;
-static StringList log_list = {0};
+static LinkedList *log_list = NULL;
 
 static int listview_auto_scroll = 0;
 static int listview_n_draw_items = 0;
@@ -92,8 +92,18 @@ static void refreshLayout()
 
 void Loading_AddLog(const char *text)
 {
+    if (!text)
+        return;
+
     sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
-    StringListAdd(&log_list, text);
+
+    char *string = malloc(strlen(text) + 1);
+    if (string)
+    {
+        strcpy(string, text);
+        LinkedListAdd(log_list, string);
+    }
+
     sceKernelUnlockLwMutex(&laoding_mutex, 1);
 }
 
@@ -101,7 +111,7 @@ void Loading_AddLogf(const char *text, ...)
 {
     char buf[1024];
     va_list argptr;
-    va_start(argptr, text);
+    va_start(argptr, (void *)text);
     vsnprintf(buf, sizeof(buf), text, argptr);
     va_end(argptr);
 
@@ -115,7 +125,7 @@ void Loading_SetAutoScrollListview(int enable)
 
 static void drawActivityCallback(GUI_Activity *activity)
 {
-    if (!app_config.show_log)
+    if (!app_config.show_log || !log_list)
         return;
 
     // Listview bg
@@ -123,7 +133,8 @@ static void drawActivityCallback(GUI_Activity *activity)
 
     sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
 
-    StringListEntry *entry = StringListGetEntryByNumber(&log_list, listview_top_pos);
+    int l_length = LinkedListGetLength(log_list);
+    LinkedListEntry *entry = LinkedListFind(log_list, listview_top_pos);
 
     if (entry)
     {
@@ -133,12 +144,17 @@ static void drawActivityCallback(GUI_Activity *activity)
         int itemview_max_dy = listview_y + listview_h - LISTVIEW_PADDING_T;
         int x, y;
         int clip_w, clip_h;
+        const char *text;
 
         int i;
-        for (i = listview_top_pos; i < log_list.length; i++)
+        for (i = listview_top_pos; i < l_length; i++)
         {
             if (itemview_y >= itemview_max_dy)
                 break;
+
+            text = (char *)LinkedListGetEntryData(entry);
+            if (!text)
+                continue;
 
             x = itemview_x + ITEMVIEW_PADDING_L;
             y = itemview_y + ITEMVIEW_PADDING_T;
@@ -148,14 +164,14 @@ static void drawActivityCallback(GUI_Activity *activity)
                 clip_h = itemview_max_dy - itemview_y;
             GUI_EnableClipping();
             GUI_SetClipRectangle(x, itemview_y, clip_w, clip_h);
-            GUI_DrawText(x, y, TEXT_COLOR, entry->string);
+            GUI_DrawText(x, y, TEXT_COLOR, text);
             GUI_DisableClipping();
             itemview_y += itemview_h;
-            entry = entry->next;
+            entry = LinkedListNext(entry);
         }
 
         // Scrollbar
-        GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, log_list.length, listview_n_draw_items, listview_top_pos, 0);
+        GUI_DrawVerticalScrollbar(scrollbar_track_x, scrollbar_track_y, scrollbar_track_height, l_length, listview_n_draw_items, listview_top_pos, 0);
     }
 
     sceKernelUnlockLwMutex(&laoding_mutex, 1);
@@ -163,33 +179,35 @@ static void drawActivityCallback(GUI_Activity *activity)
 
 static void ctrlActivityCallback(GUI_Activity *activity)
 {
-    if (!app_config.show_log)
+    if (!app_config.show_log || !log_list)
         return;
 
     sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
 
+    int l_length = LinkedListGetLength(log_list);
+
     if (listview_auto_scroll)
     {
-        listview_top_pos = log_list.length;
-        RefreshListPosNoFocus(&listview_top_pos, log_list.length, listview_n_draw_items);
+        listview_top_pos = l_length;
+        RefreshListPosNoFocus(&listview_top_pos, l_length, listview_n_draw_items);
     }
     else
     {
         if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
         {
-            MoveListPosNoFocus(TYPE_MOVE_UP, &listview_top_pos, log_list.length, listview_n_draw_items);
+            MoveListPosNoFocus(TYPE_MOVE_UP, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_DOWN] || hold2_pad[PAD_LEFT_ANALOG_DOWN])
         {
-            MoveListPosNoFocus(TYPE_MOVE_DOWN, &listview_top_pos, log_list.length, listview_n_draw_items);
+            MoveListPosNoFocus(TYPE_MOVE_DOWN, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_LEFT])
         {
-            MoveListPosNoFocus(TYPE_MOVE_LEFT, &listview_top_pos, log_list.length, listview_n_draw_items);
+            MoveListPosNoFocus(TYPE_MOVE_LEFT, &listview_top_pos, l_length, listview_n_draw_items);
         }
         else if (hold_pad[PAD_RIGHT])
         {
-            MoveListPosNoFocus(TYPE_MOVE_RIGHT, &listview_top_pos, log_list.length, listview_n_draw_items);
+            MoveListPosNoFocus(TYPE_MOVE_RIGHT, &listview_top_pos, l_length, listview_n_draw_items);
         }
 
         if (released_pad[PAD_CANCEL])
@@ -206,7 +224,10 @@ static int startActivityCallback(GUI_Activity *activity)
     loading_activity.wallpaper = GUI_GetDefaultSplash();
     refreshLayout();
 
-    StringListEmpty(&log_list);
+    if (log_list)
+        LinkedListDestroy(log_list);
+    log_list = StringListCreate();
+
     sceKernelCreateLwMutex(&laoding_mutex, "laoding_mutex", 2, 0, NULL);
     return 0;
 }
@@ -214,7 +235,11 @@ static int startActivityCallback(GUI_Activity *activity)
 static int exitActivityCallback(GUI_Activity *activity)
 {
     loading_thread_run = 0;
-    StringListEmpty(&log_list);
+    sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
+    if (log_list)
+        LinkedListDestroy(log_list);
+    log_list = NULL;
+    sceKernelUnlockLwMutex(&laoding_mutex, 1);
     sceKernelDeleteLwMutex(&laoding_mutex);
     return 0;
 }

@@ -17,12 +17,12 @@
 static int core_varialbe_need_update = 0;
 static int core_options_display_need_update = 0;
 
-void Retro_PushUpdateVariable()
+void Retro_RequestUpdateVariable()
 {
     core_varialbe_need_update = 1;
 }
 
-void Retro_PushUpdateOptionsDisplay()
+void Retro_RequestUpdateOptionsDisplay()
 {
     core_options_display_need_update = 1;
 }
@@ -120,7 +120,7 @@ static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
     GUI_Texture *texture = Emu_GetVideoTexture();
     if (!texture || GUI_GetTextureWidth(texture) != fb->width || GUI_GetTextureHeight(texture) != fb->height ||
         GUI_GetTextureFormat(texture) != core_video_pixel_format)
-        texture = Emu_UpdateVideoTexture(fb->width, fb->height);
+        texture = Emu_CreateVideoTexture(fb->width, fb->height);
     if (!texture)
         return false;
     fb->format = core_pixel_format;
@@ -307,28 +307,28 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     case RETRO_ENVIRONMENT_SET_VARIABLES:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_VARIABLES\n");
-        Retro_GetOptionListFromVariables(data);
+        Retro_SetOptionListFromVariables(data);
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_CORE_OPTIONS\n");
-        Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS);
+        Retro_SetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS);
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL\n");
-        Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL);
+        Retro_SetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_INTL);
     }
     break;
 
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2\n");
-        Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2);
+        Retro_SetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2);
 
         return false;
     }
@@ -337,7 +337,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
     case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL\n");
-        Retro_GetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL);
+        Retro_SetOptionListFromOptions(data, RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL);
 
         return false;
     }

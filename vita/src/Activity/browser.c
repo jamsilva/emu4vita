@@ -83,7 +83,7 @@ static int option_items[] = {
 #define PREVIEW_REFRESH_DELAY_FRAMES 6
 
 // File list
-static FileList file_list = {0};
+static LinkedList *file_list = NULL;
 static int list_sort_mode = SORT_BY_NAME;
 
 // Position
@@ -159,56 +159,63 @@ static void refreshLayout()
 
 int CurrentPathIsFile()
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (entry && !entry->is_folder)
-        return 1;
+    LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (data)
+        return !data->is_folder;
 
     return 0;
 }
 
 int MakeCurrentFileName(char *name)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (!entry || !entry->name)
+    LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!data || !data->name)
         return -1;
 
-    snprintf(name, MAX_NAME_LENGTH, entry->name);
+    snprintf(name, MAX_NAME_LENGTH, data->name);
     return 0;
 }
 
 int MakeCurrentFilePath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (!entry || !entry->name)
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    LinkedListEntry *f_entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(f_entry);
+    if (!l_data || !e_data || !e_data->name)
         return -1;
 
-    snprintf(path, MAX_PATH_LENGTH, "%s%s", file_list.path, entry->name);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s", l_data->path, e_data->name);
     return 0;
 }
 
 int MakePreviewPath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (!entry || !entry->name)
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    LinkedListEntry *f_entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(f_entry);
+    if (!l_data || !e_data || !e_data->name)
         return -1;
 
     char base_name[MAX_NAME_LENGTH];
-    int ret = MakeBaseName(base_name, entry->name, MAX_NAME_LENGTH);
+    int ret = MakeBaseName(base_name, e_data->name, MAX_NAME_LENGTH);
     if (ret < 0)
         return -1;
 
-    snprintf(path, MAX_PATH_LENGTH, ("%s/%s/%s.png"), file_list.path, PREVIEW_DIR_NAME, base_name);
+    snprintf(path, MAX_PATH_LENGTH, ("%s/%s/%s.png"), l_data->path, PREVIEW_DIR_NAME, base_name);
     return 0;
 }
 
 int MakeScreenshotPath(char *path)
 {
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (!entry || !entry->name)
+    LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!data || !data->name)
         return -1;
 
     char base_name[MAX_NAME_LENGTH];
-    int ret = MakeBaseName(base_name, entry->name, MAX_NAME_LENGTH);
+    int ret = MakeBaseName(base_name, data->name, MAX_NAME_LENGTH);
     if (ret < 0)
         return -1;
 
@@ -232,7 +239,7 @@ GUI_Texture *GetDefaultPreviewTexture()
     return texture;
 }
 
-void Browser_PushRefreshPreview(int urgent)
+void Browser_RequestRefreshPreview(int urgent)
 {
     preview_need_refresh = 1;
     if (urgent)
@@ -242,7 +249,7 @@ void Browser_PushRefreshPreview(int urgent)
 
     if (preview_tex)
     {
-        GUI_WaitRenderDone();
+        GUI_WaitRenderingDone();
         GUI_DestroyTexture(preview_tex);
         preview_tex = NULL;
     }
@@ -253,23 +260,24 @@ static void moveFileListPos(int type)
     static int old_dir_level = -1;
     static int old_focus_pos = -1;
 
-    MoveListPos(type, &listview_top_pos, &listview_focus_pos, file_list.length, name_listview_n_draw_items);
+    int l_length = LinkedListGetLength(file_list);
+    MoveListPos(type, &listview_top_pos, &listview_focus_pos, l_length, name_listview_n_draw_items);
     if (old_dir_level != dir_level || old_focus_pos != listview_focus_pos)
     {
         name_scroll_count = 0;
-        Browser_PushRefreshPreview(0);
+        Browser_RequestRefreshPreview(0);
         Setting_SetStateSelectId(0);
     }
 
     if (CurrentPathIsFile())
     {
         button_instructions[1].instruction = START_GAME;
-        button_instructions[2].visible = 1;
+        button_instructions[2].visibility = 1;
     }
     else
     {
         button_instructions[1].instruction = OPEN_DIR;
-        button_instructions[2].visible = 0;
+        button_instructions[2].visibility = 0;
     }
 
     old_dir_level = dir_level;
@@ -291,10 +299,11 @@ static void dirLevelUp()
 
 static void dirLevelDown()
 {
-    RemoveEndSlash(file_list.path);
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    RemoveEndSlash(l_data->path);
 
     char *p;
-    p = strrchr(file_list.path, '/'); // ux0:abc/cde
+    p = strrchr(l_data->path, '/'); // ux0:abc/cde
     if (p)
     {
         p[1] = '\0';
@@ -302,10 +311,10 @@ static void dirLevelDown()
         goto DIR_UP_RETURN;
     }
 
-    p = strrchr(file_list.path, ':'); // ux0:abc || ux0:
+    p = strrchr(l_data->path, ':'); // ux0:abc || ux0:
     if (p)
     {
-        if (strlen(file_list.path) - ((p + 1) - file_list.path) > 0) // ux0:abc
+        if (strlen(l_data->path) - ((p + 1) - l_data->path) > 0) // ux0:abc
         {
             p[1] = '\0';
             dir_level--;
@@ -313,7 +322,7 @@ static void dirLevelDown()
         }
     }
 
-    strcpy(file_list.path, HOME_PATH);
+    strcpy(l_data->path, HOME_PATH);
     dir_level = 0;
 
 DIR_UP_RETURN:
@@ -326,8 +335,9 @@ DIR_UP_RETURN:
 
 static int setFocusByName(const char *name)
 {
-    int pos = FileListGetNumberByName(&file_list, name);
-    if (pos < 0 || pos >= file_list.length)
+    int l_length = LinkedListGetLength(file_list);
+    int pos = FileListGetNumberByName(file_list, name);
+    if (pos < 0 || pos >= l_length)
         return -1;
 
     listview_focus_pos = pos;
@@ -338,11 +348,12 @@ static int setFocusByName(const char *name)
 static int refreshFileList()
 {
     int ret = 0, res = 0;
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
 
     do
     {
-        FileListEmpty(&file_list);
-        res = FileListGetEntries(&file_list, file_list.path, list_sort_mode);
+        LinkedListEmpty(file_list);
+        res = FileListGetEntries(file_list, l_data->path, list_sort_mode);
         if (res < 0)
         {
             ret = res;
@@ -359,8 +370,9 @@ static int changeToDir(char *lastdir)
     if (!CheckFolderExist(lastdir))
         return -1;
 
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
     dir_level = 0;
-    strcpy(file_list.path, HOME_PATH);
+    strcpy(l_data->path, HOME_PATH);
 
     int i;
     for (i = 0; i < strlen(lastdir) + 1; i++)
@@ -384,7 +396,7 @@ static int changeToDir(char *lastdir)
             refreshFileList();
             setFocusByName(p + 1);
 
-            strcpy(file_list.path, lastdir);
+            strcpy(l_data->path, lastdir);
 
             lastdir[i + 1] = ch;
 
@@ -436,27 +448,37 @@ static void backToParentDir()
     }
 }
 
-static void enterChildDir(FileListEntry *entry)
+static void enterChildDir(LinkedListEntry *entry)
 {
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!l_data || !e_data)
+        return;
+
     if (dir_level == 0)
     {
-        strcpy(file_list.path, entry->name);
+        strcpy(l_data->path, e_data->name);
     }
     else
     {
         if (dir_level > 1)
-            AddEndSlash(file_list.path);
-        strcat(file_list.path, entry->name);
+            AddEndSlash(l_data->path);
+        strcat(l_data->path, e_data->name);
     }
 
     dirLevelUp();
     refreshFileList();
 }
 
-static void startGame(FileListEntry *entry)
+static void startGame(LinkedListEntry *entry)
 {
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!l_data || !e_data)
+        return;
+
     EmuGameInfo info;
-    snprintf(info.path, MAX_PATH_LENGTH, "%s%s", file_list.path, entry->name);
+    snprintf(info.path, MAX_PATH_LENGTH, "%s%s", l_data->path, e_data->name);
     info.state_num = -2;
     Emu_StartGame(&info);
 }
@@ -500,7 +522,7 @@ static void makePreviewDisplayWH(int *w, int *h, int max_w, int max_h)
     *h = new_h;
 }
 
-static void refreshPreviewLayout()
+static void refreshPreviewView()
 {
     preview_tex_x = preview_imageview_x + PREVIEW_VIEW_PADDING;
     preview_tex_y = preview_imageview_y + PREVIEW_VIEW_PADDING;
@@ -521,7 +543,7 @@ static void refreshPreview()
 {
     if (preview_tex)
     {
-        GUI_WaitRenderDone();
+        GUI_WaitRenderingDone();
         GUI_DestroyTexture(preview_tex);
         preview_tex = NULL;
     }
@@ -546,7 +568,7 @@ static void refreshPreview()
     }
 
     if (preview_tex)
-        refreshPreviewLayout();
+        refreshPreviewView();
 }
 
 static void checkPreview()
@@ -568,7 +590,9 @@ static void checkPreview()
 static void drawActivityCallback(GUI_Activity *activity)
 {
     int x, y;
-    int w, h, clip_w, clip_h;
+    int w, clip_w, clip_h;
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    int l_length = LinkedListGetLength(file_list);
 
     checkPreview();
 
@@ -586,13 +610,13 @@ static void drawActivityCallback(GUI_Activity *activity)
     clip_h = path_textview_h;
     GUI_EnableClipping();
     GUI_SetClipRectangle(x, path_textview_y, clip_w, clip_h);
-    GUI_DrawText(x, y, PATH_TEXT_COLOR, file_list.path);
+    GUI_DrawText(x, y, PATH_TEXT_COLOR, l_data->path);
     GUI_DisableClipping();
 
     // Draw FileListEntries
-    FileListEntry *file_entry = FileListGetEntryByNumber(&file_list, listview_top_pos);
+    LinkedListEntry *f_entry = LinkedListFind(file_list, listview_top_pos);
 
-    if (file_entry)
+    if (f_entry)
     {
         int itemview_max_dy = name_listview_y + name_listview_h - NAME_LISTVIEW_PADDING_T;
         int itemview_x = name_listview_x + NAME_LISTVIEW_PADDING_L;
@@ -600,12 +624,16 @@ static void drawActivityCallback(GUI_Activity *activity)
         uint32_t color;
 
         int i;
-        for (i = listview_top_pos; i < file_list.length; i++)
+        for (i = listview_top_pos; i < l_length; i++)
         {
+            FileListEntryData *e_data = (FileListEntryData *)LinkedListGetEntryData(f_entry);
+            if (!e_data)
+                continue;
+
             if (itemview_y >= itemview_max_dy)
                 break;
 
-            if (file_entry->is_folder)
+            if (e_data->is_folder)
                 color = NAME_TEXT_COLOR_FOLDER;
             else
                 color = NAME_TEXT_COLOR_FILE;
@@ -624,7 +652,7 @@ static void drawActivityCallback(GUI_Activity *activity)
 
                 // Name scroll
                 clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
-                w = GUI_GetTextWidth(file_entry->name);
+                w = GUI_GetTextWidth(e_data->name);
                 if (w > clip_w)
                 {
                     name_scroll_count++;
@@ -645,15 +673,15 @@ static void drawActivityCallback(GUI_Activity *activity)
             y = itemview_y + NAME_ITEMVIEW_PADDING_T;
             clip_w = name_itemview_w - NAME_ITEMVIEW_PADDING_L * 2;
             GUI_SetClipRectangle(x, itemview_y, clip_w, clip_h);
-            GUI_DrawText(x, y, color, file_entry->name);
+            GUI_DrawText(x, y, color, e_data->name);
 
             GUI_DisableClipping();
 
-            file_entry = file_entry->next;
+            f_entry = LinkedListNext(f_entry);
             itemview_y += name_itemview_h;
         }
 
-        GUI_DrawVerticalScrollbar(name_scrollbar_track_x, name_scrollbar_track_y, name_scrollbar_track_height, file_list.length, name_listview_n_draw_items, listview_top_pos, 0);
+        GUI_DrawVerticalScrollbar(name_scrollbar_track_x, name_scrollbar_track_y, name_scrollbar_track_height, l_length, name_listview_n_draw_items, listview_top_pos, 0);
 
         if (preview_tex)
             GUI_DrawTextureScale(preview_tex, preview_tex_x, preview_tex_y, preview_tex_x_scale, preview_tex_y_scale);
@@ -668,15 +696,16 @@ static void deleteGameCallback(GUI_Dialog *dialog)
 
     sceIoRemove(path);
 #ifdef FBA_BUILD
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
     char base_name[MAX_NAME_LENGTH];
     MakeBaseName(base_name, path, MAX_NAME_LENGTH);
-    snprintf(path, MAX_PATH_LENGTH, "%s%s.dat", file_list.path, base_name);
+    snprintf(path, MAX_PATH_LENGTH, "%s%s.dat", l_data->path, base_name);
     sceIoRemove(path);
 #endif
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
-    refreshFileList(&file_list);
-    Browser_PushRefreshPreview(0);
+    refreshFileList(file_list);
+    Browser_RequestRefreshPreview(0);
 }
 
 static void deleteAutoStateCallback(GUI_Dialog *dialog)
@@ -684,7 +713,7 @@ static void deleteAutoStateCallback(GUI_Dialog *dialog)
     Emu_DeleteState(-1);
     GUI_CloseDialog(dialog->prev);
     AlertDialog_Dismiss(dialog);
-    Browser_PushRefreshPreview(0);
+    Browser_RequestRefreshPreview(0);
 }
 
 static void deleteSrmCallback(GUI_Dialog *dialog)
@@ -704,8 +733,9 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
     {
     case INDEX_OPTION_ITEM_LOAD_GAME:
     {
-        FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-        if (entry && !entry->is_folder)
+        LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+        FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+        if (data && !data->is_folder)
         {
             GUI_CloseAllDialogs(TYPE_GUI_DIALOG_ANY);
             startGame(entry);
@@ -759,8 +789,9 @@ static void optionMenuPositiveCallback(GUI_Dialog *dialog)
 static void openOptionMenu()
 {
     name_scroll_count = 0;
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (!entry || entry->is_folder)
+    LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (!data || data->is_folder)
         return;
 
     GUI_Dialog *dialog = AlertDialog_Creat();
@@ -777,10 +808,11 @@ static void openOptionMenu()
 static void onItemClick()
 {
     name_scroll_count = 0;
-    FileListEntry *entry = FileListGetEntryByNumber(&file_list, listview_focus_pos);
-    if (entry)
+    LinkedListEntry *entry = LinkedListFind(file_list, listview_focus_pos);
+    FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+    if (data)
     {
-        if (entry->is_folder)
+        if (data->is_folder)
             enterChildDir(entry);
         else
             startGame(entry);
@@ -833,8 +865,12 @@ static int startActivityCallback(GUI_Activity *activity)
     browser_activity.wallpaper = GUI_GetDefaultWallpaper();
     refreshLayout();
 
-    FileListEmpty(&file_list);
-    strcpy(file_list.path, HOME_PATH);
+    if (!file_list)
+        file_list = FileListCreate();
+    if (!file_list)
+        return -1;
+    FileListData *l_data = (FileListData *)LinkedListGetListData(file_list);
+    strcpy(l_data->path, HOME_PATH);
     refreshFileList();
     Browser_ChangeDirByFile(LASTFILE_PATH);
 
@@ -843,6 +879,6 @@ static int startActivityCallback(GUI_Activity *activity)
 
 static int exitActivityCallback(GUI_Activity *activity)
 {
-    FileListEmpty(&file_list);
+    LinkedListEmpty(file_list);
     return 0;
 }

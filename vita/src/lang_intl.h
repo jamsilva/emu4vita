@@ -197,6 +197,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Graphics",
     // TAB_CONTROL
     "Control",
+    // TAB_HOTKEY
+    "HotKey",
     // TAB_CORE
     "Core",
     // TAB_MISC
@@ -571,6 +573,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "图形",
     // TAB_CONTROL
     "控制",
+    // TAB_HOTKEY
+    "热键",
     // TAB_CORE
     "核心",
     // TAB_MISC

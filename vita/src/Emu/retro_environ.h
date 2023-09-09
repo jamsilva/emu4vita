@@ -3,7 +3,7 @@
 
 #include <libretro.h>
 
-void Retro_PushUpdateVariable();
-void Retro_PushUpdateOptionsDisplay();
+void Retro_RequestUpdateVariable();
+void Retro_RequestUpdateOptionsDisplay();
 
 #endif

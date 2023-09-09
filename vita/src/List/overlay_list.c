@@ -4,201 +4,86 @@
 #include <stdio.h>
 
 #include "overlay_list.h"
+#include "linked_list.h"
 #include "config_lib.h"
 #include "file.h"
 
-enum TypeOverlayText
+static void freeEntryData(void *data)
 {
-    TYPE_OVERLAY_TEXT_NONE,
-    TYPE_OVERLAY_TEXT_ITEM,
-    TYPE_OVERLAY_TEXT_NAME_VALUE,
-};
-
-void OverlayListFreeEntry(OverlayListEntry *entry)
-{
-    if (!entry)
-        return;
-
-    if (entry->name)
-        free(entry->name);
-    if (entry->image_name)
-        free(entry->image_name);
-    free(entry);
-}
-
-OverlayListEntry *OverlayListGetEntryByNumber(OverlayList *list, int n)
-{
-    if (!list)
-        return NULL;
-
-    OverlayListEntry *entry = list->head;
-
-    while (n > 0 && entry)
+    OverlayListEntryData *e_data = (OverlayListEntryData *)data;
+    if (e_data)
     {
-        n--;
-        entry = entry->next;
+        if (e_data->name)
+            free(e_data->name);
+        if (e_data->image_name)
+            free(e_data->image_name);
+        if (e_data->viewport_rotate)
+            free(e_data->viewport_rotate);
+        if (e_data->viewport_width)
+            free(e_data->viewport_width);
+        if (e_data->viewport_height)
+            free(e_data->viewport_height);
+        if (e_data->viewport_x)
+            free(e_data->viewport_x);
+        if (e_data->viewport_y)
+            free(e_data->viewport_y);
+        free(e_data);
     }
-
-    if (n != 0)
-        return NULL;
-
-    return entry;
 }
 
-OverlayListEntry *OverlayListGetEntryByName(OverlayList *list, const char *name)
+LinkedListEntry *ConfigListFindEntryByName(LinkedList *list, const char *name)
 {
-    if (!list)
+    if (!list || !name)
         return NULL;
 
-    OverlayListEntry *entry = list->head;
-
-    int name_length = strlen(name);
+    LinkedListEntry *entry = LinkedListHead(list);
 
     while (entry)
     {
-        if (strlen(entry->name) == name_length && strcasecmp(entry->name, name) == 0)
+        OverlayListEntryData *data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
+
+        if (data->name && strcmp(data->name, name) == 0)
             return entry;
 
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     return NULL;
 }
 
-int OverlayListGetNumberByName(OverlayList *list, const char *name)
-{
-    if (!list)
-        return -1;
-
-    OverlayListEntry *entry = list->head;
-
-    int name_length = strlen(name);
-
-    int n = 0;
-
-    while (entry)
-    {
-        if (strlen(entry->name) == name_length && strcasecmp(entry->name, name) == 0)
-            return n;
-
-        n++;
-        entry = entry->next;
-    }
-
-    return -2;
-}
-
-int OverlayListRemoveEntry(OverlayList *list, OverlayListEntry *entry)
-{
-    if (!list || !entry)
-        return 0;
-
-    if (entry->previous)
-    {
-        entry->previous->next = entry->next;
-    }
-    else
-    {
-        list->head = entry->next;
-    }
-
-    if (entry->next)
-    {
-        entry->next->previous = entry->previous;
-    }
-    else
-    {
-        list->tail = entry->previous;
-    }
-
-    OverlayListFreeEntry(entry);
-
-    list->length--;
-
-    if (list->length == 0)
-    {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-
-    return 1;
-}
-
-void OverlayListAddEntry(OverlayList *list, OverlayListEntry *entry)
-{
-    if (!list || !entry)
-        return;
-
-    entry->next = NULL;
-    entry->previous = NULL;
-
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        OverlayListEntry *tail = list->tail;
-        tail->next = entry;
-        entry->previous = tail;
-        list->tail = entry;
-    }
-
-    list->length++;
-}
-
-void OverlayListEmpty(OverlayList *list)
-{
-    if (!list)
-        return;
-
-    OverlayListEntry *entry = list->head;
-
-    while (entry)
-    {
-        OverlayListEntry *next = entry->next;
-        OverlayListFreeEntry(entry);
-        entry = next;
-    }
-
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
-}
-
 static char *getItem(const char *str)
 {
-    if (str[0] != '[')
+    const char *p = str;
+    if (*p++ != '[')
         return NULL;
 
-    char *p = strchr(str + 1, ']');
-    if (!p)
+    const char *p2 = strchr(p, ']');
+    if (!p2)
         return NULL;
 
-    int len = p - (str + 1);
+    int len = p2 - p;
 
-    char *out = malloc(len + 1);
-    if (out)
+    char *res = malloc(len + 1);
+    if (res)
     {
-        strncpy(out, str + 1, len);
-        out[len] = '\0';
+        strncpy(res, p, len);
+        res[len] = '\0';
+        // printf("ITEM: %s\n", res);
     }
 
-    return out;
+    return res;
 }
 
 static int readLine(char *line, char **pkey, char **pvalue)
 {
-    if (!line)
-        return TYPE_OVERLAY_TEXT_NONE;
-
-    int res = TYPE_OVERLAY_TEXT_NONE;
     char *key = NULL;
     char *value = NULL;
     const char *head = line;
     const char *tail = line + strlen(line);
     int len;
+
+    if (!line)
+        goto FAILED;
 
     // Trim at beginning
     while (*head == ' ' || *head == '\t')
@@ -207,15 +92,15 @@ static int readLine(char *line, char **pkey, char **pvalue)
     // Ignore comments #1
     if (head[0] == '#')
     {
-        // AppLog("IGNORE %s\n", line);
-        goto END;
+        // printf("IGNORE %s\n", line);
+        goto FAILED;
     }
 
     // Ignore comments #2
     const char *p = strchr(head, '#');
     if (p)
     {
-        // AppLog("IGNORE %s\n", p);
+        // printf("IGNORE %s\n", p);
         tail = p;
     }
 
@@ -223,25 +108,26 @@ static int readLine(char *line, char **pkey, char **pvalue)
     if (line[0] == '[')
     {
         key = getItem(line);
-        if (key != NULL)
-            res = TYPE_OVERLAY_TEXT_ITEM;
-        goto END;
+        if (key)
+            goto END;
+        else
+            goto FAILED;
     }
 
     // Get token
     p = strchr(head, '=');
     if (!p || p >= tail)
-        goto END;
+        goto FAILED;
 
     // Key
     len = p - head;
     key = malloc(len + 1);
     if (!key)
-        goto END;
+        goto FAILED;
     strncpy(key, head, len);
     key[len] = '\0';
     TrimString(key);
-    // AppLog("KEY: %s\n", key);
+    // printf("KEY: %s\n", key);
 
     head = p + 1;
     while (*head == ' ' || *head == '\t')
@@ -252,7 +138,7 @@ static int readLine(char *line, char **pkey, char **pvalue)
         head++;
         p = strchr(head, '"');
         if (!p || p >= tail)
-            goto END;
+            goto FAILED;
     }
     else // Decimal
     {
@@ -265,30 +151,109 @@ static int readLine(char *line, char **pkey, char **pvalue)
     len = p - head;
     value = malloc(len + 1);
     if (!value)
-        goto END;
+        goto FAILED;
     strncpy(value, head, len);
     value[len] = '\0';
-    // AppLog("VALUE: %s\n", value);
-
-    res = TYPE_OVERLAY_TEXT_NAME_VALUE;
+    // printf("VALUE: %s\n", value);
 
 END:
-    if (res == TYPE_OVERLAY_TEXT_NONE)
-    {
-        if (key)
-            free(key);
-        if (value)
-            free(value);
-    }
-    else
-    {
-        *pkey = key;
-        *pvalue = value;
-    }
-    return res;
+    *pkey = key;
+    *pvalue = value;
+    return 0;
+
+FAILED:
+    if (key)
+        free(key);
+    if (value)
+        free(value);
+    *pkey = NULL;
+    *pvalue = NULL;
+    return -1;
 }
 
-int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
+static void setEntryData(LinkedList *list, OverlayListEntryData **data, char *key, char *value)
+{
+    if (!data || !key)
+        goto END;
+
+    if (!value)
+    {
+        if (list)
+        {
+            *data = (OverlayListEntryData *)calloc(1, sizeof(OverlayListEntryData));
+            if (*data)
+            {
+                LinkedListAdd(list, *data);
+                (*data)->name = key;
+                key = NULL;
+            }
+        }
+    }
+    else if (*data)
+    {
+        if (strcasecmp(key, "image_name") == 0)
+        {
+            if (!(*data)->image_name)
+            {
+                (*data)->image_name = value;
+                value = NULL;
+            }
+        }
+        else if (strcasecmp(key, "viewport_rotate") == 0)
+        {
+            if (!(*data)->viewport_rotate)
+            {
+                (*data)->viewport_rotate = (int *)malloc(sizeof(int));
+                if ((*data)->viewport_rotate)
+                    *((*data)->viewport_rotate) = StringToDecimal(value);
+            }
+        }
+        else if (strcasecmp(key, "viewport_width") == 0)
+        {
+            if (!(*data)->viewport_width)
+            {
+                (*data)->viewport_width = (int *)malloc(sizeof(int));
+                if ((*data)->viewport_width)
+                    *((*data)->viewport_width) = StringToDecimal(value);
+            }
+        }
+        else if (strcasecmp(key, "viewport_height") == 0)
+        {
+            if (!(*data)->viewport_height)
+            {
+                (*data)->viewport_height = (int *)malloc(sizeof(int));
+                if ((*data)->viewport_height)
+                    *((*data)->viewport_height) = StringToDecimal(value);
+            }
+        }
+        else if (strcasecmp(key, "viewport_x") == 0)
+        {
+            if (!(*data)->viewport_x)
+            {
+                (*data)->viewport_x = (int *)malloc(sizeof(int));
+                if ((*data)->viewport_x)
+                    *((*data)->viewport_x) = StringToDecimal(value);
+            }
+        }
+        else if (strcasecmp(key, "viewport_y") == 0)
+        {
+            if (!(*data)->viewport_y)
+            {
+                (*data)->viewport_y = (int *)malloc(sizeof(int));
+                if ((*data)->viewport_y)
+                    *((*data)->viewport_y) = StringToDecimal(value);
+            }
+        }
+    }
+
+END:
+    if (key)
+        free(key);
+    if (value)
+        free(value);
+}
+
+int OverlayListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 {
     if (!list)
         return -1;
@@ -304,10 +269,10 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
         size -= 3;
     }
 
-    OverlayListEntry *entry = NULL;
+    OverlayListEntryData *data = NULL;
     char *line = NULL;
-    char *name = NULL, *value = NULL;
-    int type;
+    char *key = NULL;
+    char *value = NULL;
 
     do
     {
@@ -315,91 +280,9 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
         // AppLog("ConfigGetLine: line = %s\n", line);
         if (res > 0)
         {
-            type = readLine(line, &name, &value);
-
-            if (type == TYPE_OVERLAY_TEXT_ITEM)
-            {
-                if (name)
-                {
-                    entry = (OverlayListEntry *)calloc(1, sizeof(OverlayListEntry));
-                    if (entry)
-                    {
-                        entry->name = name;
-                        name = NULL;
-                        OverlayListAddEntry(list, entry);
-                    }
-                }
-            }
-            else if (type == TYPE_OVERLAY_TEXT_NAME_VALUE)
-            {
-                if (entry && name && value)
-                {
-                    if (strcasecmp(name, "image_name") == 0)
-                    {
-                        if (!entry->image_name)
-                        {
-                            entry->image_name = value;
-                            value = NULL;
-                        }
-                    }
-                    else if (strcasecmp(name, "viewport_rotate") == 0)
-                    {
-                        if (!entry->viewport_rotate)
-                        {
-                            entry->viewport_rotate = (int *)malloc(sizeof(int));
-                            if (entry->viewport_rotate)
-                                *(entry->viewport_rotate) = StringToDecimal(value);
-                        }
-                    }
-                    else if (strcasecmp(name, "viewport_width") == 0)
-                    {
-                        if (!entry->viewport_width)
-                        {
-                            entry->viewport_width = (int *)malloc(sizeof(int));
-                            if (entry->viewport_width)
-                                *(entry->viewport_width) = StringToDecimal(value);
-                        }
-                    }
-                    else if (strcasecmp(name, "viewport_height") == 0)
-                    {
-                        if (!entry->viewport_height)
-                        {
-                            entry->viewport_height = (int *)malloc(sizeof(int));
-                            if (entry->viewport_height)
-                                *(entry->viewport_height) = StringToDecimal(value);
-                        }
-                    }
-                    else if (strcasecmp(name, "viewport_x") == 0)
-                    {
-                        if (!entry->viewport_x)
-                        {
-                            entry->viewport_x = (int *)malloc(sizeof(int));
-                            if (entry->viewport_x)
-                                *(entry->viewport_x) = StringToDecimal(value);
-                        }
-                    }
-                    else if (strcasecmp(name, "viewport_y") == 0)
-                    {
-                        if (!entry->viewport_y)
-                        {
-                            entry->viewport_y = (int *)malloc(sizeof(int));
-                            if (entry->viewport_y)
-                                *(entry->viewport_y) = StringToDecimal(value);
-                        }
-                    }
-                }
-            }
-
-            if (line)
-                free(line);
-            line = NULL;
-            if (name)
-                free(name);
-            name = NULL;
-            if (value)
-                free(value);
-            value = NULL;
-
+            readLine(line, &key, &value);
+            setEntryData(list, &data, key, value);
+            free(line);
             size -= res;
             p += res;
         }
@@ -408,7 +291,7 @@ int OverlayListGetEntriesFromBuffer(OverlayList *list, void *buffer, int size)
     return 0;
 }
 
-int OverlayListGetEntries(OverlayList *list, const char *path)
+int OverlayListGetEntries(LinkedList *list, const char *path)
 {
     if (!list)
         return -1;
@@ -423,4 +306,14 @@ int OverlayListGetEntries(OverlayList *list, const char *path)
     free(buffer);
 
     return 0;
+}
+
+LinkedList *OverlayListCreat()
+{
+    LinkedList *list = LinkedListCreat();
+    if (!list)
+        return NULL;
+
+    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
+    return list;
 }

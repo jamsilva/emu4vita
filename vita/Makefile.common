@@ -1,5 +1,5 @@
-SFO_APP_VER  := 01.00
-APP_VER      := 1.00
+SFO_APP_VER  := 01.01
+APP_VER      := 1.01
 
 BETA_BUILD   := 0
 BETA_VER     := 0
@@ -82,6 +82,7 @@ SRC_C += \
 	gui/gui.c
 
 SRC_C += \
+	list/linked_list.c \
 	list/config_list.c \
 	list/file_list.c \
 	list/option_list.c \
@@ -164,9 +165,10 @@ CORE_ARGS += platform=vita EXTERNAL_ZLIB=1
 
 WARNINGS := \
 	-Wall \
-	-Wno-unused-variable \
-	-Wno-unused-but-set-variable \
 	-Wno-format-truncation
+
+# -Wno-unused-variable
+# -Wno-unused-but-set-variable
 
 ARCHFLAGS := -march=armv7-a -mfpu=neon -mfloat-abi=hard -DVITA
 CFLAGS    := $(ARCHFLAGS) -mword-relocations -fno-optimize-sibling-calls

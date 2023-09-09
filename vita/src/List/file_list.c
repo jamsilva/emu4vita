@@ -34,72 +34,43 @@ char **getDevices()
     return devices;
 }
 
-void FileListFreeEntry(FileListEntry *entry)
+static void freeEntryData(void *data)
 {
-    if (!entry)
-        return;
-
-    free(entry->name);
-    free(entry);
+    FileListEntryData *e_data = (FileListEntryData *)data;
+    if (e_data)
+    {
+        free(e_data->name);
+        free(e_data);
+    }
 }
 
-FileListEntry *FileListCopyEntry(FileListEntry *src)
-{
-    FileListEntry *dst = malloc(sizeof(FileListEntry));
-    if (!dst)
-        return NULL;
-
-    memcpy(dst, src, sizeof(FileListEntry));
-    dst->name = malloc(src->name_length + 1);
-    strcpy(dst->name, src->name);
-    return dst;
-}
-
-FileListEntry *FileListGetEntryByName(FileList *list, const char *name)
+LinkedListEntry *FileListFindEntryByName(LinkedList *list, const char *name)
 {
     if (!list || !name)
         return NULL;
 
-    FileListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     int name_length = strlen(name);
 
     while (entry)
     {
-        if (entry->name_length == name_length && strcasecmp(entry->name, name) == 0)
+        FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+        if (data->name_length == name_length && strcasecmp(data->name, name) == 0)
             return entry;
 
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     return NULL;
 }
 
-FileListEntry *FileListGetEntryByNumber(FileList *list, int n)
-{
-    if (!list)
-        return NULL;
-
-    FileListEntry *entry = list->head;
-
-    while (n > 0 && entry)
-    {
-        n--;
-        entry = entry->next;
-    }
-
-    if (n != 0)
-        return NULL;
-
-    return entry;
-}
-
-int FileListGetNumberByName(FileList *list, const char *name)
+int FileListGetNumberByName(LinkedList *list, const char *name)
 {
     if (!list || !name)
         return -1;
 
-    FileListEntry *entry = list->head;
+    LinkedListEntry *entry = LinkedListHead(list);
 
     int name_length = strlen(name);
 
@@ -107,209 +78,47 @@ int FileListGetNumberByName(FileList *list, const char *name)
 
     while (entry)
     {
-        if (entry->name_length == name_length && strcasecmp(entry->name, name) == 0)
+        FileListEntryData *data = (FileListEntryData *)LinkedListGetEntryData(entry);
+        if (data->name_length == name_length && strcasecmp(data->name, name) == 0)
             return n;
 
         n++;
-        entry = entry->next;
+        entry = LinkedListNext(entry);
     }
 
     return -1;
 }
 
-int FileListRemoveEntry(FileList *list, FileListEntry *entry)
+static int FileListCompareByName(void *data1, void *data2)
 {
-    if (!list || !entry)
-        return 0;
+    if (!data1 || !data2)
+        return -1;
 
-    if (entry->previous)
-    {
-        entry->previous->next = entry->next;
-    }
+    FileListEntryData *f_data1 = (FileListEntryData *)data1;
+    FileListEntryData *f_data2 = (FileListEntryData *)data2;
+    char name1[MAX_NAME_LENGTH];
+    char name2[MAX_NAME_LENGTH];
+
+    strcpy(name1, f_data1->name);
+    RemoveEndSlash(name1);
+    strcpy(name2, f_data2->name);
+    RemoveEndSlash(name2);
+
+    // Sort by name within the same type
+    if (f_data1->is_folder == f_data2->is_folder)
+        return strnatcasecmp(name1, name2);
     else
-    {
-        list->head = entry->next;
-    }
-
-    if (entry->next)
-    {
-        entry->next->previous = entry->previous;
-    }
-    else
-    {
-        list->tail = entry->previous;
-    }
-
-    FileListFreeEntry(entry);
-
-    list->length--;
-
-    if (list->length == 0)
-    {
-        list->head = NULL;
-        list->tail = NULL;
-    }
-
-    return 1;
+        return f_data1->is_folder ? -1 : 1;
 }
 
-int FileListRemoveEntryByName(FileList *list, const char *name)
-{
-    if (!list)
-        return 0;
-
-    FileListEntry *entry = list->head;
-    FileListEntry *previous = NULL;
-
-    int name_length = strlen(name);
-
-    while (entry)
-    {
-        if (entry->name_length == name_length && strcasecmp(entry->name, name) == 0)
-        {
-            if (previous)
-            {
-                previous->next = entry->next;
-            }
-            else
-            {
-                list->head = entry->next;
-            }
-
-            if (list->tail == entry)
-            {
-                list->tail = previous;
-            }
-
-            FileListFreeEntry(entry);
-
-            list->length--;
-
-            if (list->length == 0)
-            {
-                list->head = NULL;
-                list->tail = NULL;
-            }
-
-            return 1;
-        }
-
-        previous = entry;
-        entry = entry->next;
-    }
-
-    return 0;
-}
-
-void FileListAddEntry(FileList *list, FileListEntry *entry, int sort)
-{
-    if (!list || !entry)
-        return;
-
-    entry->next = NULL;
-    entry->previous = NULL;
-
-    if (list->head == NULL)
-    {
-        list->head = entry;
-        list->tail = entry;
-    }
-    else
-    {
-        if (sort != SORT_NONE)
-        {
-            FileListEntry *p = list->head;
-            FileListEntry *previous = NULL;
-
-            char entry_name[MAX_NAME_LENGTH];
-            strcpy(entry_name, entry->name);
-            RemoveEndSlash(entry_name);
-
-            while (p)
-            {
-                char p_name[MAX_NAME_LENGTH];
-                strcpy(p_name, p->name);
-                RemoveEndSlash(p_name);
-
-                // Sort by type
-                if (sort == SORT_BY_NAME)
-                {
-                    // First folders then files
-                    if (entry->is_folder > p->is_folder)
-                        break;
-
-                    // Sort by name within the same type
-                    if (entry->is_folder == p->is_folder)
-                    {
-                        if (strnatcasecmp(entry_name, p_name) < 0)
-                        {
-                            break;
-                        }
-                    }
-                }
-
-                previous = p;
-                p = p->next;
-            }
-
-            if (previous == NULL)
-            { // Order: entry (new head) -> p (old head)
-                entry->next = p;
-                p->previous = entry;
-                list->head = entry;
-            }
-            else if (previous->next == NULL)
-            { // Order: p (old tail) -> entry (new tail)
-                FileListEntry *tail = list->tail;
-                tail->next = entry;
-                entry->previous = tail;
-                list->tail = entry;
-            }
-            else
-            { // Order: previous -> entry -> p
-                previous->next = entry;
-                entry->previous = previous;
-                entry->next = p;
-                p->previous = entry;
-            }
-        }
-        else
-        {
-            FileListEntry *tail = list->tail;
-            tail->next = entry;
-            entry->previous = tail;
-            list->tail = entry;
-        }
-    }
-
-    list->length++;
-}
-
-void FileListEmpty(FileList *list)
-{
-    if (!list)
-        return;
-
-    FileListEntry *entry = list->head;
-
-    while (entry)
-    {
-        FileListEntry *next = entry->next;
-        FileListFreeEntry(entry);
-        entry = next;
-    }
-
-    list->head = NULL;
-    list->tail = NULL;
-    list->length = 0;
-    list->files = 0;
-    list->folders = 0;
-}
-
-int FileListGetDeviceEntries(FileList *list)
+int FileListGetDeviceEntries(LinkedList *list)
 {
     if (!list)
         return -1;
+
+    LinkedListSetCompareCallback(list, FileListCompareByName);
+
+    FileListData *l_data = (FileListData *)LinkedListGetListData(list);
 
     int i;
     for (i = 0; i < N_DEVICES; i++)
@@ -323,17 +132,17 @@ int FileListGetDeviceEntries(FileList *list)
             memset(&stat, 0, sizeof(SceIoStat));
             if (sceIoGetstat(devices[i], &stat) >= 0)
             {
-                FileListEntry *entry = malloc(sizeof(FileListEntry));
-                if (entry)
+                FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
+                if (e_data)
                 {
-                    entry->name_length = strlen(devices[i]);
-                    entry->name = malloc(entry->name_length + 1);
-                    strcpy(entry->name, devices[i]);
-                    entry->is_folder = 1;
+                    e_data->name_length = strlen(devices[i]);
+                    e_data->name = malloc(e_data->name_length + 1);
+                    strcpy(e_data->name, devices[i]);
+                    e_data->is_folder = 1;
 
-                    FileListAddEntry(list, entry, SORT_BY_NAME);
+                    LinkedListAdd(list, e_data);
 
-                    list->folders++;
+                    l_data->folders++;
                 }
             }
         }
@@ -342,15 +151,21 @@ int FileListGetDeviceEntries(FileList *list)
     return 0;
 }
 
-int FileListGetDirectoryEntries(FileList *list, const char *path, int sort)
+int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
 {
     if (!list)
         return -1;
+
+    if (sort == SORT_BY_NAME)
+        LinkedListSetCompareCallback(list, FileListCompareByName);
+    else
+        LinkedListSetCompareCallback(list, NULL);
 
     SceUID dfd = sceIoDopen(path);
     if (dfd < 0)
         return dfd;
 
+    FileListData *l_data = (FileListData *)LinkedListGetListData(list);
     int res = 0;
 
     do
@@ -369,29 +184,29 @@ int FileListGetDirectoryEntries(FileList *list, const char *path, int sort)
             if (!is_folder && !IsValidFile(dir.d_name))
                 continue;
 
-            FileListEntry *entry = malloc(sizeof(FileListEntry));
-            if (!entry)
+            FileListEntryData *e_data = malloc(sizeof(FileListEntryData));
+            if (!e_data)
                 continue;
 
-            entry->is_folder = is_folder;
+            e_data->is_folder = is_folder;
 
             if (is_folder)
             {
-                entry->name_length = strlen(dir.d_name) + 1;
-                entry->name = malloc(entry->name_length + 1);
-                strcpy(entry->name, dir.d_name);
-                AddEndSlash(entry->name);
-                list->folders++;
+                e_data->name_length = strlen(dir.d_name) + 1;
+                e_data->name = malloc(e_data->name_length + 1);
+                strcpy(e_data->name, dir.d_name);
+                AddEndSlash(e_data->name);
+                l_data->folders++;
             }
             else
             {
-                entry->name_length = strlen(dir.d_name);
-                entry->name = malloc(entry->name_length + 1);
-                strcpy(entry->name, dir.d_name);
-                list->files++;
+                e_data->name_length = strlen(dir.d_name);
+                e_data->name = malloc(e_data->name_length + 1);
+                strcpy(e_data->name, dir.d_name);
+                l_data->files++;
             }
 
-            FileListAddEntry(list, entry, sort);
+            LinkedListAdd(list, e_data);
         }
     } while (res > 0);
 
@@ -400,7 +215,7 @@ int FileListGetDirectoryEntries(FileList *list, const char *path, int sort)
     return 0;
 }
 
-int FileListGetEntries(FileList *list, const char *path, int sort)
+int FileListGetEntries(LinkedList *list, const char *path, int sort)
 {
     if (!list)
         return -1;
@@ -411,4 +226,24 @@ int FileListGetEntries(FileList *list, const char *path, int sort)
     }
 
     return FileListGetDirectoryEntries(list, path, sort);
+}
+
+LinkedList *FileListCreate()
+{
+    LinkedList *list = LinkedListCreat();
+    if (!list)
+        return NULL;
+
+    FileListData *data = (FileListData *)calloc(1, sizeof(FileListData));
+    if (!data)
+    {
+        LinkedListDestroy(list);
+        return NULL;
+    }
+
+    LinkedListSetListData(list, data);
+    LinkedListSetFreeEntryDataCallback(list, freeEntryData);
+    LinkedListSetFreeListDataCallback(list, free);
+
+    return list;
 }
