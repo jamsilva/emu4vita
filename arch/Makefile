@@ -21,7 +21,7 @@ CORES_DIR         := $(ROOT_DIR)/cores
 PKG_DIR           := $(ROOT_DIR)/pkg
 SRC_DIR           := $(ROOT_DIR)/src
 BUILD_DIR         := $(ROOT_DIR)/../build/arch
-BUBBLE_DIR        := $(ROOT_DIR)/../bubble
+BUBBLE_DIR        := $(ROOT_DIR)/../apps
 
 RELEASES_DIR      := $(ROOT_DIR)/../releases
 
