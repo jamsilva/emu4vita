@@ -5,7 +5,7 @@
 
 #include "overlay_list.h"
 #include "linked_list.h"
-#include "config_lib.h"
+#include "utils_string.h"
 #include "file.h"
 
 static void freeEntryData(void *data)
@@ -276,8 +276,8 @@ int OverlayListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 
     do
     {
-        res = ConfigGetLine(p, size, &line);
-        // AppLog("ConfigGetLine: line = %s\n", line);
+        res = StringGetLine(p, size, &line);
+        // AppLog("StringGetLine: line = %s\n", line);
         if (res > 0)
         {
             readLine(line, &key, &value);
@@ -308,9 +308,9 @@ int OverlayListGetEntries(LinkedList *list, const char *path)
     return 0;
 }
 
-LinkedList *OverlayListCreat()
+LinkedList *NewOverlayList()
 {
-    LinkedList *list = LinkedListCreat();
+    LinkedList *list = NewLinkedList();
     if (!list)
         return NULL;
 

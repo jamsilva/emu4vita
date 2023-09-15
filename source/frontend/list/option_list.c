@@ -75,7 +75,7 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
     if (!list)
         return -1;
 
-    LinkedList *config_list = ConfigListCreat();
+    LinkedList *config_list = NewConfigList();
     if (!config_list)
         return -1;
     ConfigListGetEntries(config_list, path);
@@ -152,9 +152,9 @@ int OptionListSaveConfig(LinkedList *list, const char *path)
     return ret;
 }
 
-LinkedList *OptionListCreat()
+LinkedList *NewOptionList()
 {
-    LinkedList *list = LinkedListCreat();
+    LinkedList *list = NewLinkedList();
     if (!list)
         return NULL;
 

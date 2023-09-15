@@ -19,7 +19,7 @@ static int OverlayThreadFunc(SceSize args, void *argp)
 
     if (graphics_overlay_list)
         LinkedListDestroy(graphics_overlay_list);
-    graphics_overlay_list = OverlayListCreat();
+    graphics_overlay_list = NewOverlayList();
 
     ret = -1;
     if (private_assets_dir)

@@ -6,20 +6,24 @@
 #include "linked_list.h"
 #include "string_list.h"
 
-LinkedListEntry *StringListAdd(LinkedList *list, const char *text)
+int StringListAdd(LinkedList *list, const char *string)
 {
-    if (!list || !text)
+    if (!list || !string)
         return 0;
-    
-    char *string = malloc(strlen(text) + 1);
-    strcpy(string, text);
 
-    return LinkedListAdd(list, string);
+    char *str = malloc(strlen(string) + 1);
+    if (!str)
+        return 0;
+    strcpy(str, string);
+
+    LinkedListAdd(list, str);
+
+    return 1;
 }
 
-LinkedList *StringListCreate()
+LinkedList *NewStringList()
 {
-    LinkedList *list = LinkedListCreat();
+    LinkedList *list = NewLinkedList();
     if (!list)
         return NULL;
 

@@ -52,7 +52,7 @@ GUI_Texture *Emu_GetStateScreenshotTexture(int num)
         sceIoClose(fd);
         return false;
     }
-    tex = GUI_CreatTextureFormat(header.screenshot_width, header.screenshot_height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
+    tex = GUI_CreateTextureFormat(header.screenshot_width, header.screenshot_height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
     if (tex)
     {
         sceIoLseek(fd, header.screenshot_offset, SCE_SEEK_SET);
@@ -81,7 +81,7 @@ GUI_Texture *Emu_GetStatePreviewTexture(int num)
         sceIoClose(fd);
         return false;
     }
-    tex = GUI_CreatTextureFormat(header.preview_width, header.preview_height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
+    tex = GUI_CreateTextureFormat(header.preview_width, header.preview_height, SCE_GXM_TEXTURE_FORMAT_A8B8G8R8);
     if (tex)
     {
         sceIoLseek(fd, header.preview_offset, SCE_SEEK_SET);

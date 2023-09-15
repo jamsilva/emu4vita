@@ -100,15 +100,15 @@ void Setting_RequestUpdateMenuItems()
     menu_items_need_update = 1;
 }
 
-static void refreshSelectMenuItems()
+static void refreshCurMenuItems()
 {
-    if (select_menu_items)
-        free(select_menu_items);
-    select_menu_items = NULL;
-    n_select_menu_items = 0;
+    if (cur_menu_items)
+        free(cur_menu_items);
+    cur_menu_items = NULL;
+    n_cur_menu_items = 0;
 
-    SettingMenuItem *items = menu_list[menu_list_focus_pos]->items;
-    int n_items = menu_list[menu_list_focus_pos]->n_items;
+    SettingMenuItem *items = setting_menus[tab_focus_pos]->items;
+    int n_items = setting_menus[tab_focus_pos]->n_items;
     int n_visibles = 0;
     int i;
 
@@ -121,27 +121,29 @@ static void refreshSelectMenuItems()
     if (n_visibles == 0)
         return;
 
-    select_menu_items = (SettingMenuItem **)malloc(n_visibles * sizeof(SettingMenuItem *));
-    if (!select_menu_items)
+    cur_menu_items = (SettingMenuItem **)malloc(n_visibles * sizeof(SettingMenuItem *));
+    if (!cur_menu_items)
         return;
 
     for (i = 0; i < n_items; i++)
     {
         if (*items[i].visibility)
-            select_menu_items[n_select_menu_items++] = &items[i];
+            cur_menu_items[n_cur_menu_items++] = &items[i];
     }
 }
 
-static void setFocusByName(const char *name)
+static void setFocusByName(const char *focus_name)
 {
-    if (!name)
+    if (!focus_name)
         return;
 
+    char *name;
     int pos = -1;
     int i;
-    for (i = 0; i < n_select_menu_items; i++)
+    for (i = 0; i < n_cur_menu_items; i++)
     {
-        if (select_menu_items[i]->name && strcmp(select_menu_items[i]->name, name) == 0)
+        name = GetLangString(&cur_menu_items[i]->name);
+        if (name && strcmp(name, focus_name) == 0)
         {
             pos = i;
             break;
@@ -151,12 +153,12 @@ static void setFocusByName(const char *name)
         return;
 
     menu_focus_pos = pos;
-    RefreshListPos(&menu_top_pos, &menu_focus_pos, n_select_menu_items, menu_listview_n_draw_items);
+    RefreshListPos(&menu_top_pos, &menu_focus_pos, n_cur_menu_items, menu_listview_n_draw_items);
 }
 
 static void moveMenuListPos(int move_type)
 {
-    int pos = menu_list_focus_pos;
+    int pos = tab_focus_pos;
 
     if (move_type == TYPE_MOVE_UP)
     {
@@ -166,7 +168,7 @@ static void moveMenuListPos(int move_type)
                 pos--;
             else
                 pos = MENU_LIST_LEN - 1;
-        } while (!*menu_list[pos]->visibility && pos != menu_list_focus_pos);
+        } while (!*setting_menus[pos]->visibility && pos != tab_focus_pos);
     }
     else if (move_type == TYPE_MOVE_DOWN)
     {
@@ -176,37 +178,48 @@ static void moveMenuListPos(int move_type)
                 pos++;
             else
                 pos = 0;
-        } while (!*menu_list[pos]->visibility && pos != menu_list_focus_pos);
+        } while (!*setting_menus[pos]->visibility && pos != tab_focus_pos);
     }
 
-    menu_list_focus_pos = pos;
+    tab_focus_pos = pos;
     menu_top_pos = 0;
     menu_focus_pos = 0;
-    refreshSelectMenuItems();
+    refreshCurMenuItems();
     option_open = 0;
     option_listview_scroll_sx = option_listview_dx;
 }
 
-static void cleanSettingMenuItem(SettingMenuItem *item)
+static void destroySettingMenuItemOption(void *option, int option_type)
 {
-    if (item->option_type == TYPE_OPTION_STR_ARRAY)
+    if (option_type == TYPE_OPTION_STR_ARRAY)
     {
-        StrArrayOption *option = (StrArrayOption *)item->option;
-        if (option->langs)
-            free(option->langs);
-        if (option->names)
+        StrArrayOption *m_option = (StrArrayOption *)option;
+        if (m_option->names)
         {
             int i;
-            for (i = 0; i < option->n_names; i++)
+            for (i = 0; i < m_option->n_names; i++)
             {
-                if (option->names[i])
-                    free(option->names[i]);
+                if (m_option->names[i].string)
+                    free(m_option->names[i].string);
             }
-            free(option->names);
+            free(m_option->names);
         }
-        option->langs = NULL;
-        option->names = NULL;
-        option->n_names = 0;
+    }
+
+    free(option);
+}
+
+static void cleanSettingMenuItem(SettingMenuItem *item)
+{
+    if (item->name.string)
+    {
+        free(item->name.string);
+        item->name.string = NULL;
+    }
+    if (item->option)
+    {
+        destroySettingMenuItemOption(item->option, item->option_type);
+        item->option = NULL;
     }
 }
 
@@ -233,7 +246,7 @@ int Setting_SetCoreMenu(LinkedList *list)
 
     int l_length = LinkedListGetLength(list);
 
-    // Creat new menu items
+    // Create new menu items
     int n_items = l_length + 1; // +1 for reset config
     SettingMenuItem *items = (SettingMenuItem *)calloc(n_items, sizeof(SettingMenuItem));
     if (!items)
@@ -247,7 +260,7 @@ int Setting_SetCoreMenu(LinkedList *list)
         OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
 
         // Disable use lang
-        items[i].lang = LANG_NULL;
+        items[i].name.lang = LANG_NULL;
         items[i].visibility = &(data->visibility);
 
         // Item name
@@ -257,9 +270,9 @@ int Setting_SetCoreMenu(LinkedList *list)
         if (desc)
         {
             // printf("desc: %s\n", desc);
-            items[i].name = (char *)malloc(strlen(desc) + 1);
-            if (items[i].name)
-                strcpy(items[i].name, desc);
+            items[i].name.string = (char *)malloc(strlen(desc) + 1);
+            if (items[i].name.string)
+                strcpy(items[i].name.string, desc);
         }
 
         if (!data->values || data->n_values <= 0)
@@ -272,30 +285,31 @@ int Setting_SetCoreMenu(LinkedList *list)
         items[i].option_type = TYPE_OPTION_STR_ARRAY;
         items[i].option = option;
 
-        // Update callback
+        // Item option callbacks
         option->updateCallback = coreOptionUpdateCallback;
 
-        // Item option value pointer
+        // Item option value
         option->value = &(data->select);
 
         // Item option names
-        option->names = (char **)calloc(data->n_values, sizeof(char *));
+        option->names = (LangString *)calloc(data->n_values, sizeof(LangString));
         if (!option->names)
             continue;
         option->n_names = data->n_values;
 
         for (j = 0; j < option->n_names; j++)
         {
-            char *value;
-            if (data->values[j].label)
-                value = data->values[j].label;
-            else
-                value = data->values[j].value;
-            if (value)
+            // Disable use lang
+            option->names[j].lang = LANG_NULL;
+
+            char *name = data->values[j].label;
+            if (!name)
+                name = data->values[j].value;
+            if (name)
             {
-                option->names[j] = (char *)malloc(strlen(value) + 1);
-                if (option->names[j])
-                    strcpy(option->names[j], value);
+                option->names[j].string = (char *)malloc(strlen(name) + 1);
+                if (option->names[j].string)
+                    strcpy(option->names[j].string, name);
             }
         }
 
@@ -303,7 +317,7 @@ int Setting_SetCoreMenu(LinkedList *list)
     }
 
     // The last one is reset config
-    items[n_items - 1].lang = LABEL_RESET_CONFIGS;
+    items[n_items - 1].name.lang = LABEL_RESET_CONFIGS;
     items[n_items - 1].option_type = TYPE_OPTION_CALLBACK;
     items[n_items - 1].option = resetCoreConfigCallback;
     items[n_items - 1].visibility = &visibility_visible;
@@ -311,7 +325,7 @@ int Setting_SetCoreMenu(LinkedList *list)
     core_menu.items = items;
     core_menu.n_items = n_items;
 
-    if (menu_list_focus_pos == INDEX_MENU_CORE)
+    if (tab_focus_pos == INDEX_MENU_CORE)
         moveMenuListPos(TYPE_MOVE_NONE);
 
     return 0;
@@ -322,30 +336,43 @@ int Setting_SetOverlayOption(LinkedList *list)
     if (!list)
         return -1;
 
-    int l_length = LinkedListGetLength(list);
-    printf("overlay: length = %d\n", l_length);
+    // Clean old options
+    if (overlay_select_option.names)
+    {
+        int i;
+        for (i = 0; i < overlay_select_option.n_names; i++)
+        {
+            if (overlay_select_option.names[i].string)
+                free(overlay_select_option.names[i].string);
+        }
+        free(overlay_select_option.names);
+        overlay_select_option.names = NULL;
+        overlay_select_option.n_names = 0;
+    }
 
-    int n_names = l_length + 1; // +1 for none
-    char **names = (char **)calloc(n_names, sizeof(char *));
+    // Create new options
+    int ls_length = LinkedListGetLength(list);
+    int n_names = ls_length + 1; // +1 for none
+    LangString *names = (LangString *)calloc(n_names, sizeof(LangString));
     if (!names)
         return -1;
 
-    names[0] = (char *)malloc(strlen(cur_lang[NONE]) + 1);
-    if (names[0])
-        strcpy(names[0], cur_lang[NONE]);
+    names[0].lang = NONE; // The first one is none
 
     LinkedListEntry *entry = LinkedListHead(list);
 
     int i;
     for (i = 1; i < n_names && entry; i++)
     {
+        names[i].lang = LANG_NULL;
+
         OverlayListEntryData *data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
         if (data->name)
         {
-            printf("overlay: name = %s\n", data->name);
-            names[i] = (char *)malloc(strlen(data->name) + 1);
-            if (names[i])
-                strcpy(names[i], data->name);
+            // printf("overlay: name = %s\n", data->name);
+            names[i].string = (char *)malloc(strlen(data->name) + 1);
+            if (names[i].string)
+                strcpy(names[i].string, data->name);
         }
         entry = LinkedListNext(entry);
     }
@@ -356,10 +383,25 @@ int Setting_SetOverlayOption(LinkedList *list)
     return 0;
 }
 
-int Setting_SetAppLangOption()
+int Setting_SetLangOption()
 {
     SetCurrentLang(app_config.language);
 
+    // Clean old options
+    if (language_option.names)
+    {
+        int i;
+        for (i = 0; i < language_option.n_names; i++)
+        {
+            if (language_option.names[i].string)
+                free(language_option.names[i].string);
+        }
+        free(language_option.names);
+        language_option.names = NULL;
+        language_option.n_names = 0;
+    }
+
+    // Create new options
     int n_names = 0;
     int langs_len = GetLangsLength();
     int i;
@@ -370,7 +412,7 @@ int Setting_SetAppLangOption()
             n_names++;
     }
 
-    char **names = (char **)calloc(n_names, sizeof(char *));
+    LangString *names = (LangString *)calloc(n_names, sizeof(LangString));
     if (!names)
         return -1;
 
@@ -379,7 +421,8 @@ int Setting_SetAppLangOption()
     {
         if (lang_entries[i].container)
         {
-            names[index] = lang_entries[i].name;
+            names[index].lang = LANG_NULL;
+            names[index].string = lang_entries[i].name;
             index++;
         }
     }
@@ -395,21 +438,12 @@ void Setting_UpdataLangOption()
     SetCurrentLang(app_config.language);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_HOTKEY);
-
-    if (overlay_select_option.names)
-    {
-        if (overlay_select_option.names[0])
-            free(overlay_select_option.names[0]);
-        overlay_select_option.names[0] = (char *)malloc(strlen(cur_lang[NONE]) + 1);
-        if (overlay_select_option.names[0])
-            strcpy(overlay_select_option.names[0], cur_lang[NONE]);
-    }
 }
 
 void Setting_UpdateKeyMapperMenu(int idx)
 {
-    SettingMenuItem *items = menu_list[idx]->items;
-    int n_items = menu_list[idx]->n_items;
+    SettingMenuItem *items = setting_menus[idx]->items;
+    int n_items = setting_menus[idx]->n_items;
 
     int i, j;
     for (i = 0; i < n_items; i++)
@@ -418,31 +452,39 @@ void Setting_UpdateKeyMapperMenu(int idx)
             continue;
 
         CheckBoxOptionMenu *option = (CheckBoxOptionMenu *)(items[i].option);
-        char *text = option->name;
+
+        if (!option->name.string)
+            option->name.string = (char *)malloc(256);
+        if (option->name.string)
+            option->name.string[0] = '\0';
+
         uint32_t config_key = *(uint32_t *)(option->userdata);
-        // ptintf("%d\n", config_key);
         int enabled = config_key & ENABLE_KEY_BITMASK;
-        text[0] = '\0';
         if (!enabled)
         {
-            strcpy(text, cur_lang[DISABLE]);
+            option->name.lang = DISABLE;
             continue;
         }
+
+        option->name.lang = LANG_NULL;
 
         int n_maped = 0;
         for (j = 0; j < option->n_items; j++)
         {
             CheckBoxOptionMenuItem *option_item = &(option->items[j]);
             uint32_t mapping_key = (uint32_t)(option_item->userdata);
-            char *name = option_item->name;
-            if (option_item->lang != LANG_NULL)
-                name = cur_lang[option_item->lang];
-
-            if (name && config_key & mapping_key)
+            if (config_key & mapping_key)
             {
-                if (n_maped > 0)
-                    strcat(text, "+");
-                strcat(text, name);
+                if (option->name.string)
+                {
+                    char *name = GetLangString(&option_item->name);
+                    if (name)
+                    {
+                        if (n_maped > 0)
+                            strcat(option->name.string, "+");
+                        strcat(option->name.string, name);
+                    }
+                }
                 n_maped++;
             }
         }
@@ -499,10 +541,9 @@ static void drawOption()
         if (i == option_focus_pos)
             GUI_DrawFillRectangle(item_sx, item_sy, option_itemview_width, option_itemview_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
-        if (items[i].name)
-            GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, items[i].name);
-        else if (items[i].lang != LANG_NULL)
-            GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, cur_lang[items[i].lang]);
+        const char *name = GetLangString(&items[i].name);
+        if (name)
+            GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, name);
 
         GUI_DrawEmptyRectangle(checkbox_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, checkbox_width, checkbox_height, 1.0f, COLOR_GREEN);
         if (items[i].selected)
@@ -518,8 +559,8 @@ static void drawOption()
 
 static void drawMenu()
 {
-    SettingMenuItem **items = select_menu_items;
-    int n_items = n_select_menu_items;
+    SettingMenuItem **items = cur_menu_items;
+    int n_items = n_cur_menu_items;
 
     // Draw items
     if (items && n_items > 0)
@@ -555,10 +596,9 @@ static void drawMenu()
             if (i == menu_focus_pos)
                 GUI_DrawFillRectangle(item_sx, item_sy, menu_itemview_width, menu_itemview_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
-            if (items[i]->name)
-                GUI_DrawText(sx, sy, COLOR_WHITE, items[i]->name);
-            else if (items[i]->lang != LANG_NULL)
-                GUI_DrawText(sx, sy, COLOR_WHITE, cur_lang[items[i]->lang]);
+            const char *item_name = GetLangString(&items[i]->name);
+            if (item_name)
+                GUI_DrawText(sx, sy, COLOR_WHITE, item_name);
 
             if (items[i]->option)
             {
@@ -566,33 +606,32 @@ static void drawMenu()
                 {
                     StrArrayOption *option = (StrArrayOption *)items[i]->option;
                     int value = *(option->value);
-                    if (option->names)
-                        GUI_DrawText(dx - GUI_GetTextWidth(option->names[value]), sy, COLOR_GREEN, option->names[value]);
-                    else if (option->langs)
-                        GUI_DrawText(dx - GUI_GetTextWidth(cur_lang[option->langs[value]]), sy, COLOR_GREEN, cur_lang[option->langs[value]]);
+                    const char *option_name = GetLangString(&option->names[value]);
+                    if (option_name)
+                        GUI_DrawText(dx - GUI_GetTextWidth(option_name), sy, COLOR_GREEN, option_name);
                 }
                 else if (items[i]->option_type == TYPE_OPTION_INT_ARRAY) // Option int array
                 {
                     IntArrayOption *option = (IntArrayOption *)items[i]->option;
                     int value = *(option->value);
                     const int key = option->values[value];
-                    char name[256];
-                    snprintf(name, 256, option->format, key);
-                    GUI_DrawText(dx - GUI_GetTextWidth(name), sy, COLOR_GREEN, name);
+                    char option_name[256];
+                    snprintf(option_name, 256, option->format, key);
+                    GUI_DrawText(dx - GUI_GetTextWidth(option_name), sy, COLOR_GREEN, option_name);
                 }
                 else if (items[i]->option_type == TYPE_OPTION_INT_RANGE) // Option int range
                 {
                     IntRangeOption *option = (IntRangeOption *)items[i]->option;
                     int value = *(option->value);
-                    char name[256];
-                    snprintf(name, 256, option->format, value);
-                    GUI_DrawText(dx - GUI_GetTextWidth(name), sy, COLOR_GREEN, name);
+                    char option_name[256];
+                    snprintf(option_name, 256, option->format, value);
+                    GUI_DrawText(dx - GUI_GetTextWidth(option_name), sy, COLOR_GREEN, option_name);
                 }
                 else if (items[i]->option_type == TYPE_OPTION_CHECK_BOX) // Option check box
                 {
                     CheckBoxOptionMenu *option = (CheckBoxOptionMenu *)items[i]->option;
                     int x = dx;
-                    if (menu_list_focus_pos == INDEX_MENU_CONTROL)
+                    if (tab_focus_pos == INDEX_MENU_CONTROL)
                     {
                         int turbo = *(int *)(option->userdata) & TURBO_KEY_BITMASK;
                         uint32_t bg_color = turbo ? COLOR_ALPHA(COLOR_ORANGE, 0xBF) : COLOR_ALPHA(COLOR_BLACK, 0xBF);
@@ -603,10 +642,9 @@ static void drawMenu()
                         GUI_DrawFillRectangle(x, sy, turbo_text_width, GUI_GetFontSize(), bg_color);
                         GUI_DrawText(x, sy, text_color, turbo_str);
                     }
-                    if (option->name)
-                        GUI_DrawText(x - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, option->name);
-                    else if (option->lang != LANG_NULL)
-                        GUI_DrawText(x - GUI_GetTextWidth(option->name) - 6, sy, COLOR_GREEN, cur_lang[option->lang]);
+                    const char *option_name = GetLangString(&option->name);
+                    if (option_name)
+                        GUI_DrawText(x - GUI_GetTextWidth(option_name) - 6, sy, COLOR_GREEN, option_name);
                 }
             }
 
@@ -635,20 +673,21 @@ static void drawCommon()
     int i;
     for (i = 0; i < MENU_LIST_LEN; i++)
     {
-        if (!*menu_list[i]->visibility)
+        if (!*setting_menus[i]->visibility)
             continue;
 
-        char *name = menu_list[i]->name;
-        if (menu_list[i]->lang != LANG_NULL)
-            name = cur_lang[menu_list[i]->lang];
-        view_width = GUI_GetTextWidth(name) + MENU_TAB_VIEW_PADDING_L * 2;
+        char *name = GetLangString(&setting_menus[i]->name);
+        if (name)
+        {
+            view_width = GUI_GetTextWidth(name) + MENU_TAB_VIEW_PADDING_L * 2;
 
-        if (i == menu_list_focus_pos)
-            GUI_DrawFillRectangle(view_sx, view_sy, view_width, menu_tab_view_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
+            if (i == tab_focus_pos)
+                GUI_DrawFillRectangle(view_sx, view_sy, view_width, menu_tab_view_height, MENU_ITEMVIEW_COLOR_FOCUS_BG);
 
-        sx = view_sx + MENU_TAB_VIEW_PADDING_L;
-        GUI_DrawText(sx, sy, COLOR_WHITE, name);
-        view_sx += view_width;
+            sx = view_sx + MENU_TAB_VIEW_PADDING_L;
+            GUI_DrawText(sx, sy, COLOR_WHITE, name);
+            view_sx += view_width;
+        }
     }
 
     // Battery
@@ -686,7 +725,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
 {
     drawCommon();
 
-    if (menu_list_focus_pos == 1)
+    if (tab_focus_pos == 1)
         Setting_DrawState();
     else
         drawMenu();
@@ -696,9 +735,9 @@ static void ctrlCommon()
 {
     if (released_pad[PAD_PSBUTTON] && IsPSbuttonEventEnabled())
     {
-        if (menu_list_focus_pos != 0)
+        if (tab_focus_pos != 0)
         {
-            menu_list_focus_pos = 0;
+            tab_focus_pos = 0;
             moveMenuListPos(TYPE_MOVE_NONE);
         }
         else
@@ -777,8 +816,8 @@ static void ctrlMenu()
         return;
     }
 
-    SettingMenuItem *item = select_menu_items[menu_focus_pos];
-    int n_items = n_select_menu_items;
+    SettingMenuItem *item = cur_menu_items[menu_focus_pos];
+    int n_items = n_cur_menu_items;
 
     if (hold_pad[PAD_UP] || hold2_pad[PAD_LEFT_ANALOG_UP])
     {
@@ -884,7 +923,7 @@ static void ctrlMenu()
             }
             else if (released_pad[PAD_SQUARE])
             {
-                if (menu_list_focus_pos == INDEX_MENU_CONTROL)
+                if (tab_focus_pos == INDEX_MENU_CONTROL)
                 {
                     uint32_t *config_key = (uint32_t *)(option->userdata);
                     if (*config_key & TURBO_KEY_BITMASK)
@@ -900,12 +939,10 @@ static void ctrlMenu()
 
 static void ctrlDialogCallback(GUI_Dialog *dialog)
 {
-    if (menu_items_need_update)
+    if (menu_items_need_update && cur_menu_items)
     {
-        char *name = select_menu_items[menu_focus_pos]->name;
-        if (select_menu_items[menu_focus_pos]->lang != LANG_NULL)
-            name = cur_lang[select_menu_items[menu_focus_pos]->lang];
-        refreshSelectMenuItems();
+        char *name = GetLangString(&cur_menu_items[menu_focus_pos]->name);
+        refreshCurMenuItems();
         if (name)
             setFocusByName(name);
         menu_items_need_update = 0;
@@ -913,7 +950,7 @@ static void ctrlDialogCallback(GUI_Dialog *dialog)
 
     ctrlCommon();
 
-    if (menu_list_focus_pos == 1)
+    if (tab_focus_pos == 1)
         Setting_CtrlState();
     else
         ctrlMenu();
@@ -934,23 +971,23 @@ static int openDialogCallback(GUI_Dialog *dialog)
         game_is_loaded = Emu_IsGameLoaded();
         setting_config_type = game_is_loaded ? TYPE_CONFIG_GAME : TYPE_CONFIG_MAIN;
         app_menu_visibility = !game_is_loaded;
-        core_menu_visibility = (menu_list[INDEX_MENU_CORE]->items && (game_is_loaded || has_main_core_menu));
+        core_menu_visibility = (setting_menus[INDEX_MENU_CORE]->items && (game_is_loaded || has_main_core_menu));
         disk_control_visibility = (game_is_loaded && Emu_HasDiskControl() && Emu_DiskGetNumImages() > 0);
         exit_to_arch_visibility = (exec_boot_mode == BOOT_MODE_ARCH);
         touch_to_button_visibility = !is_vitatv_model;
     }
 
-    if (menu_need_update || !*menu_list[menu_list_focus_pos]->visibility)
+    if (menu_need_update || !*setting_menus[tab_focus_pos]->visibility)
     {
-        menu_list_focus_pos = 0;
+        tab_focus_pos = 0;
         moveMenuListPos(TYPE_MOVE_NONE);
     }
 
     int i;
     for (i = 0; i < MENU_LIST_LEN; i++)
     {
-        if (*menu_list[i]->visibility && menu_list[i]->enterCallback)
-            menu_list[i]->enterCallback(menu_list[i]);
+        if (*setting_menus[i]->visibility && setting_menus[i]->enterCallback)
+            setting_menus[i]->enterCallback(setting_menus[i]);
     }
 
     menu_need_update = 0;
@@ -963,8 +1000,8 @@ static int closeDialogCallback(GUI_Dialog *dialog)
     int i;
     for (i = 0; i < MENU_LIST_LEN; i++)
     {
-        if (*menu_list[i]->visibility && menu_list[i]->exitCallback)
-            menu_list[i]->exitCallback(menu_list[i]);
+        if (*setting_menus[i]->visibility && setting_menus[i]->exitCallback)
+            setting_menus[i]->exitCallback(setting_menus[i]);
     }
 
     if (game_is_loaded)
@@ -977,7 +1014,7 @@ int Setting_Init()
 {
     if (core_menu.items)
         has_main_core_menu = 1;
-    Setting_SetAppLangOption();
+    Setting_SetLangOption();
     Setting_InitOverlay();
     refreshSettingLayout();
     return 0;

@@ -1,12 +1,11 @@
 #ifndef __M_SETTING_H__
 #define __M_SETTING_H__
 
-#include <stdint.h>
-
 #include "list/option_list.h"
 #include "list/overlay_list.h"
 #include "setting_state.h"
 #include "setting_overlay.h"
+#include "lang.h"
 
 enum TypeSettingOption
 {
@@ -21,8 +20,7 @@ enum TypeSettingOption
 typedef struct StrArrayOption
 {
     uint32_t *value;
-    int *langs;
-    char **names;
+    LangString *names;
     int n_names;
     void (*updateCallback)(struct StrArrayOption *option);
     void *userdata;
@@ -51,16 +49,14 @@ typedef struct IntRangeOption
 
 typedef struct CheckBoxOptionMenuItem
 {
-    int lang;
-    char *name;
+    LangString name;
     int selected;
     void *userdata;
 } CheckBoxOptionMenuItem;
 
 typedef struct CheckBoxOptionMenu
 {
-    int lang;
-    char *name;
+    LangString name;
     CheckBoxOptionMenuItem *items;
     int n_items;
     void (*openCallback)(struct CheckBoxOptionMenu *option);
@@ -71,8 +67,7 @@ typedef struct CheckBoxOptionMenu
 
 typedef struct SettingMenuItem
 {
-    int lang;
-    char *name;
+    LangString name;
     int *visibility;
     int option_type;
     void *option;
@@ -80,8 +75,7 @@ typedef struct SettingMenuItem
 
 typedef struct SettingMenu
 {
-    int lang;
-    char *name;
+    LangString name;
     int *visibility;
     SettingMenuItem *items;
     int n_items;
@@ -97,7 +91,7 @@ int Setting_Deinit();
 
 int Setting_SetCoreMenu(LinkedList *list);
 int Setting_SetOverlayOption(LinkedList *list);
-int Setting_SetAppLangOption();
+int Setting_SetLangOption();
 void Setting_UpdataLangOption();
 
 void Setting_UpdateKeyMapperMenu(int idx);

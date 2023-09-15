@@ -12,6 +12,6 @@ typedef struct ConfigListEntryData
 LinkedListEntry *ConfigListFindEntryByKey(LinkedList *list, const char *key);
 int ConfigListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size);
 int ConfigListGetEntries(LinkedList *list, const char *path);
-LinkedList *ConfigListCreat();
+LinkedList *NewConfigList();
 
 #endif

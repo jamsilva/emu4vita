@@ -118,7 +118,7 @@ int FileListGetDeviceEntries(LinkedList *list)
 
     LinkedListSetCompareCallback(list, FileListCompareByName);
 
-    FileListData *l_data = (FileListData *)LinkedListGetListData(list);
+    FileListData *ls_data = (FileListData *)LinkedListGetListData(list);
 
     int i;
     for (i = 0; i < N_DEVICES; i++)
@@ -142,7 +142,7 @@ int FileListGetDeviceEntries(LinkedList *list)
 
                     LinkedListAdd(list, e_data);
 
-                    l_data->folders++;
+                    ls_data->folders++;
                 }
             }
         }
@@ -165,7 +165,7 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
     if (dfd < 0)
         return dfd;
 
-    FileListData *l_data = (FileListData *)LinkedListGetListData(list);
+    FileListData *ls_data = (FileListData *)LinkedListGetListData(list);
     int res = 0;
 
     do
@@ -196,14 +196,14 @@ int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort)
                 e_data->name = malloc(e_data->name_length + 1);
                 strcpy(e_data->name, dir.d_name);
                 AddEndSlash(e_data->name);
-                l_data->folders++;
+                ls_data->folders++;
             }
             else
             {
                 e_data->name_length = strlen(dir.d_name);
                 e_data->name = malloc(e_data->name_length + 1);
                 strcpy(e_data->name, dir.d_name);
-                l_data->files++;
+                ls_data->files++;
             }
 
             LinkedListAdd(list, e_data);
@@ -228,9 +228,9 @@ int FileListGetEntries(LinkedList *list, const char *path, int sort)
     return FileListGetDirectoryEntries(list, path, sort);
 }
 
-LinkedList *FileListCreate()
+LinkedList *NewFileList()
 {
-    LinkedList *list = LinkedListCreat();
+    LinkedList *list = NewLinkedList();
     if (!list)
         return NULL;
 

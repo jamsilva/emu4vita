@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "list/linked_list.h"
 #include "gui/gui.h"
 #include "Layout.h"
 
@@ -10,196 +11,392 @@ void LayoutDestroy(void *view)
 {
     Layout *layout = (Layout *)view;
 
-    if (!layout || layout->data.params.donot_free)
+    if (!layout || layout->params.dont_free)
         return;
 
-    if (layout->childs)
-    {
-        LinkedListEntry *entry = LinkedListHead(layout->childs);
-        while (entry)
-        {
-            LinkedListEntry *next = LinkedListNext(entry);
-            ViewData *data = (ViewData *)LinkedListGetEntryData(entry);
-            LayoutParam *params = &data->params;
-            if (params->destroy)
-                params->destroy(data);
-            LinkedListRemove(layout->childs, entry);
-            entry = next;
-        }
-    }
-
+    LayoutEmpty(layout);
     LinkedListDestroy(layout->childs);
     free(layout);
 }
 
-int LayoutUpdate(void *view, int x, int y, int max_w, int max_h)
+static int LayoutUpdateChild(void *view, int orientation, int *remaining_w, int *remaining_h)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+
+    if (!params->update)
+        return -1;
+
+    params->update(params, *remaining_w, *remaining_h);
+
+    if (orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+    {
+        *remaining_w -= (params->render_w + params->margin_left + params->margin_right);
+        if (params->above_view)
+            LayoutUpdateChild(params->above_view, orientation, remaining_w, remaining_h);
+    }
+    else if (orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+    {
+        *remaining_h -= (params->render_h + params->margin_top + params->margin_bottom);
+        if (params->above_view)
+            LayoutUpdateChild(params->above_view, orientation, remaining_w, remaining_h);
+    }
+
+    return 0;
+}
+
+int LayoutUpdate(void *view, int max_w, int max_h)
 {
     if (!view)
         return -1;
 
     Layout *layout = (Layout *)view;
-    LayoutPosition *ly_positions = &layout->data.positions;
+    LayoutParam *params = &layout->params;
+    int wrap_w = 0;
+    int wrap_h = 0;
 
-    ly_positions->layout_max_w = max_w;
-    ly_positions->layout_max_h = max_h;
+    max_w -= (params->margin_left + params->margin_right);
+    max_h -= (params->margin_top + params->margin_bottom);
 
-    if (ly_positions->layout_w > 0 && ly_positions->layout_w < max_w)
-        max_w = ly_positions->layout_w;
-    if (ly_positions->layout_h > 0 && ly_positions->layout_h < max_w)
-        max_h = ly_positions->layout_h;
-
-    layout->remaining_x = x;
-    layout->remaining_y = x;
-    layout->remaining_w = max_w;
-    layout->remaining_h = max_h;
+    layout->remaining_w = max_w - params->padding_left - params->padding_right;
+    layout->remaining_h = max_h - params->padding_top - params->padding_bottom;
 
     LinkedListEntry *entry = LinkedListHead(layout->childs);
 
     while (entry)
     {
-        ViewData *data = (ViewData *)LinkedListGetEntryData(entry);
-        LayoutParam *params = &data->params;
-        LayoutPosition *positions = &data->positions;
+        if (layout->remaining_w <= 0 || layout->remaining_h <= 0)
+            break;
 
-        if (params->update)
-            params->update(data, layout->remaining_x, layout->remaining_y, layout->remaining_w, layout->remaining_h);
+        void *child = LinkedListGetEntryData(entry);
+        LayoutUpdateChild(child, layout->orientation, &layout->remaining_w, &layout->remaining_h);
 
-        if (layout->orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
-        {
-            layout->remaining_x += positions->w;
-            layout->remaining_w -= positions->w;
-            if (layout->remaining_w <= 0)
-                break;
-        }
-        else if (layout->orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
-        {
-            layout->remaining_y += positions->w;
-            layout->remaining_h -= positions->h;
-            if (layout->remaining_h <= 0)
-                break;
-        }
+        if (max_w - layout->remaining_w > wrap_w)
+            wrap_w = max_w - layout->remaining_w;
+        if (max_h - layout->remaining_h > wrap_h)
+            wrap_h = max_h - layout->remaining_h;
+
+        entry = LinkedListNext(entry);
     }
 
-    ly_positions->x = x;
-    ly_positions->y = y;
-    ly_positions->w = ly_positions->layout_w;
-    ly_positions->h = ly_positions->layout_h;
+    params->render_w = params->layout_w;
+    params->render_h = params->layout_h;
 
-    if (ly_positions->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        ly_positions->w = max_w;
-    else if (ly_positions->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        ly_positions->w = layout->remaining_x - x;
-    if (ly_positions->w > max_w)
-        ly_positions->w = max_w;
+    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+        params->render_w = max_w;
+    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_w = wrap_w;
+    if (params->render_w > max_w)
+        params->render_w = max_w;
+    if (params->render_w < 0)
+        params->render_w = 0;
 
-    if (ly_positions->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        ly_positions->h = max_h;
-    else if (ly_positions->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        ly_positions->h = layout->remaining_y - y;
-    if (ly_positions->h > max_h)
-        ly_positions->h = max_h;
+    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+        params->render_h = max_h;
+    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_h = wrap_h;
+    if (params->render_h > max_h)
+        params->render_h = max_h;
+    if (params->render_h < 0)
+        params->render_h = 0;
 
     return 0;
 }
 
-void LayoutDraw(void *view)
+static void LayoutDrawChild(void *view, int orientation, int *x, int *y)
+{
+    if (!view)
+        return;
+
+    LayoutParam *params = (LayoutParam *)view;
+
+    if (params->above_view)
+        LayoutDrawChild(params->above_view, orientation, x, y);
+
+    if (!params->draw)
+        return;
+
+    params->draw(params, *x, *y);
+
+    if (orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
+        *x += (params->render_w + params->margin_left + params->margin_right);
+    else if (orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
+        *y += (params->render_h + params->margin_top + params->margin_bottom);
+}
+
+void LayoutDraw(void *view, int x, int y)
 {
     if (!view)
         return;
 
     Layout *layout = (Layout *)view;
-    LayoutPosition *ly_positions = &layout->data.positions;
+    LayoutParam *params = &layout->params;
+
+    if (params->render_w <= 0 || params->render_h <= 0)
+        return;
+
+    int layout_x = x + params->margin_left;
+    int layout_y = y + params->margin_top;
 
     if (layout->bg_color)
-        GUI_DrawFillRectangle(ly_positions->x, ly_positions->y, ly_positions->w, ly_positions->h, layout->bg_color);
+        GUI_DrawFillRectangle(layout_x, layout_y, params->render_w, params->render_h, layout->bg_color);
 
     LinkedListEntry *entry = LinkedListHead(layout->childs);
+    int child_min_x = layout_x + params->padding_left;
+    int child_min_y = layout_y + params->padding_top;
+    int child_max_x = layout_x + params->render_w - params->padding_right;
+    int child_max_y = layout_y + params->render_h - params->padding_bottom;
+    int child_max_w = child_max_x - child_min_x;
+    int child_max_h = child_max_y - child_min_y;
+
+    GUI_EnableClipping(child_min_x, child_min_y, child_max_w, child_max_h);
+
+    int child_x = child_min_x;
+    int child_y = child_min_y;
 
     while (entry)
     {
-        ViewData *data = (ViewData *)LinkedListGetEntryData(entry);
-        LayoutParam *params = &data->params;
-        LayoutPosition *positions = &data->positions;
-
-        if (positions->x >= ly_positions->x + ly_positions->w || positions->y >= ly_positions->y + ly_positions->h)
+        if (child_x >= child_max_x || child_y >= child_max_y)
             break;
 
-        if (params->draw)
-            params->draw(data);
+        void *child = LinkedListGetEntryData(entry);
+        LayoutDrawChild(child, layout->orientation, &child_x, &child_y);
 
         entry = LinkedListNext(entry);
     }
+
+    GUI_DisableClipping();
 }
 
-int LayoutRefresh(Layout *layout)
+int LayoutSetOrientation(Layout *layout, int orientation)
 {
     if (!layout)
         return -1;
 
-    LayoutPosition *positions = &layout->data.positions;
+    layout->orientation = orientation;
 
-    if (positions->layout_w > 0 && positions->layout_h > 0)
-        return LayoutUpdate(layout, positions->x, positions->y, positions->layout_w, positions->layout_h);
-    else if (layout->data.params.parent)
-        return LayoutRefresh(layout->data.params.parent);
-    else
-        return LayoutUpdate(layout, positions->x, positions->y, positions->layout_max_w, positions->layout_max_w);
+    return 0;
+}
+
+int LayoutSetBgColor(Layout *layout, uint32_t color)
+{
+    if (!layout)
+        return -1;
+
+    layout->bg_color = color;
+
+    return 0;
+}
+
+int LayoutGetRemaining(Layout *layout, int *remaining_w, int *remaining_h)
+{
+    if (!layout)
+        return -1;
+
+    *remaining_w = layout->remaining_w;
+    *remaining_h = layout->remaining_h;
+
+    return 0;
 }
 
 int LayoutAdd(Layout *layout, void *view)
 {
-    if (!layout || !view)
+    if (!layout || !layout->childs || !view)
         return 0;
 
-    ViewData *v_data = (ViewData *)view;
-    LayoutParam *v_params = &v_data->params;
+    LayoutParam *v_params = (LayoutParam *)view;
     v_params->parent = layout;
-    v_params->layout_id = LinkedListAdd(layout->childs, view);
+    LinkedListAddEx(layout->childs, view, v_params->destroy);
 
     return 1;
 }
 
 int LayoutRemove(Layout *layout, void *view)
 {
-    if (!layout || !view)
+    if (!layout || !layout->childs || !view)
         return 0;
 
-    ViewData *data = (ViewData *)view;
-    LayoutParam *params = &data->params;
-    LinkedListEntry *entry = (LinkedListEntry *)params->layout_id;
-    if (params->parent != layout || !entry)
+    LayoutParam *v_params = (LayoutParam *)view;
+    if (v_params->parent != layout)
         return 0;
 
-    if (params->destroy)
-        params->destroy(view);
+    LinkedListEntry *entry = LinkedListFindByData(layout->childs, view);
+    if (!entry)
+        return 0;
 
+    if (v_params->above_view)
+        ViewDestroy(v_params->above_view);
     LinkedListRemove(layout->childs, entry);
 
     return 1;
 }
 
-Layout *LayoutCreat(int orientation, int layout_w, int layout_h, int donot_free)
+void LayoutEmpty(Layout *layout)
 {
-    Layout *layout = (Layout *)calloc(1, sizeof(Layout));
+    if (!layout)
+        return;
+
+    LinkedListEntry *entry = LinkedListHead(layout->childs);
+    while (entry)
+    {
+        LinkedListEntry *next = LinkedListNext(entry);
+        LayoutParam *params = (LayoutParam *)LinkedListGetEntryData(entry);
+        if (params->above_view)
+            ViewDestroy(params->above_view);
+        LinkedListRemove(layout->childs, entry);
+        entry = next;
+    }
+}
+
+int LayoutInit(Layout *layout)
+{
+    if (!layout)
+        return -1;
+
+    memset(layout, 0, sizeof(Layout));
+
+    layout->childs = NewLinkedList();
+    if (!layout->childs)
+        return -1;
+
+    LayoutParam *params = &layout->params;
+    params->destroy = LayoutDestroy;
+    params->update = LayoutUpdate;
+    params->draw = LayoutDraw;
+
+    return 0;
+}
+
+Layout *NewLayout()
+{
+    Layout *layout = (Layout *)malloc(sizeof(Layout));
     if (!layout)
         return NULL;
 
-    layout->childs = LinkedListCreat();
-    if (!layout->childs)
+    if (LayoutInit(layout) < 0)
     {
         free(layout);
         return NULL;
     }
 
-    LayoutParam *params = &layout->data.params;
-    LayoutPosition *positions = &layout->data.positions;
-    layout->orientation = orientation;
-    positions->layout_w = layout_w;
-    positions->layout_h = layout_h;
-    params->donot_free = donot_free;
-    params->update = LayoutUpdate;
-    params->draw = LayoutDraw;
-    params->destroy = LayoutDestroy;
-
     return layout;
+}
+
+int LayoutParamSetMargin(void *view, int left, int right, int top, int bottom)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    params->margin_left = left;
+    params->margin_right = right;
+    params->margin_top = top;
+    params->margin_bottom = bottom;
+
+    return 0;
+}
+
+int LayoutParamSetPadding(void *view, int left, int right, int top, int bottom)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    params->padding_left = left;
+    params->padding_right = right;
+    params->padding_top = top;
+    params->padding_bottom = bottom;
+
+    return 0;
+}
+
+int LayoutParamSetLayoutSize(void *view, int layout_w, int layout_h)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    params->layout_w = layout_w;
+    params->layout_h = layout_h;
+
+    return 0;
+}
+
+int LayoutParamSetAutoFree(void *view, int auto_free)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    params->dont_free = !auto_free;
+
+    return 0;
+}
+
+int RootViewUpdate(void *view)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    if (!params->update)
+        return -1;
+
+    int max_w, max_h;
+
+    if (params->layout_w > 0)
+        max_w = params->layout_w;
+    else
+        max_w = GUI_SCREEN_WIDTH;
+    if (params->layout_h > 0)
+        max_h = params->layout_h;
+    else
+        max_h = GUI_SCREEN_HEIGHT;
+
+    return params->update(view, max_w, max_h);
+}
+
+int ViewRefresh(void *view)
+{
+    if (!view)
+        return -1;
+
+    LayoutParam *params = (LayoutParam *)view;
+    if (!params->update)
+        return -1;
+
+    if (params->layout_w != TYPE_LAYOUT_WRAP_CONTENT && params->layout_h != TYPE_LAYOUT_WRAP_CONTENT &&
+        params->render_w > 0 && params->render_h > 0)
+        return params->update(view, params->render_w + params->margin_left + params->margin_right, params->render_h + params->margin_top + params->margin_bottom);
+    else if (params->parent)
+        return ViewRefresh(params->parent);
+    else
+        return RootViewUpdate(view);
+
+    return 0;
+}
+
+void ViewDestroy(void *view)
+{
+    if (!view)
+        return;
+
+    LayoutParam *params = (LayoutParam *)view;
+    if (params->above_view)
+        ViewDestroy(params->above_view);
+    if (params->destroy)
+        params->destroy(params);
+}
+
+int ViewAddAbove(void *view, void *above)
+{
+    if (!view)
+        return 0;
+
+    LayoutParam *params = (LayoutParam *)view;
+    params->above_view = above;
+
+    return 1;
 }

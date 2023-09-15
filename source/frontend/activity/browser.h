@@ -13,7 +13,7 @@ GUI_Texture *GetDefaultPreviewTexture();
 
 void Browser_RequestRefreshPreview(int urgent);
 
-int Browser_ChangeDirByPath(const char *path);
-int Browser_ChangeDirByFile(const char *path);
+int Browser_ChangeDirByFilePath(const char *path);
+int Browser_ChangeDirBySaveFile(const char *path);
 
 #endif

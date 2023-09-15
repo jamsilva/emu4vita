@@ -134,7 +134,7 @@ static void drawActivityCallback(GUI_Activity *activity)
     sceKernelLockLwMutex(&laoding_mutex, 1, NULL);
 
     int l_length = LinkedListGetLength(log_list);
-    LinkedListEntry *entry = LinkedListFind(log_list, listview_top_pos);
+    LinkedListEntry *entry = LinkedListFindByNum(log_list, listview_top_pos);
 
     if (entry)
     {
@@ -225,7 +225,7 @@ static int startActivityCallback(GUI_Activity *activity)
 
     if (log_list)
         LinkedListDestroy(log_list);
-    log_list = StringListCreate();
+    log_list = NewStringList();
 
     sceKernelCreateLwMutex(&laoding_mutex, "laoding_mutex", 2, 0, NULL);
     return 0;

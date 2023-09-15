@@ -24,6 +24,6 @@ LinkedListEntry *OptionListFindEntryByKey(LinkedList *list, const char *key);
 int OptionListResetConfig(LinkedList *list);
 int OptionListLoadConfig(LinkedList *list, const char *path);
 int OptionListSaveConfig(LinkedList *list, const char *path);
-LinkedList *OptionListCreat();
+LinkedList *NewOptionList();
 
 #endif

@@ -1,6 +1,21 @@
 #ifndef __M_GUI_CTRL_H__
 #define __M_GUI_CTRL_H__
 
+#include <psp2/ctrl.h>
+
+enum ExtCtrlButtons
+{
+    /* SCE_CTRL_PSBUTTON = SCE_CTRL_INTERCEPTED is 17, we have 30 bitmask for set */
+    EXT_CTRL_LEFT_ANLOG_UP = SCE_CTRL_INTERCEPTED << 1,     // 18
+    EXT_CTRL_LEFT_ANLOG_RIGHT = SCE_CTRL_INTERCEPTED << 2,  // 19
+    EXT_CTRL_LEFT_ANLOG_DOWN = SCE_CTRL_INTERCEPTED << 3,   // 20
+    EXT_CTRL_LEFT_ANLOG_LEFT = SCE_CTRL_INTERCEPTED << 4,   // 21
+    EXT_CTRL_RIGHT_ANLOG_UP = SCE_CTRL_INTERCEPTED << 5,    // 22
+    EXT_CTRL_RIGHT_ANLOG_RIGHT = SCE_CTRL_INTERCEPTED << 6, // 23
+    EXT_CTRL_RIGHT_ANLOG_DOWN = SCE_CTRL_INTERCEPTED << 7,  // 24
+    EXT_CTRL_RIGHT_ANLOG_LEFT = SCE_CTRL_INTERCEPTED << 8,  // 25
+};
+
 enum PadButtons
 {
     PAD_LEFT,
@@ -40,10 +55,12 @@ enum PadButtons
 
 #define N_CTRL_PORTS 4
 
+#define DISABLE_PSBUTTON_EVENT_HOLD_MICROS (500000llu) // 0.5 second
+
 typedef uint8_t Pad[PAD_N_BUTTONS];
 
 extern Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
-extern Pad hold_count, hold2_count, real_hold_count;
+extern Pad hold_count, hold2_count;
 
 void GUI_ReadPad();
 void GUI_CleanPad();

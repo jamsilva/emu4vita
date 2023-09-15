@@ -12,22 +12,24 @@ void LinkedListSetEntryData(LinkedListEntry *entry, void *data);
 void *LinkedListGetListData(LinkedList *list);
 void LinkedListSetListData(LinkedList *list, void *data);
 int LinkedListGetLength(LinkedList *list);
+void LinkedListEntrySetFreeEntryDataCallback(LinkedListEntry *entry, LinkedListFreeDataCallback callback);
 void LinkedListSetFreeEntryDataCallback(LinkedList *list, LinkedListFreeDataCallback callback);
 void LinkedListSetFreeListDataCallback(LinkedList *list, LinkedListFreeDataCallback callback);
 void LinkedListSetCompareCallback(LinkedList *list, LinkedListCompareCallback callback);
 
-void LinkedListFreeEntryData(LinkedList *list, void *data);
 void LinkedListFreeListData(LinkedList *list, void *data);
 
 LinkedListEntry *LinkedListHead(LinkedList *list);
 LinkedListEntry *LinkedListTail(LinkedList *list);
 LinkedListEntry *LinkedListNext(LinkedListEntry *entry);
 LinkedListEntry *LinkedListPrev(LinkedListEntry *entry);
-LinkedListEntry *LinkedListFind(LinkedList *list, int n);
+LinkedListEntry *LinkedListFindByNum(LinkedList *list, int n);
+LinkedListEntry *LinkedListFindByData(LinkedList *list, void *data);
 int LinkedListRemove(LinkedList *list, LinkedListEntry *entry);
-LinkedListEntry *LinkedListAdd(LinkedList *list, void *data);
+int LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback freeEntryData);
+int LinkedListAdd(LinkedList *list, void *data);
 void LinkedListEmpty(LinkedList *list);
-LinkedList *LinkedListCreat();
 void LinkedListDestroy(LinkedList *list);
+LinkedList *NewLinkedList();
 
 #endif

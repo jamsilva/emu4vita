@@ -413,3 +413,13 @@ uint64_t GetUsedHeadMemSize()
 {
     return _newlib_heap_cur - _newlib_heap_base;
 }
+
+int GetUTF8Count(const char *utf8)
+{
+    if ((utf8[0] & 0xF0) == 0xE0) // 0xF0(11110000) => 0xE0(11100000)
+        return 3;
+    else if ((utf8[0] & 0xE0) == 0xC0) // 0xE0(11100000) => 0xC0(11000000)
+        return 2;
+    else // 0XXXXXXX or other
+        return 1;
+}

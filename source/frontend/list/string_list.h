@@ -3,7 +3,7 @@
 
 #include "linked_list.h"
 
-LinkedListEntry *StringListAdd(LinkedList *list, const char *text);
-LinkedList *StringListCreate();
+int StringListAdd(LinkedList *list, const char *string);
+LinkedList *NewStringList();
 
 #endif

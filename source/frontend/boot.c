@@ -30,7 +30,7 @@ int BootLoadGame()
     if (!boot_game_path)
         return -1;
 
-    Browser_ChangeDirByPath(boot_game_path);
+    Browser_ChangeDirByFilePath(boot_game_path);
 
     EmuGameInfo info;
     strcpy(info.path, boot_game_path);
@@ -44,7 +44,7 @@ static int readBootParamString(const char *str)
 {
     char *name = NULL;
     char *value = NULL;
-    int ret = ConfigReadLine(str, &name, &value);
+    int ret = StringReadConfigLine(str, &name, &value);
     if (ret < 0)
         return ret;
 

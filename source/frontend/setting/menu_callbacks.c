@@ -53,7 +53,7 @@ static void diskControlOptionMenuPositiveCallback(GUI_Dialog *dialog)
 
 static void diskControlCallback()
 {
-    GUI_Dialog *dialog = AlertDialog_Creat();
+    GUI_Dialog *dialog = AlertDialog_Create();
     AlertDialog_SetTitle(dialog, cur_lang[TITLE_SWITCH_DISK]);
     int n_items = Emu_DiskGetNumImages();
     char **items = (char **)malloc(n_items * sizeof(char *));

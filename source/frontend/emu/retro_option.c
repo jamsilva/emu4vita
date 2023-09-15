@@ -6,6 +6,7 @@
 #include "list/option_list.h"
 #include "setting/setting.h"
 #include "emu/emu.h"
+#include "utils_string.h"
 #include "config.h"
 
 int Retro_GetVariable(struct retro_variable *var)
@@ -62,7 +63,7 @@ int Retro_SetOptionListFromVariables(struct retro_variable *varialbes)
     if (!varialbes)
         return -1;
 
-    core_option_list = OptionListCreat();
+    core_option_list = NewOptionList();
     if (!core_option_list)
         return -1;
 
@@ -167,7 +168,7 @@ int Retro_SetOptionListFromOptions(void *options, int type)
     if (!options)
         return -1;
 
-    core_option_list = OptionListCreat();
+    core_option_list = NewOptionList();
     if (!core_option_list)
         return -1;
 

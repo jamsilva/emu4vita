@@ -13,13 +13,16 @@ enum TypeImageViewScale
     TYPE_IMAGE_SCALE_FIT_START,
     TYPE_IMAGE_SCALE_FIT_END,
     TYPE_IMAGE_SCALE_FIT_CENTER,
+    TYPE_IMAGE_SCALE_FIT_CENTER_CROP,
+    TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE,
     TYPE_IMAGE_SCALE_MATRIX,
 };
 
-typedef struct ImageView
+typedef struct
 {
-    ViewData data;
+    LayoutParam params;
     GUI_Texture *tex;
+    int tex_auto_free;
     int scale_type;
     int tex_w;
     int tex_h;
@@ -36,19 +39,17 @@ typedef struct ImageView
 } ImageView;
 
 void ImageViewDestroy(void *view);
-int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h);
-void ImageViewDraw(void *view);
+int ImageViewUpdate(void *view, int max_w, int max_h);
+void ImageViewDraw(void *view, int x, int y);
 
-int ImageViewSetScaleType(ImageView *view, int type);
-int ImageViewSetPadding(ImageView *view, int left, int right, int top, int bottom);
-int ImageViewSetMargin(ImageView *view, int left, int right, int top, int bottom);
-int ImageViewSetTintColor(ImageView *view, uint32_t color);
-int ImageViewSetBgColor(ImageView *view, uint32_t color);
-GUI_Texture *ImageViewGetTexture(ImageView *view);
-int ImageViewSetTexture(ImageView *view, GUI_Texture *tex);
+int ImageViewSetScaleType(ImageView *imageView, int type);
+int ImageViewSetTintColor(ImageView *imageView, uint32_t color);
+int ImageViewSetBgColor(ImageView *imageView, uint32_t color);
+int ImageViewSetTexture(ImageView *imageView, GUI_Texture *tex, int auto_free);
+GUI_Texture *ImageViewGetTexture(ImageView *imageView);
 
-int ImageViewRefresh(ImageView *view);
-ImageView *ImageViewCreat(int layout_w, int layout_h, int donot_free);
-ImageView *ImageViewCreatFrom(const char *path, int layout_w, int layout_h, int donot_free);
+int ImageViewInit(ImageView *imageView);
+ImageView *NewImageView();
+ImageView *NewImageViewFrom(const char *path);
 
 #endif

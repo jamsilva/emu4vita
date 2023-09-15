@@ -11,30 +11,24 @@
 #include "gui_lib.h"
 #include "file.h"
 #include "config.h"
+#include "utils.h"
 
 extern float _vita2d_ortho_matrix[4 * 4];
 
 #define DEFAULT_PGF_FONT_HEIGHT 17.402f
 #define DEFAULT_PGF_FONT_SCALE 1.0f
-#define DEFAULT_FONT_SIZE 21.0f
+#define DEFAULT_FONT_SIZE 21
+#define DEFAULT_LINE_SPACE 2
 
 static GUI_Texture *rendertarget_texture = NULL;
 
 static vita2d_pgf *gui_font = NULL;
-static float pgf_font_scale = DEFAULT_PGF_FONT_SCALE;
-static float pgf_font_height = DEFAULT_PGF_FONT_HEIGHT;
+static float gui_font_scale = DEFAULT_PGF_FONT_SCALE;
+static float gui_font_height = DEFAULT_PGF_FONT_HEIGHT;
 static int gui_font_size = DEFAULT_FONT_SIZE;
+static int gui_line_space = DEFAULT_LINE_SPACE;
+
 static LinkedList *gui_clip_list = NULL;
-
-static int initRenderClip()
-{
-    gui_clip_list = LinkedListCreat();
-    if (!gui_clip_list)
-        return -1;
-
-    LinkedListSetFreeEntryDataCallback(gui_clip_list, free);
-    return 0;
-}
 
 static int initFont()
 {
@@ -54,12 +48,15 @@ static int initFont()
         gui_font = vita2d_load_default_pgf();
 
     if (!gui_font)
+    {
+        AppLog("[GUI] Failed to init font!\n");
         return -1;
+    }
 
-    pgf_font_scale = DEFAULT_PGF_FONT_SCALE;
-    pgf_font_height = vita2d_pgf_font_height(gui_font, pgf_font_scale);
-    gui_font_size = DEFAULT_FONT_SIZE * pgf_font_scale;
-    // printf("pgf_font_height: %.2f\n", pgf_font_height);
+    gui_font_scale = DEFAULT_PGF_FONT_SCALE;
+    gui_font_height = vita2d_pgf_font_height(gui_font, gui_font_scale);
+    gui_font_size = DEFAULT_FONT_SIZE * gui_font_scale;
+    // printf("gui_font_height: %.2f\n", gui_font_height);
 
     return 0;
 }
@@ -79,13 +76,23 @@ int GUI_GetFontSize()
 void GUI_SetFontSize(int size)
 {
     gui_font_size = size;
-    pgf_font_scale = (float)size / DEFAULT_FONT_SIZE;
-    pgf_font_height = vita2d_pgf_font_height(gui_font, pgf_font_scale);
+    gui_font_scale = (float)size / DEFAULT_FONT_SIZE;
+    gui_font_height = vita2d_pgf_font_height(gui_font, gui_font_scale);
+}
+
+int GUI_GetLineSpace()
+{
+    return gui_line_space;
+}
+
+void GUI_SetLineSpace(int space)
+{
+    gui_line_space = space;
 }
 
 int GUI_DrawText(int x, int y, unsigned int color, const char *text)
 {
-    return vita2d_pgf_draw_text(gui_font, x, y + pgf_font_height, color, pgf_font_scale, text);
+    return vita2d_pgf_draw_text_ls(gui_font, x, y + gui_font_height, gui_line_space, color, gui_font_scale, text);
 }
 
 int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
@@ -96,17 +103,17 @@ int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...)
     vsnprintf(buf, sizeof(buf), text, argptr);
     va_end(argptr);
 
-    return vita2d_pgf_draw_text(gui_font, x, y + pgf_font_height, color, pgf_font_scale, buf);
+    return GUI_DrawText(x, y, color, buf);
 }
 
 int GUI_GetTextWidth(const char *text)
 {
-    return vita2d_pgf_text_width(gui_font, pgf_font_scale, text);
+    return vita2d_pgf_text_width(gui_font, gui_font_scale, text);
 }
 
 int GUI_GetTextHeight(const char *text)
 {
-    return vita2d_pgf_text_height(gui_font, pgf_font_scale, text);
+    return vita2d_pgf_text_height(gui_font, gui_font_scale, text);
 }
 
 void GUI_DrawEmptyRectangle(float x, float y, float w, float h, float line_size, unsigned int color)
@@ -166,6 +173,17 @@ void GUI_EndDrawing()
     vita2d_swap_buffers();
 }
 
+static int initRenderClip()
+{
+    if (!gui_clip_list)
+        gui_clip_list = NewLinkedList();
+    if (!gui_clip_list)
+        return -1;
+
+    LinkedListSetFreeEntryDataCallback(gui_clip_list, free);
+    return 0;
+}
+
 int GUI_EnableClipping(int x, int y, int w, int h)
 {
     if (!gui_clip_list)
@@ -216,16 +234,18 @@ int GUI_DisableClipping()
         return -1;
 
     LinkedListEntry *cur_entry = LinkedListTail(gui_clip_list);
-    LinkedListEntry *prev_entry = LinkedListPrev(cur_entry);
-    GUI_Rect *prev_rect = (GUI_Rect *)LinkedListGetEntryData(prev_entry);
-
-    if (prev_rect)
-        vita2d_set_clip_rectangle(prev_rect->x, prev_rect->y, prev_rect->x + prev_rect->w, prev_rect->y + prev_rect->h);
-    else if (cur_entry)
-        vita2d_disable_clipping();
-    
     if (cur_entry)
+    {
+        LinkedListEntry *prev_entry = LinkedListPrev(cur_entry);
+        GUI_Rect *prev_rect = (GUI_Rect *)LinkedListGetEntryData(prev_entry);
+
+        if (prev_rect)
+            vita2d_set_clip_rectangle(prev_rect->x, prev_rect->y, prev_rect->x + prev_rect->w, prev_rect->y + prev_rect->h);
+        else
+            vita2d_disable_clipping();
+
         LinkedListRemove(gui_clip_list, cur_entry);
+    }
 
     return 0;
 }
@@ -244,7 +264,6 @@ int GUI_DeinitLib()
 {
     vita2d_ext_fini();
     vita2d_fini();
-
     deinitFont();
     return 0;
 }

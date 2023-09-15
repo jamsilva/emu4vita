@@ -5,7 +5,7 @@
 
 #include "config_list.h"
 #include "linked_list.h"
-#include "config_lib.h"
+#include "utils_string.h"
 #include "file.h"
 
 static void freeEntryData(void *data)
@@ -63,13 +63,13 @@ int ConfigListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
 
     do
     {
-        res = ConfigGetLine(p, size, &line);
-        // printf("ConfigGetLine: line = %s\n", line);
+        res = StringGetLine(p, size, &line);
+        // printf("StringGetLine: line = %s\n", line);
         if (res > 0)
         {
-            if (ConfigReadLine(line, &name, &value) >= 0)
+            if (StringReadConfigLine(line, &name, &value) >= 0)
             {
-                // printf("ConfigGetLine: name = %s, value = %s\n", name, value);
+                // printf("StringGetLine: name = %s, value = %s\n", name, value);
                 data = (ConfigListEntryData *)calloc(1, sizeof(ConfigListEntryData));
                 if (data)
                 {
@@ -116,9 +116,9 @@ int ConfigListGetEntries(LinkedList *list, const char *path)
     return 0;
 }
 
-LinkedList *ConfigListCreat()
+LinkedList *NewConfigList()
 {
-    LinkedList *list = LinkedListCreat();
+    LinkedList *list = NewLinkedList();
     if (!list)
         return NULL;
 

@@ -33,6 +33,8 @@ int GUI_DisableClipping();
 // Draw text
 int GUI_GetFontSize();
 void GUI_SetFontSize(int size);
+int GUI_GetLineSpace();
+void GUI_SetLineSpace(int space);
 
 int GUI_DrawText(int x, int y, unsigned int color, const char *text);
 int GUI_DrawTextf(int x, int y, unsigned int color, const char *text, ...);
@@ -65,9 +67,9 @@ typedef SceGxmTextureFilter GuiTextureFilter;
 #define GUI_TEXTURE_FILTER_POINT SCE_GXM_TEXTURE_FILTER_POINT
 #define GUI_TEXTURE_FILTER_LINEAR SCE_GXM_TEXTURE_FILTER_LINEAR
 
-#define GUI_CreatTexture vita2d_create_empty_texture(w, h)
-#define GUI_CreatTextureFormat(w, h, format) vita2d_create_empty_texture_format(w, h, format)
-#define GUI_CreatTextureRendertarget(w, h, format) vita2d_create_empty_texture_rendertarget(w, h, format)
+#define GUI_CreateTexture vita2d_create_empty_texture(w, h)
+#define GUI_CreateTextureFormat(w, h, format) vita2d_create_empty_texture_format(w, h, format)
+#define GUI_CreateTextureRendertarget(w, h, format) vita2d_create_empty_texture_rendertarget(w, h, format)
 #define GUI_DestroyTexture(texture) vita2d_free_texture(texture)
 
 #define GUI_GetTextureWidth(texture) vita2d_texture_get_width(texture)

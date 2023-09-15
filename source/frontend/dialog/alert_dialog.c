@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 #include "list/string_list.h"
+#include "gui/gui.h"
 #include "alert_dialog.h"
-#include "gui.h"
 #include "utils.h"
 #include "lang.h"
 
@@ -43,16 +43,6 @@ static void drawDialogCallback(GUI_Dialog *dialog);
 static void ctrlDialogCallback(GUI_Dialog *dialog);
 static int openDialogCallback(GUI_Dialog *dialog);
 static int closeDialogCallback(GUI_Dialog *dialog);
-
-int GetUTF8Count(const char *utf8)
-{
-    if ((utf8[0] & 0xF0) == 0xE0) // 0xF0(11110000) => 0xE0(11100000)
-        return 3;
-    else if ((utf8[0] & 0xE0) == 0xC0) // 0xE0(11100000) => 0xC0(11000000)
-        return 2;
-    else // 0XXXXXXX or other
-        return 1;
-}
 
 static int isEnglishCharacter(char ch)
 {
@@ -151,7 +141,7 @@ static int convertStringToListByWidth(LinkedList *list, const char *str, int lim
     return max_width;
 }
 
-GUI_Dialog *AlertDialog_Creat()
+GUI_Dialog *AlertDialog_Create()
 {
     GUI_Dialog *dialog = malloc(sizeof(GUI_Dialog));
     if (!dialog)
@@ -174,7 +164,7 @@ GUI_Dialog *AlertDialog_Creat()
     data->dialog_width = DIALOG_MIN_WIDTH;
     data->dialog_height = DIALOG_MIN_HEIGHT;
     data->dialog = dialog;
-    data->list = StringListCreate();
+    data->list = NewStringList();
     if (!data->list)
         goto FAILED;
 
@@ -469,7 +459,7 @@ static void drawDialogCallback(GUI_Dialog *dialog)
     }
 
     // Draw list
-    LinkedListEntry *entry = LinkedListFind(data->list, data->top_pos);
+    LinkedListEntry *entry = LinkedListFindByNum(data->list, data->top_pos);
     if (entry)
     {
         int listview_padding_l, listview_padding_t;
@@ -631,7 +621,7 @@ static int closeDialogCallback(GUI_Dialog *dialog)
 
 int AlertDialog_ShowSimpleTipDialog(char *title, char *message)
 {
-    GUI_Dialog *tip_dialog = AlertDialog_Creat();
+    GUI_Dialog *tip_dialog = AlertDialog_Create();
     if (!tip_dialog)
         return -1;
     AlertDialog_SetTitle(tip_dialog, title);

@@ -11,10 +11,10 @@ void ImageViewDestroy(void *view)
 {
     ImageView *imageView = (ImageView *)view;
 
-    if (!imageView || imageView->data.params.donot_free)
+    if (!imageView || imageView->params.dont_free)
         return;
 
-    if (imageView->tex)
+    if (imageView->tex && imageView->tex_auto_free)
     {
         GUI_WaitRenderingDone();
         GUI_DestroyTexture(imageView->tex);
@@ -22,117 +22,165 @@ void ImageViewDestroy(void *view)
     free(imageView);
 }
 
-int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h)
+int ImageViewUpdate(void *view, int max_w, int max_h)
 {
     if (!view)
         return -1;
 
     ImageView *imageView = (ImageView *)view;
-    LayoutPosition *positions = &imageView->data.positions;
+    LayoutParam *params = &imageView->params;
 
-    positions->layout_max_w = max_w;
-    positions->layout_max_h = max_h;
-    positions->x = x;
-    positions->y = y;
-    positions->w = positions->layout_w;
-    positions->h = positions->layout_h;
+    max_w -= (params->margin_left + params->margin_right);
+    max_h -= (params->margin_top + params->margin_bottom);
 
-    if (positions->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        positions->w = max_w;
-    else if (positions->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        positions->w = imageView->tex_w;
-    if (positions->w > max_w)
-        positions->w = max_w;
+    params->render_w = params->layout_w;
+    params->render_h = params->layout_h;
 
-    if (positions->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        positions->h = max_h;
-    else if (positions->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        positions->h = imageView->tex_h;
-    if (positions->h > max_h)
-        positions->h = max_h;
+    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+        params->render_w = max_w;
+    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_w = imageView->tex_w + params->padding_left + params->padding_right;
+    if (params->render_w > max_w)
+        params->render_w = max_w;
+    if (params->render_w < 0)
+        params->render_w = 0;
+
+    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+        params->render_h = max_h;
+    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_h = imageView->tex_h + params->padding_top + params->padding_bottom;
+    if (params->render_h > max_h)
+        params->render_h = max_h;
+    if (params->render_h < 0)
+        params->render_h = 0;
 
     if (imageView->tex)
     {
-        int max_w = positions->w - positions->padding_left - positions->padding_right;
-        int max_h = positions->w - positions->padding_top - positions->padding_bottom;
+        int tex_max_w = params->render_w - params->padding_left - params->padding_right;
+        int tex_max_h = params->render_h - params->padding_top - params->padding_bottom;
         int tex_w = imageView->tex_w;
         int tex_h = imageView->tex_h;
         int scale_w = tex_w;
         int scale_h = tex_h;
         int scale_src_x = 0;
         int scale_src_y = 0;
-        int scale_src_w = scale_w;
-        int scale_src_h = scale_h;
+        int scale_src_w = tex_w;
+        int scale_src_h = tex_h;
         float aspect_ratio = (float)tex_w / (float)tex_h;
 
         switch (imageView->scale_type)
         {
-        case TYPE_IMAGE_SCALE_CENTER:
-            if (tex_w > max_w || tex_h > max_h)
-                goto SCALE_CENTER_CROP;
-        SMALL_CENTER:
+        case TYPE_IMAGE_SCALE_CENTER: // 原图，居中，（宽高度大于视图：裁剪）
+                                      //            （宽高度小于视图：原图）
             scale_w = tex_w;
             scale_h = tex_h;
-            scale_src_x = 0;
-            scale_src_y = 0;
-            imageView->tex_dst_x = (max_w - scale_w) / 2;
-            imageView->tex_dst_y = (max_h - scale_h) / 2;
-            break;
-
-        case TYPE_IMAGE_SCALE_CENTER_CROP:
-        SCALE_CENTER_CROP:
-            scale_w = tex_w;
-            scale_h = tex_h;
-            if (scale_w < max_w)
-            {
-                scale_w = max_w;
-                scale_h = scale_w / aspect_ratio;
-            }
-            if (scale_h < max_h)
-            {
-                scale_h = max_h;
-                scale_w = scale_h * aspect_ratio;
-            }
-
-            if (scale_w > max_w)
-            {
-                scale_src_x = (scale_w - max_w) / 2;
-                imageView->tex_dst_x = 0;
-            }
-            else
+            if (scale_w < tex_max_w)
             {
                 scale_src_x = 0;
-                imageView->tex_dst_x = (max_w - scale_w) / 2;
-            }
-            if (scale_h > max_h)
-            {
-                scale_src_y = (scale_h - max_h) / 2;
-                imageView->tex_dst_y = 0;
+                imageView->tex_dst_x = (tex_max_w - scale_w) / 2;
             }
             else
             {
+                scale_src_x = (scale_w - tex_max_w) / 2;
+                imageView->tex_dst_x = 0;
+            }
+            if (scale_h < tex_max_h)
+            {
                 scale_src_y = 0;
-                imageView->tex_dst_y = (max_h - scale_h) / 2;
+                imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
+            }
+            else
+            {
+                scale_src_y = (scale_h - tex_max_h) / 2;
+                imageView->tex_dst_y = 0;
             }
             break;
 
-        case TYPE_IMAGE_SCALE_CENTER_INSIDE:
-            if (tex_w > max_w || tex_h > max_h)
-                goto SCALE_FIT_CENTER;
-            goto SMALL_CENTER;
+        case TYPE_IMAGE_SCALE_CENTER_CROP: // 等比，居中，（宽高度小于视图：先放大，再裁剪）
+                                           //            （宽高度大于视图：原图）
+            scale_w = tex_w;
+            scale_h = tex_h;
+            if (scale_w < tex_max_w) // 宽度小于视图，放大
+            {
+                scale_w = tex_max_w;
+                scale_h = scale_w / aspect_ratio;
+            }
+            if (scale_h < tex_max_h) // 高度小于视图，放大
+            {
+                scale_h = tex_max_h;
+                scale_w = scale_h * aspect_ratio;
+            }
+
+            if (scale_w < tex_max_w)
+            {
+                scale_src_x = 0;
+                imageView->tex_dst_x = (tex_max_w - scale_w) / 2;
+            }
+            else
+            {
+                scale_src_x = (scale_w - tex_max_w) / 2;
+                imageView->tex_dst_x = 0;
+            }
+            if (scale_h < tex_max_h)
+            {
+                scale_src_y = 0;
+                imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
+            }
+            else
+            {
+                scale_src_y = (scale_h - tex_max_h) / 2;
+                imageView->tex_dst_y = 0;
+            }
             break;
 
-        case TYPE_IMAGE_SCALE_FIT_XY:
-            scale_w = max_w;
-            scale_h = max_h;
+        case TYPE_IMAGE_SCALE_CENTER_INSIDE: // 等比，居中，（宽高度大于视图： 缩小 （宽==视图，高<=视图） 或 （高===视图，宽<=视图））
+                                             //             (宽高度小于视图： 原图
+            scale_w = tex_w;
+            scale_h = tex_h;
+            if (scale_w > tex_max_w) // 宽度大于视图，缩小
+            {
+                scale_w = tex_max_w;
+                scale_h = scale_w / aspect_ratio;
+            }
+            if (scale_h > tex_max_h) // 高度大于视图，缩小
+            {
+                scale_h = tex_max_h;
+                scale_w = scale_h * aspect_ratio;
+            }
+
+            if (scale_w < tex_max_w)
+            {
+                scale_src_x = 0;
+                imageView->tex_dst_x = (tex_max_w - scale_w) / 2;
+            }
+            else
+            {
+                scale_src_x = (scale_w - tex_max_w) / 2;
+                imageView->tex_dst_x = 0;
+            }
+            if (scale_h < tex_max_h)
+            {
+                scale_src_y = 0;
+                imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
+            }
+            else
+            {
+                scale_src_y = (scale_h - tex_max_h) / 2;
+                imageView->tex_dst_y = 0;
+            }
+            break;
+
+        case TYPE_IMAGE_SCALE_FIT_XY: // 拉伸，缩放，（宽==视图，高==视图）
+            scale_w = tex_max_w;
+            scale_h = tex_max_h;
             scale_src_x = 0;
             scale_src_y = 0;
             imageView->tex_dst_x = 0;
             imageView->tex_dst_y = 0;
             break;
 
-        case TYPE_IMAGE_SCALE_FIT_START:
-            scale_w = max_w;
+        case TYPE_IMAGE_SCALE_FIT_START: // 等比，缩放，顶部对齐，（宽==视图，高等比缩放）
+            scale_w = tex_max_w;
             scale_h = scale_w / aspect_ratio;
             scale_src_x = 0;
             scale_src_y = 0;
@@ -140,39 +188,88 @@ int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h)
             imageView->tex_dst_y = 0;
             break;
 
-        case TYPE_IMAGE_SCALE_FIT_END:
-            scale_w = max_w;
+        case TYPE_IMAGE_SCALE_FIT_END: // 等比，缩放，底部对齐，（宽==视图，高等比缩放）
+            scale_w = tex_max_w;
             scale_h = scale_w / aspect_ratio;
             scale_src_x = 0;
             imageView->tex_dst_x = 0;
-            if (scale_h > max_h)
+            if (scale_h < tex_max_h)
             {
-                scale_src_y = scale_h - max_h;
-                imageView->tex_dst_y = 0;
+                scale_src_y = 0;
+                imageView->tex_dst_y = tex_max_h - scale_h;
             }
             else
             {
-                scale_src_y = 0;
-                imageView->tex_dst_y = max_h - scale_h;
+                scale_src_y = scale_h - tex_max_h;
+                imageView->tex_dst_y = 0;
             }
             break;
 
-        case TYPE_IMAGE_SCALE_FIT_CENTER:
-        SCALE_FIT_CENTER:
-            scale_w = max_w;
+        case TYPE_IMAGE_SCALE_FIT_CENTER: // 等比，缩放，垂直居中，（宽==视图，高等比缩放）
+            scale_w = tex_max_w;
             scale_h = scale_w / aspect_ratio;
-            if (scale_h > max_h)
+            scale_src_x = 0;
+            imageView->tex_dst_x = 0;
+            if (scale_h < tex_max_h)
             {
-                scale_h = max_h;
+                scale_src_y = 0;
+                imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
+            }
+            else
+            {
+                scale_src_y = (scale_h - tex_max_h) / 2;
+                imageView->tex_dst_y = 0;
+            }
+            break;
+
+        case TYPE_IMAGE_SCALE_FIT_CENTER_CROP: // 等比，居中，（宽高度大于视图： 缩小 （宽==视图，高>=视图） 或 （高===视图，宽>=视图））
+                                               //             (宽高度小于视图： 放大 （宽==视图，高>=视图） 或 （高===视图，宽>=视图））
+            scale_w = tex_max_w;
+            scale_h = scale_w / aspect_ratio;
+            if (scale_h < tex_max_h)
+            {
+                scale_h = tex_max_h;
+                scale_w = scale_h * aspect_ratio;
+            }
+
+            if (scale_w < tex_max_w)
+            {
+                scale_src_x = 0;
+                imageView->tex_dst_x = (tex_max_w - scale_w) / 2;
+            }
+            else
+            {
+                scale_src_x = (scale_w - tex_max_w) / 2;
+                imageView->tex_dst_x = 0;
+            }
+            if (scale_h < tex_max_h)
+            {
+                scale_src_y = 0;
+                imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
+            }
+            else
+            {
+                scale_src_y = (scale_h - tex_max_h) / 2;
+                imageView->tex_dst_y = 0;
+            }
+            break;
+
+        case TYPE_IMAGE_SCALE_FIT_CENTER_INSIDE: // 等比，居中，（宽高度大于视图： 缩小 （宽==视图，高<=视图） 或 （高===视图，宽<=视图））
+                                                 //             (宽高度小于视图： 放大 （宽==视图，高<=视图） 或 （高===视图，宽<=视图））
+            scale_w = tex_max_w;
+            scale_h = scale_w / aspect_ratio;
+            if (scale_h > tex_max_h)
+            {
+                scale_h = tex_max_h;
                 scale_w = scale_h * aspect_ratio;
             }
             scale_src_x = 0;
             scale_src_y = 0;
-            imageView->tex_dst_x = (max_w - scale_w) / 2;
-            imageView->tex_dst_y = (max_h - scale_h) / 2;
+            imageView->tex_dst_x = (tex_max_w - scale_w) / 2;
+            imageView->tex_dst_y = (tex_max_h - scale_h) / 2;
             break;
 
-        case TYPE_IMAGE_SCALE_MATRIX:
+        case TYPE_IMAGE_SCALE_MATRIX: // 图像原始大小，左上对齐
             scale_w = tex_w;
             scale_h = tex_h;
             scale_src_x = 0;
@@ -185,8 +282,8 @@ int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h)
             break;
         }
 
-        scale_src_w = scale_w > max_w ? max_w : scale_w;
-        scale_src_h = scale_h > max_h ? max_h : scale_h;
+        scale_src_w = scale_w < tex_max_w ? scale_w : tex_max_w;
+        scale_src_h = scale_h < tex_max_h ? scale_h : tex_max_h;
 
         imageView->tex_scale_x = (float)scale_w / (float)tex_w;
         imageView->tex_scale_y = (float)scale_h / (float)tex_h;
@@ -199,21 +296,27 @@ int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h)
     return 0;
 }
 
-void ImageViewDraw(void *view)
+void ImageViewDraw(void *view, int x, int y)
 {
     if (!view)
         return;
 
     ImageView *imageView = (ImageView *)view;
-    LayoutPosition *positions = &imageView->data.positions;
+    LayoutParam *params = &imageView->params;
+
+    if (params->render_w <= 0 || params->render_h <= 0)
+        return;
+
+    int view_x = x + params->margin_left;
+    int view_y = y + params->margin_top;
 
     if (imageView->bg_color)
-        GUI_DrawFillRectangle(positions->x, positions->y, positions->w, positions->h, imageView->bg_color);
+        GUI_DrawFillRectangle(view_x, view_y, params->render_w, params->render_h, imageView->bg_color);
 
     if (imageView->tex)
     {
-        int tex_dst_x = positions->x + positions->padding_left + imageView->tex_dst_x;
-        int tex_dst_y = positions->y + positions->padding_top + imageView->tex_dst_y;
+        int tex_dst_x = view_x + params->padding_left + imageView->tex_dst_x;
+        int tex_dst_y = view_y + params->padding_top + imageView->tex_dst_y;
 
         if (imageView->tint_color)
             GUI_DrawTextureTintPartScale(imageView->tex, tex_dst_x, tex_dst_y, imageView->tex_src_x, imageView->tex_src_y,
@@ -224,132 +327,100 @@ void ImageViewDraw(void *view)
     }
 }
 
-int ImageViewSetScaleType(ImageView *view, int type)
+int ImageViewSetScaleType(ImageView *imageView, int type)
 {
-    if (!view)
+    if (!imageView)
         return -1;
 
-    view->scale_type = type;
+    imageView->scale_type = type;
 
     return 0;
 }
 
-int ImageViewSetPadding(ImageView *view, int left, int right, int top, int bottom)
+int ImageViewSetTintColor(ImageView *imageView, uint32_t color)
 {
-    if (!view)
+    if (!imageView)
         return -1;
 
-    LayoutPosition *positions = &view->data.positions;
-
-    positions->padding_left = left;
-    positions->padding_right = right;
-    positions->padding_top = top;
-    positions->padding_bottom = bottom;
+    imageView->tint_color = color;
 
     return 0;
 }
 
-int ImageViewSetMargin(ImageView *view, int left, int right, int top, int bottom)
+int ImageViewSetBgColor(ImageView *imageView, uint32_t color)
 {
-    if (!view)
+    if (!imageView)
         return -1;
 
-    LayoutPosition *positions = &view->data.positions;
-
-    positions->margin_left = left;
-    positions->margin_right = right;
-    positions->margin_top = top;
-    positions->margin_bottom = bottom;
+    imageView->bg_color = color;
 
     return 0;
 }
 
-int ImageViewSetTintColor(ImageView *view, uint32_t color)
+GUI_Texture *ImageViewGetTexture(ImageView *imageView)
 {
-    if (!view)
-        return -1;
-
-    view->tint_color = color;
-
-    return 0;
+    return imageView ? imageView->tex : NULL;
 }
 
-int ImageViewSetBgColor(ImageView *view, uint32_t color)
+int ImageViewSetTexture(ImageView *imageView, GUI_Texture *tex, int auto_free)
 {
-    if (!view)
+    if (!imageView)
         return -1;
 
-    view->bg_color = color;
-
-    return 0;
-}
-
-GUI_Texture *ImageViewGetTexture(ImageView *view)
-{
-    return view ? view->tex : NULL;
-}
-
-int ImageViewSetTexture(ImageView *view, GUI_Texture *tex)
-{
-    if (!view)
-        return -1;
-
-    if (view->tex)
+    if (imageView->tex && imageView->tex_auto_free)
     {
         GUI_WaitRenderingDone();
-        GUI_DestroyTexture(view->tex);
+        GUI_DestroyTexture(imageView->tex);
     }
-    if (tex)
+
+    imageView->tex = tex;
+    imageView->tex_auto_free = auto_free;
+    imageView->tex_w = 0;
+    imageView->tex_h = 0;
+
+    if (imageView->tex)
     {
-        view->tex = tex;
-        view->tex_w = GUI_GetTextureWidth(view->tex);
-        view->tex_h = GUI_GetTextureHeight(view->tex);
+        imageView->tex_w = GUI_GetTextureWidth(imageView->tex);
+        imageView->tex_h = GUI_GetTextureHeight(imageView->tex);
     }
 
     return 0;
 }
 
-int ImageViewRefresh(ImageView *view)
+int ImageViewInit(ImageView *imageView)
 {
-    if (!view)
+    if (!imageView)
         return -1;
 
-    LayoutPosition *positions = &view->data.positions;
+    memset(imageView, 0, sizeof(ImageView));
 
-    if (positions->layout_w > 0 && positions->layout_h > 0)
-        return ImageViewUpdate(view, positions->x, positions->y, positions->layout_w, positions->layout_h);
-    else if (view->data.params.parent)
-        return LayoutRefresh(view->data.params.parent);
-    else
-        return ImageViewUpdate(view, positions->x, positions->y, positions->layout_max_w, positions->layout_max_h);
-}
-
-ImageView *ImageViewCreat(int layout_w, int layout_h, int donot_free)
-{
-    ImageView *view = (ImageView *)calloc(1, sizeof(ImageView));
-    if (!view)
-        return NULL;
-
-    LayoutParam *params = &view->data.params;
-    LayoutPosition *positions = &view->data.positions;
-
-    positions->layout_w = layout_w;
-    positions->layout_h = layout_h;
-    params->donot_free = donot_free;
+    LayoutParam *params = &imageView->params;
+    params->destroy = ImageViewDestroy;
     params->update = ImageViewUpdate;
     params->draw = ImageViewDraw;
-    params->destroy = ImageViewDestroy;
 
-    return view;
+    return 0;
 }
 
-ImageView *ImageViewCreatFrom(const char *path, int layout_w, int layout_h, int donot_free)
+ImageView *NewImageView()
 {
-    ImageView *view = ImageViewCreat(layout_w, layout_h, donot_free);
-    if (!view)
+    ImageView *imageView = (ImageView *)malloc(sizeof(ImageView));
+    if (!imageView)
         return NULL;
 
-    view->tex = GUI_LoadPNGFile(path);
+    ImageViewInit(imageView);
 
-    return view;
+    return imageView;
+}
+
+ImageView *NewImageViewFrom(const char *path)
+{
+    ImageView *imageView = NewImageView();
+    if (!imageView)
+        return NULL;
+
+    GUI_Texture *tex = GUI_LoadPNGFile(path);
+    ImageViewSetTexture(imageView, tex, 1);
+
+    return imageView;
 }

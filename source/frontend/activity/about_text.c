@@ -16,4 +16,4 @@ char *about_texts[] = {
     " * ......",
 };
 
-#define N_ABOUT_TEXTS (sizeof(about_texts) / sizeof(char **))
+#define N_ABOUT_TEXTS (sizeof(about_texts) / sizeof(char *))

@@ -10,6 +10,7 @@ struct LinkedListEntry
     struct LinkedListEntry *next;
     struct LinkedListEntry *prev;
     void *data;
+    LinkedListFreeDataCallback freeEntryData;
 };
 
 struct LinkedList
@@ -18,7 +19,6 @@ struct LinkedList
     LinkedListEntry *tail;
     int length;
     void *data;
-    int is_alloc;
     LinkedListFreeDataCallback freeEntryData;
     LinkedListFreeDataCallback freeListData;
     LinkedListCompareCallback compare;
@@ -51,6 +51,12 @@ int LinkedListGetLength(LinkedList *list)
     return list ? list->length : 0;
 }
 
+void LinkedListEntrySetFreeEntryDataCallback(LinkedListEntry *entry, LinkedListFreeDataCallback callback)
+{
+    if (entry)
+        entry->freeEntryData = callback;
+}
+
 void LinkedListSetFreeEntryDataCallback(LinkedList *list, LinkedListFreeDataCallback callback)
 {
     if (list)
@@ -67,12 +73,6 @@ void LinkedListSetCompareCallback(LinkedList *list, LinkedListCompareCallback ca
 {
     if (list)
         list->compare = callback;
-}
-
-void LinkedListFreeEntryData(LinkedList *list, void *data)
-{
-    if (list && data && list->freeEntryData)
-        list->freeEntryData(data);
 }
 
 void LinkedListFreeListData(LinkedList *list, void *data)
@@ -101,7 +101,7 @@ LinkedListEntry *LinkedListPrev(LinkedListEntry *entry)
     return entry ? entry->prev : NULL;
 }
 
-LinkedListEntry *LinkedListFind(LinkedList *list, int n)
+LinkedListEntry *LinkedListFindByNum(LinkedList *list, int n)
 {
     if (!list)
         return NULL;
@@ -118,6 +118,23 @@ LinkedListEntry *LinkedListFind(LinkedList *list, int n)
         return NULL;
 
     return entry;
+}
+
+LinkedListEntry *LinkedListFindByData(LinkedList *list, void *data)
+{
+    if (!list)
+        return NULL;
+
+    LinkedListEntry *entry = list->head;
+
+    while (entry)
+    {
+        if (entry->data == data)
+            return entry;
+        entry = entry->next;
+    }
+
+    return NULL;
 }
 
 int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
@@ -158,18 +175,19 @@ int LinkedListRemove(LinkedList *list, LinkedListEntry *entry)
     return 1;
 }
 
-LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
+int LinkedListAddEx(LinkedList *list, void *data, LinkedListFreeDataCallback freeEntryData)
 {
     if (!list || !data)
-        return NULL;
+        return 0;
 
     LinkedListEntry *entry = malloc(sizeof(LinkedListEntry));
     if (!entry)
-        return NULL;
+        return 0;
 
     entry->next = NULL;
     entry->prev = NULL;
     entry->data = data;
+    entry->freeEntryData = freeEntryData;
 
     if (list->head == NULL)
     {
@@ -185,10 +203,9 @@ LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
             insert = list->head;
             while (insert)
             {
-                if (list->compare(data, insert->data) >= 0)
-                    insert = insert->next;
-                else
+                if (list->compare(data, insert->data) < 0)
                     break;
+                insert = insert->next;
             }
         }
 
@@ -215,7 +232,12 @@ LinkedListEntry *LinkedListAdd(LinkedList *list, void *data)
 
     list->length++;
 
-    return entry;
+    return 1;
+}
+
+int LinkedListAdd(LinkedList *list, void *data)
+{
+    return LinkedListAddEx(list, data, NULL);
 }
 
 void LinkedListEmpty(LinkedList *list)
@@ -228,8 +250,13 @@ void LinkedListEmpty(LinkedList *list)
     while (entry)
     {
         LinkedListEntry *next = entry->next;
-        if (entry->data && list->freeEntryData)
-            list->freeEntryData(entry->data);
+        if (entry->data)
+        {
+            if (entry->freeEntryData)
+                entry->freeEntryData(entry->data);
+            else if (list->freeEntryData)
+                list->freeEntryData(entry->data);
+        }
         free(entry);
         entry = next;
     }
@@ -237,16 +264,6 @@ void LinkedListEmpty(LinkedList *list)
     list->head = NULL;
     list->tail = NULL;
     list->length = 0;
-}
-
-LinkedList *LinkedListCreat()
-{
-    LinkedList *list = (LinkedList *)calloc(1, sizeof(LinkedList));
-    if (!list)
-        return NULL;
-
-    list->is_alloc = 1;
-    return list;
 }
 
 void LinkedListDestroy(LinkedList *list)
@@ -257,11 +274,15 @@ void LinkedListDestroy(LinkedList *list)
     LinkedListEmpty(list);
 
     if (list->data && list->freeListData)
-    {
         list->freeListData(list->data);
-        list->data = NULL;
-    }
+    free(list);
+}
 
-    if (list->is_alloc)
-        free(list);
+LinkedList *NewLinkedList()
+{
+    LinkedList *list = (LinkedList *)calloc(1, sizeof(LinkedList));
+    if (!list)
+        return NULL;
+
+    return list;
 }

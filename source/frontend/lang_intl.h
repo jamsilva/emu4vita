@@ -360,10 +360,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "preserve full",
     // FULL_STRETCH
     "stretch full",
-    // FULL_4_3,
-    "4:3 full",
-    // FULL_3_2
-    "3:2 full",
+    // FULL_CROP,
+    "crop full",
 
     /**************  Menu state  *****************/
     // LABEL_EXISTENT_STATE
@@ -736,10 +734,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "等比铺满",
     // FULL_STRETCH
     "拉伸铺满",
-    // FULL_4_3,
-    "4:3铺满",
-    // FULL_3_2
-    "3:2铺满",
+    // FULL_CROP,
+    "裁剪铺满",
 
     /**************  Menu state  *****************/
     // LABEL_EXISTENT_STATE

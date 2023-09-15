@@ -83,7 +83,7 @@ int Emu_GetVideoDisplayRotate()
     OverlayListEntryData *overlay_data = NULL;
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        LinkedListEntry *entry = LinkedListFindByNum(graphics_overlay_list, graphics_config.overlay_select - 1);
         overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
     }
 
@@ -107,7 +107,7 @@ void Emu_GetVideoBaseWH(uint32_t *width, uint32_t *height)
 
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        LinkedListEntry *entry = LinkedListFindByNum(graphics_overlay_list, graphics_config.overlay_select - 1);
         overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
     }
 
@@ -169,7 +169,7 @@ void Emu_GetVideoDisplayWH(uint32_t *width, uint32_t *height)
     OverlayListEntryData *overlay_data = NULL;
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        LinkedListEntry *entry = LinkedListFindByNum(graphics_overlay_list, graphics_config.overlay_select - 1);
         overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
     }
 
@@ -277,7 +277,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
     }
 
     // Use gpu to conver image
-    rendert_tex = GUI_CreatTextureRendertarget(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
+    rendert_tex = GUI_CreateTextureRendertarget(GUI_SCREEN_WIDTH, GUI_SCREEN_HEIGHT, GUI_PIXEL_FORMAT_U8U8U8U8_ABGR);
     if (!rendert_tex)
         goto END;
 
@@ -369,7 +369,7 @@ GUI_Texture *Emu_CreateVideoTexture(int width, int height)
     video_width = width;
     video_height = height;
     video_display_need_update = 1;
-    video_texture = GUI_CreatTextureFormat(width, height, core_video_pixel_format);
+    video_texture = GUI_CreateTextureFormat(width, height, core_video_pixel_format);
 
     if (!video_texture)
         AppLog("[VIDEO] create video texture failed\n");
@@ -389,7 +389,7 @@ static int updateOverlayTexture()
     OverlayListEntryData *overlay_data = NULL;
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        LinkedListEntry *entry = LinkedListFindByNum(graphics_overlay_list, graphics_config.overlay_select - 1);
         overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
     }
 
@@ -431,7 +431,7 @@ static int updateVideoDisplay()
     // Overlay config
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
     {
-        LinkedListEntry *entry = LinkedListFind(graphics_overlay_list, graphics_config.overlay_select - 1);
+        LinkedListEntry *entry = LinkedListFindByNum(graphics_overlay_list, graphics_config.overlay_select - 1);
         overlay_data = (OverlayListEntryData *)LinkedListGetEntryData(entry);
     }
 

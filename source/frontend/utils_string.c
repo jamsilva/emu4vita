@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "gui/gui.h"
+#include "utils_string.h"
+#include "utils.h"
+
 void TrimString(char *str)
 {
     int len = strlen(str);
@@ -52,7 +56,7 @@ int StringToBoolean(const char *str)
     return -1;
 }
 
-int ConfigGetLine(const char *buf, int size, char **pline)
+int StringGetLine(const char *buf, int size, char **pline)
 {
     int n = 0;
     int i = 0;
@@ -78,7 +82,7 @@ int ConfigGetLine(const char *buf, int size, char **pline)
     return i;
 }
 
-int ConfigReadLine(const char *line, char **pkey, char **pvalue)
+int StringReadConfigLine(const char *line, char **pkey, char **pvalue)
 {
     if (!line)
         return -1;
@@ -160,4 +164,106 @@ FAILED:
     if (value)
         free(value);
     return -1;
+}
+
+char *StringMakeShortByWidth(const char *string, int limit_w)
+{
+    if (!string)
+        return NULL;
+
+    char *res = NULL;
+    int len = strlen(string);
+    char *buf = (char *)malloc(len + 1);
+    if (!buf)
+        return NULL;
+    strcpy(buf, string);
+
+    int cut_w = limit_w - GUI_GetTextWidth("...");
+    int cut = 0;
+    int max_w = 0;
+    char ch;
+    int i, count;
+    for (i = 0; i < len; i += count)
+    {
+        if (buf[i] == '\n')
+            break;
+
+        if (max_w <= cut_w)
+            cut = i;
+
+        count = GetUTF8Count(&buf[i]);
+        if (i + count > len)
+            break;
+        ch = buf[i + count];
+        buf[i + count] = '\0';
+        max_w += GUI_GetTextWidth(&buf[i]);
+        buf[i + count] = ch;
+
+        if (max_w > limit_w)
+            break;
+    }
+
+    if (max_w > limit_w)
+    {
+        res = (char *)malloc(cut + 4);
+        buf[cut] = '\0';
+        sprintf(res, "%s...", buf);
+        free(buf);
+    }
+    else
+    {
+        res = buf;
+    }
+
+    return res;
+}
+
+char *StringBreakLineByWidth(const char *string, int limit_w)
+{
+    if (!string)
+        return NULL;
+
+    int len = strlen(string) + 128;
+    char *res = malloc(len + 1);
+    if (!res)
+        return NULL;
+    strcpy(res, string);
+
+    char ch;
+    int w = 0, max_w = 0;
+    int i, count;
+    for (i = 0; i < len; i += count)
+    {
+        if (res[i] == '\n')
+        {
+            max_w = 0;
+            count = 1;
+            continue;
+        }
+
+        count = GetUTF8Count(&res[i]);
+        if (i + count > len)
+        {
+            res[i] = '\0';
+            break;
+        }
+
+        ch = res[i + count];
+        res[i + count] = '\0';
+        w = GUI_GetTextWidth(&res[i]);
+        res[i + count] = ch;
+
+        if (max_w + w >= limit_w)
+        {
+            max_w = w;
+            memmove(&res[i + 1], &res[i], len - i - 1);
+            res[i++] = '\n';
+        }
+        else
+        {
+            max_w += w;
+        }
+    }
+
+    return res;
 }

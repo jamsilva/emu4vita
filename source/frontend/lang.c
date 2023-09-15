@@ -87,3 +87,14 @@ int SetCurrentLang(int fake_id)
     cur_lang = lang_entries[i].container;
     return 0;
 }
+
+char *GetLangString(LangString *lang_s)
+{
+    if (!lang_s)
+        return NULL;
+
+    if (cur_lang && lang_s->lang != LANG_NULL && lang_s->lang < LANGUAGE_CONTAINER_SIZE)
+        return cur_lang[lang_s->lang];
+    else
+        return lang_s->string;
+}

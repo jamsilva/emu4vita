@@ -73,7 +73,6 @@ SRC_C += \
 	emu/retro_option.c
 
 SRC_C += \
-	gui/alert_dialog.c \
 	gui/gui_ctrl.c \
 	gui/gui_init.c \
 	gui/gui_lib.c \
@@ -81,8 +80,14 @@ SRC_C += \
 	gui/gui.c
 
 SRC_C += \
+	dialog/alert_dialog.c
+
+SRC_C += \
 	layout/Layout.c \
-	layout/ImageView.c
+	layout/RectView.c \
+	layout/TextView.c \
+	layout/ImageView.c \
+	layout/ListView.c
 
 SRC_C += \
 	list/linked_list.c \
@@ -99,7 +104,6 @@ SRC_C += \
 
 SRC_C += \
 	boot.c \
-	config_lib.c \
 	config.c \
 	file.c \
 	init.c \
@@ -107,6 +111,7 @@ SRC_C += \
 	main.c \
 	sbrk.c \
 	strnatcmp.c \
+	utils_string.c \
 	utils.c
 
 OBJS := $(SRC_C:.c=.o)

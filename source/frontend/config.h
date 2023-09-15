@@ -3,20 +3,18 @@
 
 #include <stdint.h>
 
-#include <psp2/ctrl.h>
-
 #include "list/config_list.h"
 #include "list/option_list.h"
 #include "list/overlay_list.h"
-#include "config_lib.h"
+#include "utils_string.h"
 #include "file.h"
 
-#define APP_CONFIG_VERSION 1
-#define GRAPHICS_CONFIG_VERSION 2
-#define CONTROL_CONFIG_VERSION 2
-#define CORE_CONFIG_VERSION 1
-#define HOTKEY_CONFIG_VERSION 1
-#define MISC_CONFIG_VERSION 1
+#define APP_CONFIG_VERSION 2      // v1.01
+#define GRAPHICS_CONFIG_VERSION 2 // v1.01
+#define CONTROL_CONFIG_VERSION 2  // v1.01
+#define CORE_CONFIG_VERSION 1     // v1.00
+#define HOTKEY_CONFIG_VERSION 1   // v1.00
+#define MISC_CONFIG_VERSION 1     // v1.00
 
 #define APP_CONFIG_NAME "app.cfg"
 #define GRAPHICS_CONFIG_NAME "graphics.cfg"
@@ -59,24 +57,6 @@
 
 #define GET_RETRO_BITMASK_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
 #define GET_RETRO_BITMASK_KEY_TURBO(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
-
-#define EXIT_APP_HOT_KEY (SCE_CTRL_PSBUTTON | SCE_CTRL_SELECT)
-#define CHECK_EXIT_APP(key) ((key & EXIT_APP_HOT_KEY) == EXIT_APP_HOT_KEY)
-
-#define DISABLE_PSBUTTON_EVENT_HOLD_MICROS (500000llu) // 0.5 second
-
-enum ExtCtrlButtons
-{
-    /* SCE_CTRL_PSBUTTON = SCE_CTRL_INTERCEPTED is 17, we have 30 bitmask for set */
-    EXT_CTRL_LEFT_ANLOG_UP = SCE_CTRL_INTERCEPTED << 1,     // 18
-    EXT_CTRL_LEFT_ANLOG_RIGHT = SCE_CTRL_INTERCEPTED << 2,  // 19
-    EXT_CTRL_LEFT_ANLOG_DOWN = SCE_CTRL_INTERCEPTED << 3,   // 20
-    EXT_CTRL_LEFT_ANLOG_LEFT = SCE_CTRL_INTERCEPTED << 4,   // 21
-    EXT_CTRL_RIGHT_ANLOG_UP = SCE_CTRL_INTERCEPTED << 5,    // 22
-    EXT_CTRL_RIGHT_ANLOG_RIGHT = SCE_CTRL_INTERCEPTED << 6, // 23
-    EXT_CTRL_RIGHT_ANLOG_DOWN = SCE_CTRL_INTERCEPTED << 7,  // 24
-    EXT_CTRL_RIGHT_ANLOG_LEFT = SCE_CTRL_INTERCEPTED << 8,  // 25
-};
 
 enum TypeDisplaySize
 {
@@ -124,10 +104,9 @@ enum TypePreviewPath
 
 enum TypePreviewStyle
 {
-    TYPE_PREVIEW_STYLE_FULL_PRESERVE,
-    TYPE_PREVIEW_STYLE_FULL_STRETCH,
-    TYPE_PREVIEW_STYLE_FULL_4_3,
-    TYPE_PREVIEW_STYLE_FULL_3_2,
+    TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_INSIDE,
+    TYPE_PREVIEW_SCALE_TYPE_FIT_XY,
+    TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_CROP,
 };
 
 enum TypeConfig

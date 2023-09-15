@@ -38,6 +38,6 @@ int FileListGetNumberByName(LinkedList *list, const char *name);
 int FileListGetDeviceEntries(LinkedList *list);
 int FileListGetDirectoryEntries(LinkedList *list, const char *path, int sort);
 int FileListGetEntries(LinkedList *list, const char *path, int sort);
-LinkedList *FileListCreate();
+LinkedList *NewFileList();
 
 #endif

@@ -41,7 +41,7 @@ typedef struct AlertDialogData
     void *userdata;
 } AlertDialogData;
 
-GUI_Dialog *AlertDialog_Creat();
+GUI_Dialog *AlertDialog_Create();
 void AlertDialog_Destroy(GUI_Dialog *dialog);
 void AlertDialog_SetAutoFree(GUI_Dialog *dialog, int auto_free);
 void AlertDialog_SetUserdata(GUI_Dialog *dialog, void *userdata);

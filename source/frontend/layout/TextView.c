@@ -6,140 +6,235 @@
 #include "gui/gui.h"
 #include "Layout.h"
 #include "TextView.h"
+#include "utils.h"
+#include "utils_string.h"
 
-void ImageViewDestroy(void *view)
+void TextViewDestroy(void *view)
 {
     TextView *textView = (TextView *)view;
 
-    if (!textView || textView->data.params.donot_free)
+    if (!textView || textView->params.dont_free)
         return;
 
     if (textView->text)
         free(textView->text);
-    if (textView->text)
-        free(textView->text);
+    if (textView->text_buf)
+        free(textView->text_buf);
     free(textView);
 }
 
-int ImageViewUpdate(void *view, int x, int y, int max_w, int max_h)
+int TextViewUpdate(void *view, int max_w, int max_h)
 {
     if (!view)
         return -1;
 
     TextView *textView = (TextView *)view;
-    LayoutPosition *positions = &textView->data.positions;
+    LayoutParam *params = &textView->params;
 
-    positions->x = x;
-    positions->y = y;
-    positions->w = positions->layout_w;
-    positions->h = positions->layout_h;
+    max_w -= (params->margin_left + params->margin_right);
+    max_h -= (params->margin_top + params->margin_bottom);
 
-    if (positions->layout_w == TYPE_LAYOUT_MATH_PARENT)
-    {
-        positions->w = max_w;
-    }
-    else if (positions->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-    {
-        if (textView->text)
-            positions->w = GUI_GetTextWidth(textView->text);
-        else
-            positions->w = 0;
-    }
-    if (positions->w > max_w)
-        positions->w = max_w;
+    params->render_w = params->layout_w;
+    params->render_h = params->layout_h;
 
-    if (positions->layout_h == TYPE_LAYOUT_MATH_PARENT)
-    {
-        positions->h = max_h;
-    }
-    else if (positions->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-    {
-        if (textView->text)
-            positions->w = GUI_GetTextHeight(textView->text);
-        else
-            positions->h = 0;
-    }
-    if (positions->h > max_h)
-        positions->h = max_h;
+    if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
+        params->render_w = max_w;
+    else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_w = textView->text_w + params->padding_left + params->padding_right;
+    if (params->render_w > max_w)
+        params->render_w = max_w;
+    if (params->render_w < 0)
+        params->render_w = 0;
+
+    if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
+        params->render_h = max_h;
+    else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+        params->render_h = textView->text_h + params->padding_top + params->padding_bottom;
+    if (params->render_h > max_h)
+        params->render_h = max_h;
+    if (params->render_h < 0)
+        params->render_h = 0;
+
+    if (textView->text_buf)
+        free(textView->text_buf);
+    textView->text_buf = NULL;
 
     if (textView->text)
     {
-    }
+        int text_max_w = params->render_w - params->padding_left - params->padding_right;
 
-    return 0;
-}
-
-void TextViewDraw(void *view)
-{
-    if (!view)
-        return;
-
-    TextView *textView = (TextView *)view;
-    LayoutPosition *positions = &textView->data.positions;
-
-    if (textView->bg_color)
-        GUI_DrawFillRectangle(positions->x, positions->y, positions->w, positions->h, textView->bg_color);
-
-    if (textView->text)
-    {
-        int x = positions->x + positions->padding_left + textView->text_x;
-        int y = positions->y + positions->padding_top + textView->text_y;
-        GUI_DrawText(x, y, textView->text_color, textView->text);
-    }
-}
-
-int TextViewRefresh(TextView *view)
-{
-    if (!view)
-        return -1;
-
-    LayoutPosition *positions = &view->data.positions;
-
-    if (positions->layout_w > 0 && positions->layout_h > 0)
-        return TextViewUpdate(view, positions->x, positions->y, positions->layout_w, positions->layout_h);
-    else if (view->data.params.parent)
-        return LayoutRefresh(view->data.params.parent);
-    else
-        return TextViewUpdate(view, positions->x, positions->y, positions->layout_max_w, positions->layout_max_h);
-}
-
-int TextViewSetText(TextView *view, const char *text)
-{
-    if (!view || !text)
-        return -1;
-
-    if (view->text)
-        free(view->text);
-    view->text = NULL;
-    if (text)
-    {
-        view->text = malloc(strlen(text) + 1);
-        if (view->text)
+        if (textView->text_w > text_max_w)
         {
-            strcpy(view->text, text);
-            view->text_w = GUI_GetTextWidth(view->text);
-            view->text_h = GUI_GetTextHeight(view->text);
+            if (textView->single_line)
+                textView->text_buf = StringMakeShortByWidth(textView->text, text_max_w);
+            else
+                textView->text_buf = StringBreakLineByWidth(textView->text, text_max_w);
+            if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
+                params->render_h = GUI_GetTextHeight(textView->text_buf) + 4 + params->padding_top + params->padding_bottom;
         }
     }
 
     return 0;
 }
 
-TextView *TextViewViewCreat(int layout_w, int layout_h, int donot_free)
+void TextViewDraw(void *view, int x, int y)
 {
-    TextView *view = (TextView *)calloc(1, sizeof(TextView));
     if (!view)
-        return NULL;
+        return;
 
-    LayoutParam *params = &view->data.params;
-    LayoutPosition *positions = &view->data.positions;
+    TextView *textView = (TextView *)view;
+    LayoutParam *params = &textView->params;
 
-    positions->layout_w = layout_w;
-    positions->layout_h = layout_h;
-    params->donot_free = donot_free;
+    if (params->render_w <= 0 || params->render_h <= 0)
+        return;
+
+    int view_x = x + params->margin_left;
+    int view_y = y + params->margin_top;
+
+    if (textView->bg_color)
+        GUI_DrawFillRectangle(view_x, view_y, params->render_w, params->render_h, textView->bg_color);
+
+    if (textView->text)
+    {
+        const char *text = textView->text_buf;
+        int text_x = view_x + params->padding_left + textView->text_x;
+        int text_y = view_y + params->padding_top + textView->text_y;
+        int text_max_w = params->render_w - params->padding_left - params->padding_right;
+        int text_max_h = params->render_h - params->padding_top - params->padding_bottom;
+        uint32_t color = textView->text_color;
+
+        GUI_EnableClipping(text_x, text_y, text_max_w, text_max_h);
+
+        if (textView->text_scoll_enable && textView->text_w > text_max_w)
+        {
+            text = textView->text;
+
+            if (textView->text_scoll_count < 60)
+            {
+                textView->text_x_off = 0;
+            }
+            else if (textView->text_scoll_count < textView->text_w + 60)
+            {
+                textView->text_x_off++;
+            }
+            else if (textView->text_scoll_count < textView->text_w + 90)
+            {
+                color = (color & 0x00FFFFFF) | ((((color >> 24) * (textView->text_scoll_count - textView->text_w - 60)) / 30) << 24); // fade-in in 0.5s
+                textView->text_x_off = 0;
+            }
+            else
+            {
+                textView->text_scoll_count = 0;
+            }
+
+            textView->text_scoll_count++;
+            text_x -= textView->text_x_off;
+        }
+        else
+        {
+            textView->text_scoll_count = 0;
+            textView->text_x_off = 0;
+        }
+
+        if (!text)
+            text = textView->text;
+        if (text)
+            GUI_DrawText(text_x, text_y, color, text);
+
+        GUI_DisableClipping();
+    }
+}
+
+int TextViewSetText(TextView *textView, const char *text)
+{
+    if (!textView)
+        return -1;
+
+    if (textView->text)
+        free(textView->text);
+    textView->text = NULL;
+    if (textView->text_buf)
+        free(textView->text_buf);
+    textView->text_buf = NULL;
+    textView->text_w = 0;
+    textView->text_h = 0;
+
+    if (text)
+    {
+        textView->text = malloc(strlen(text) + 1);
+        if (textView->text)
+        {
+            strcpy(textView->text, text);
+            textView->text_w = GUI_GetTextWidth(textView->text);
+            textView->text_h = GUI_GetTextHeight(textView->text) + 4;
+        }
+    }
+
+    return 0;
+}
+
+int TextViewSetBgColor(TextView *textView, uint32_t color)
+{
+    if (!textView)
+        return -1;
+
+    textView->bg_color = color;
+
+    return 0;
+}
+
+int TextViewSetTextColor(TextView *textView, uint32_t color)
+{
+    if (!textView)
+        return -1;
+
+    textView->text_color = color;
+
+    return 0;
+}
+
+int TextViewSetSingleLine(TextView *textView, int single_line)
+{
+    if (!textView)
+        return -1;
+
+    textView->single_line = single_line;
+
+    return 0;
+}
+
+int TextViewSetTextScollEnabled(TextView *textView, int enable)
+{
+    if (!textView)
+        return -1;
+
+    textView->text_scoll_enable = enable;
+
+    return 0;
+}
+
+int TextViewInit(TextView *textView)
+{
+    if (!textView)
+        return -1;
+
+    memset(textView, 0, sizeof(TextView));
+
+    LayoutParam *params = &textView->params;
+    params->destroy = TextViewDestroy;
     params->update = TextViewUpdate;
     params->draw = TextViewDraw;
-    params->destroy = TextViewDestroy;
 
-    return view;
+    return 0;
+}
+
+TextView *NewTextView()
+{
+    TextView *textView = (TextView *)malloc(sizeof(TextView));
+    if (!textView)
+        return NULL;
+
+    TextViewInit(textView);
+
+    return textView;
 }

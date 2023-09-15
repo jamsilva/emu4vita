@@ -88,7 +88,7 @@ typedef struct GUI_Dialog
 // Color
 #define GUI_DEF_COLOR_TEXT COLOR_WHITE
 #define GUI_DEF_COLOR_BG 0xAF0F0F0F
-#define GUI_DEF_COLOR_FOCUS_BG COLOR_ALPHA(COLOR_AZURE, 0xDF)
+#define GUI_DEF_COLOR_FOCUS COLOR_ALPHA(COLOR_AZURE, 0xDF)
 
 int GUI_BackToMainActivity();
 int GUI_StartActivity(GUI_Activity *activity);
@@ -116,6 +116,7 @@ void GUI_DrawMain();
 void GUI_CtrlMain();
 void GUI_RunMain();
 
-#include "alert_dialog.h"
+#include "layout/Layout.h"
+#include "dialog/dialog.h"
 
 #endif

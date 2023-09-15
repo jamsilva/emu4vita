@@ -13,7 +13,7 @@
 #include "utils.h"
 
 Pad old_pad, current_pad, pressed_pad, released_pad, hold_pad, hold2_pad;
-Pad hold_count, hold2_count, real_hold_count;
+Pad hold_count, hold2_count;
 static uint64_t disable_psbutton_micros = 0;
 
 void GUI_ReadPad()
@@ -35,9 +35,6 @@ void GUI_ReadPad()
         int ret = sceCtrlPeekBufferPositiveExt2(port, &ctrlData, 1);
         if (ret < 0)
             continue;
-
-        // if (CHECK_EXIT_APP(ctrlData.buttons))
-        // AppExit();
 
         if (ctrlData.buttons & SCE_CTRL_UP)
             current_pad[PAD_UP] = 1;
@@ -119,15 +116,11 @@ void GUI_ReadPad()
 
             hold_count[i]++;
             hold2_count[i]++;
-
-            if (real_hold_count[i] < 255)
-                real_hold_count[i]++;
         }
         else
         {
             hold_count[i] = 0;
             hold2_count[i] = 0;
-            real_hold_count[i] = 0;
         }
     }
 

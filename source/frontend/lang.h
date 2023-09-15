@@ -204,8 +204,7 @@ enum LanguageContainer
 
     FULL_PRESERVE,
     FULL_STRETCH,
-    FULL_4_3,
-    FULL_3_2,
+    FULL_CROP,
 
     // Menu state
     LABEL_EXISTENT_STATE,
@@ -218,7 +217,13 @@ enum LanguageContainer
     LANGUAGE_CONTAINER_SIZE,
 };
 
-typedef struct LangEntry
+typedef struct
+{
+    int lang;
+    char *string;
+} LangString;
+
+typedef struct
 {
     char *name;
     char **container;
@@ -230,5 +235,7 @@ extern char **cur_lang;
 int GetLangsLength();
 int GetLangValue(int fake_id);
 int SetCurrentLang(int fake_id);
+
+char *GetLangString(LangString *lang_s);
 
 #endif

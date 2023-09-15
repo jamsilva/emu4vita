@@ -30,7 +30,7 @@
 #define OPTION_ITEMVIEW_PADDING_L 10.0f
 #define OPTION_ITEMVIEW_PADDING_T 6.0f
 
-#define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS_BG
+#define MENU_ITEMVIEW_COLOR_FOCUS_BG GUI_DEF_COLOR_FOCUS
 
 enum IndexSettingMenuList
 {
@@ -51,8 +51,8 @@ static int menu_items_need_update = 0;
 static int has_main_core_menu = 0;
 static int setting_config_type = 0;
 
-// static int menu_list_top_pos = 0;
-static int menu_list_focus_pos = 0;
+// static int tab_top_pos = 0;
+static int tab_focus_pos = 0;
 static int menu_top_pos = 0;
 static int menu_focus_pos = 0;
 
@@ -79,8 +79,8 @@ static int disk_control_visibility = 0;
 static int exit_to_arch_visibility = 0;
 static int touch_to_button_visibility = 0;
 
-static SettingMenuItem **select_menu_items = NULL;
-static int n_select_menu_items = 0;
+static SettingMenuItem **cur_menu_items = NULL;
+static int n_cur_menu_items = 0;
 
 // Free draw
 int SETTING_FREE_DRAW_WIDTH, SETTING_FREE_DRAW_HEIGHT;

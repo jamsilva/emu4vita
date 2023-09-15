@@ -232,7 +232,7 @@ int ResetAppConfig()
     memset(&app_config, 0, sizeof(AppConfig));
     app_config.version = APP_CONFIG_VERSION;
     app_config.preview_path = TYPE_PREVIEW_PATH_AUTO;
-    app_config.preview_style = TYPE_PREVIEW_STYLE_FULL_PRESERVE;
+    app_config.preview_style = TYPE_PREVIEW_SCALE_TYPE_FIT_CENTER_INSIDE;
     app_config.app_log = 1;
     app_config.core_log = 0;
 #if defined(FBA_BUILD)
