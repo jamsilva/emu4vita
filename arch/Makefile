@@ -2,10 +2,10 @@ TARGET := Emu4VitaArch
 
 SFO_TITLE_ID      := EMUARCH01
 SFO_TITLE_NAME    := Emu4Vita Arch
-SFO_APP_VER       := 01.04
+SFO_APP_VER       := 01.05
 
 APP_NAME_STR      := Emu4Vita\ Arch
-APP_VER_STR       := 1.04
+APP_VER_STR       := 1.05
 APP_DIR_NAME      := Emu4VitaArch
 BUILD_DATE        := $(shell date +"%Y-%m-%d")
 

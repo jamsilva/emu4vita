@@ -33,13 +33,13 @@ static int LayoutUpdateChild(void *view, int orientation, int *remaining_w, int 
 
     if (orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
     {
-        *remaining_w -= (params->render_w + params->margin_left + params->margin_right);
+        *remaining_w -= (params->measured_w + params->margin_left + params->margin_right);
         if (params->above_view)
             LayoutUpdateChild(params->above_view, orientation, remaining_w, remaining_h);
     }
     else if (orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
     {
-        *remaining_h -= (params->render_h + params->margin_top + params->margin_bottom);
+        *remaining_h -= (params->measured_h + params->margin_top + params->margin_bottom);
         if (params->above_view)
             LayoutUpdateChild(params->above_view, orientation, remaining_w, remaining_h);
     }
@@ -47,18 +47,17 @@ static int LayoutUpdateChild(void *view, int orientation, int *remaining_w, int 
     return 0;
 }
 
-int LayoutUpdate(void *view, int max_w, int max_h)
+int LayoutUpdate(void *view, int remaining_w, int remaining_h)
 {
     if (!view)
         return -1;
 
     Layout *layout = (Layout *)view;
     LayoutParam *params = &layout->params;
+    int max_w = remaining_w - params->margin_left - params->margin_right;
+    int max_h = remaining_h - params->margin_top - params->margin_bottom;
     int wrap_w = 0;
     int wrap_h = 0;
-
-    max_w -= (params->margin_left + params->margin_right);
-    max_h -= (params->margin_top + params->margin_bottom);
 
     layout->remaining_w = max_w - params->padding_left - params->padding_right;
     layout->remaining_h = max_h - params->padding_top - params->padding_bottom;
@@ -81,26 +80,26 @@ int LayoutUpdate(void *view, int max_w, int max_h)
         entry = LinkedListNext(entry);
     }
 
-    params->render_w = params->layout_w;
-    params->render_h = params->layout_h;
+    params->measured_w = params->layout_w;
+    params->measured_h = params->layout_h;
 
     if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        params->render_w = max_w;
+        params->measured_w = max_w;
     else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_w = wrap_w;
-    if (params->render_w > max_w)
-        params->render_w = max_w;
-    if (params->render_w < 0)
-        params->render_w = 0;
+        params->measured_w = wrap_w;
+    if (params->measured_w > max_w)
+        params->measured_w = max_w;
+    if (params->measured_w < 0)
+        params->measured_w = 0;
 
     if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        params->render_h = max_h;
+        params->measured_h = max_h;
     else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_h = wrap_h;
-    if (params->render_h > max_h)
-        params->render_h = max_h;
-    if (params->render_h < 0)
-        params->render_h = 0;
+        params->measured_h = wrap_h;
+    if (params->measured_h > max_h)
+        params->measured_h = max_h;
+    if (params->measured_h < 0)
+        params->measured_h = 0;
 
     return 0;
 }
@@ -121,9 +120,9 @@ static void LayoutDrawChild(void *view, int orientation, int *x, int *y)
     params->draw(params, *x, *y);
 
     if (orientation == TYPE_LAYOUT_ORIENTATION_HORIZONTAL)
-        *x += (params->render_w + params->margin_left + params->margin_right);
+        *x += (params->measured_w + params->margin_left + params->margin_right);
     else if (orientation == TYPE_LAYOUT_ORIENTATION_VERTICAL)
-        *y += (params->render_h + params->margin_top + params->margin_bottom);
+        *y += (params->measured_h + params->margin_top + params->margin_bottom);
 }
 
 void LayoutDraw(void *view, int x, int y)
@@ -134,20 +133,20 @@ void LayoutDraw(void *view, int x, int y)
     Layout *layout = (Layout *)view;
     LayoutParam *params = &layout->params;
 
-    if (params->render_w <= 0 || params->render_h <= 0)
+    if (params->measured_w <= 0 || params->measured_h <= 0)
         return;
 
     int layout_x = x + params->margin_left;
     int layout_y = y + params->margin_top;
 
     if (layout->bg_color)
-        GUI_DrawFillRectangle(layout_x, layout_y, params->render_w, params->render_h, layout->bg_color);
+        GUI_DrawFillRectangle(layout_x, layout_y, params->measured_w, params->measured_h, layout->bg_color);
 
     LinkedListEntry *entry = LinkedListHead(layout->childs);
     int child_min_x = layout_x + params->padding_left;
     int child_min_y = layout_y + params->padding_top;
-    int child_max_x = layout_x + params->render_w - params->padding_right;
-    int child_max_y = layout_y + params->render_h - params->padding_bottom;
+    int child_max_x = layout_x + params->measured_w - params->padding_right;
+    int child_max_y = layout_y + params->measured_h - params->padding_bottom;
     int child_max_w = child_max_x - child_min_x;
     int child_max_h = child_max_y - child_min_y;
 
@@ -368,8 +367,8 @@ int ViewRefresh(void *view)
         return -1;
 
     if (params->layout_w != TYPE_LAYOUT_WRAP_CONTENT && params->layout_h != TYPE_LAYOUT_WRAP_CONTENT &&
-        params->render_w > 0 && params->render_h > 0)
-        return params->update(view, params->render_w + params->margin_left + params->margin_right, params->render_h + params->margin_top + params->margin_bottom);
+        params->measured_w > 0 && params->measured_h > 0)
+        return params->update(view, params->measured_w + params->margin_left + params->margin_right, params->measured_h + params->margin_top + params->margin_bottom);
     else if (params->parent)
         return ViewRefresh(params->parent);
     else

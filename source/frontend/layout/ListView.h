@@ -36,9 +36,8 @@ typedef struct
 typedef struct
 {
     LayoutParam params;
+    int orientation;
     LinkedList *items;
-    int wrap_w;
-    int wrap_h;
     int itemView_margin_left;
     int itemView_margin_right;
     int itemView_margin_top;
@@ -64,7 +63,7 @@ typedef struct
 } ListView;
 
 void ListViewDestroy(void *view);
-int ListViewUpdate(void *view, int max_w, int max_h);
+int ListViewUpdate(void *view, int remaining_w, int remaining_h);
 void ListViewDraw(void *view, int x, int y);
 
 int ListViewRemoveItem(ListView *listView, int n);

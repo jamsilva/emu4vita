@@ -31,7 +31,7 @@ void ListViewDestroy(void *view)
     free(listView);
 }
 
-int ListViewUpdate(void *view, int max_w, int max_h)
+int ListViewUpdate(void *view, int remaining_w, int remaining_h)
 {
     if (!view)
         return -1;
@@ -39,15 +39,15 @@ int ListViewUpdate(void *view, int max_w, int max_h)
     ListView *listView = (ListView *)view;
     LayoutParam *params = &listView->params;
 
-    max_w -= (params->margin_left + params->margin_right);
-    max_h -= (params->margin_top + params->margin_bottom);
+    int max_w = remaining_w - params->margin_left - params->margin_right;
+    int max_h = remaining_h - params->margin_top - params->margin_bottom;
+    int wrap_w = 0;
+    int wrap_h = 0;
 
     int item_max_w = max_w - params->padding_left - params->padding_right;
     int item_max_h = max_h - params->padding_top - params->padding_bottom;
-    int item_w = 0;
-    int item_h = 0;
-    listView->wrap_w = 0;
-    listView->wrap_h = 0;
+    int item_wrap_w = 0;
+    int item_wrap_h = 0;
 
     LinkedListEntry *entry = LinkedListHead(listView->items);
     while (entry)
@@ -59,39 +59,40 @@ int ListViewUpdate(void *view, int max_w, int max_h)
         LayoutParamSetPadding(data->textView, listView->itemView_padding_left, listView->itemView_padding_right, listView->itemView_padding_top, listView->itemView_padding_bottom);
         TextViewSetSingleLine(data->textView, 1);
         TextViewUpdate(data->textView, item_max_w, item_max_h);
-        item_w = data->textView->params.render_w + data->textView->params.margin_left + data->textView->params.margin_right;
-        item_h = data->textView->params.render_h + data->textView->params.margin_top + data->textView->params.margin_bottom + listView->driver_size;
-        if (listView->wrap_w < item_w)
-            listView->wrap_w = item_w;
-        listView->wrap_h += item_h;
+        item_wrap_w = data->textView->params.measured_w + data->textView->params.margin_left + data->textView->params.margin_right;
+        item_wrap_h = data->textView->params.measured_h + data->textView->params.margin_top + data->textView->params.margin_bottom + listView->driver_size;
+        if (wrap_w < item_wrap_w)
+            wrap_w = item_wrap_w;
+        wrap_h += item_wrap_h;
 
         entry = LinkedListNext(entry);
     }
-    if (listView->wrap_h > 0)
-        listView->wrap_h -= listView->driver_size;
 
-    params->render_w = params->layout_w;
-    params->render_h = params->layout_h;
+    if (wrap_h > 0)
+        wrap_h -= listView->driver_size;
+
+    params->measured_w = params->layout_w;
+    params->measured_h = params->layout_h;
 
     if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        params->render_w = max_w;
+        params->measured_w = max_w;
     else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_w = listView->wrap_w;
-    if (params->render_w > max_w)
-        params->render_w = max_w;
-    if (params->render_w < 0)
-        params->render_w = 0;
+        params->measured_w = wrap_w;
+    if (params->measured_w > max_w)
+        params->measured_w = max_w;
+    if (params->measured_w < 0)
+        params->measured_w = 0;
 
     if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        params->render_h = max_h;
+        params->measured_h = max_h;
     else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_h = listView->wrap_h;
-    if (params->render_h > max_h)
-        params->render_h = max_h;
-    if (params->render_h < 0)
-        params->render_h = 0;
+        params->measured_h = wrap_h;
+    if (params->measured_h > max_h)
+        params->measured_h = max_h;
+    if (params->measured_h < 0)
+        params->measured_h = 0;
 
-    listView->n_draw_items = (item_max_h + listView->driver_size) / item_h;
+    listView->n_draw_items = (item_max_h + listView->driver_size) / item_wrap_h;
 
     return 0;
 }
@@ -104,7 +105,7 @@ void ListViewDraw(void *view, int x, int y)
     ListView *listView = (ListView *)view;
     LayoutParam *params = &listView->params;
 
-    if (params->render_w <= 0 || params->render_h <= 0)
+    if (params->measured_w <= 0 || params->measured_h <= 0)
         return;
 
     ListViewCallbacks *callbacks = &listView->callbacks;
@@ -112,12 +113,12 @@ void ListViewDraw(void *view, int x, int y)
     int layout_y = y + params->margin_top;
 
     if (listView->bg_color)
-        GUI_DrawFillRectangle(layout_x, layout_y, params->render_w, params->render_h, listView->bg_color);
+        GUI_DrawFillRectangle(layout_x, layout_y, params->measured_w, params->measured_h, listView->bg_color);
 
     int child_min_x = layout_x + params->padding_left;
     int child_min_y = layout_y + params->padding_top;
-    int child_max_x = layout_x + params->render_w - params->padding_right;
-    int child_max_y = layout_y + params->render_h - params->padding_bottom;
+    int child_max_x = layout_x + params->measured_w - params->padding_right;
+    int child_max_y = layout_y + params->measured_h - params->padding_bottom;
     int child_max_w = child_max_x - child_min_x;
     int child_max_h = child_max_y - child_min_y;
 
@@ -157,7 +158,7 @@ void ListViewDraw(void *view, int x, int y)
 
             TextViewDraw(data->textView, child_x, child_y);
 
-            child_y += (data->textView->params.render_h + data->textView->params.margin_top + data->textView->params.margin_bottom);
+            child_y += (data->textView->params.measured_h + data->textView->params.margin_top + data->textView->params.margin_bottom);
             if (listView->driver_size > 0)
             {
                 GUI_DrawFillRectangle(child_x, child_y, child_max_w, listView->driver_size, listView->driver_color);

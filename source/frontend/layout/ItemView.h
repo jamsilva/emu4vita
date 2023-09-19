@@ -15,7 +15,8 @@ typedef struct
     uint32_t bg_color;
 } ItemView;
 
-int ItemViewUpdate(void *view, int max_w, int max_h);
+void ItemViewDestroy(void *view);
+int ItemViewUpdate(void *view, int remaining_w, int remaining_h);
 void ItemViewDraw(void *view, int x, int y);
 
 int ItemViewSetImage(ItemView *itemView, GUI_Texture *image, int auto_free);

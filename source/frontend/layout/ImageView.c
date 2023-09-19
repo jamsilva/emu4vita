@@ -22,7 +22,7 @@ void ImageViewDestroy(void *view)
     free(imageView);
 }
 
-int ImageViewUpdate(void *view, int max_w, int max_h)
+int ImageViewUpdate(void *view, int remaining_w, int remaining_h)
 {
     if (!view)
         return -1;
@@ -30,34 +30,36 @@ int ImageViewUpdate(void *view, int max_w, int max_h)
     ImageView *imageView = (ImageView *)view;
     LayoutParam *params = &imageView->params;
 
-    max_w -= (params->margin_left + params->margin_right);
-    max_h -= (params->margin_top + params->margin_bottom);
+    int max_w = remaining_w - params->margin_left - params->margin_right;
+    int max_h = remaining_h - params->margin_top - params->margin_bottom;
+    int wrap_w = imageView->tex_w + params->padding_left + params->padding_right;
+    int wrap_h = imageView->tex_h + params->padding_top + params->padding_bottom;
 
-    params->render_w = params->layout_w;
-    params->render_h = params->layout_h;
+    params->measured_w = params->layout_w;
+    params->measured_h = params->layout_h;
 
     if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        params->render_w = max_w;
+        params->measured_w = max_w;
     else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_w = imageView->tex_w + params->padding_left + params->padding_right;
-    if (params->render_w > max_w)
-        params->render_w = max_w;
-    if (params->render_w < 0)
-        params->render_w = 0;
+        params->measured_w = wrap_w;
+    if (params->measured_w > max_w)
+        params->measured_w = max_w;
+    if (params->measured_w < 0)
+        params->measured_w = 0;
 
     if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        params->render_h = max_h;
+        params->measured_h = max_h;
     else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_h = imageView->tex_h + params->padding_top + params->padding_bottom;
-    if (params->render_h > max_h)
-        params->render_h = max_h;
-    if (params->render_h < 0)
-        params->render_h = 0;
+        params->measured_h = wrap_h;
+    if (params->measured_h > max_h)
+        params->measured_h = max_h;
+    if (params->measured_h < 0)
+        params->measured_h = 0;
 
     if (imageView->tex)
     {
-        int tex_max_w = params->render_w - params->padding_left - params->padding_right;
-        int tex_max_h = params->render_h - params->padding_top - params->padding_bottom;
+        int tex_max_w = params->measured_w - params->padding_left - params->padding_right;
+        int tex_max_h = params->measured_h - params->padding_top - params->padding_bottom;
         int tex_w = imageView->tex_w;
         int tex_h = imageView->tex_h;
         int scale_w = tex_w;
@@ -304,14 +306,14 @@ void ImageViewDraw(void *view, int x, int y)
     ImageView *imageView = (ImageView *)view;
     LayoutParam *params = &imageView->params;
 
-    if (params->render_w <= 0 || params->render_h <= 0)
+    if (params->measured_w <= 0 || params->measured_h <= 0)
         return;
 
     int view_x = x + params->margin_left;
     int view_y = y + params->margin_top;
 
     if (imageView->bg_color)
-        GUI_DrawFillRectangle(view_x, view_y, params->render_w, params->render_h, imageView->bg_color);
+        GUI_DrawFillRectangle(view_x, view_y, params->measured_w, params->measured_h, imageView->bg_color);
 
     if (imageView->tex)
     {

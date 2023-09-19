@@ -10,7 +10,7 @@ typedef struct
     uint32_t bg_color;
 } RectView;
 
-int RectViewUpdate(void *view, int max_w, int max_h);
+int RectViewUpdate(void *view, int remaining_w, int remaining_h);
 void RectViewDraw(void *view, int x, int y);
 
 int RectViewSetBgColor(RectView *rectView , uint32_t color);

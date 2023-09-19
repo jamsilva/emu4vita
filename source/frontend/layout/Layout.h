@@ -27,8 +27,8 @@ typedef struct Layout Layout;
 
 typedef struct
 {
-    int render_w;
-    int render_h;
+    int measured_w;
+    int measured_h;
     int layout_w;
     int layout_h;
     int padding_left;
@@ -46,7 +46,7 @@ typedef struct
     int is_clicked;
     int is_focus;
     void (*destroy)(void *view);
-    int (*update)(void *view, int max_w, int max_h);
+    int (*update)(void *view, int remaining_w, int remaining_h);
     void (*draw)(void *view, int x, int y);
 } LayoutParam;
 
@@ -54,6 +54,7 @@ struct Layout
 {
     LayoutParam params;
     int orientation;
+    int scroll_enable;
     int remaining_w;
     int remaining_h;
     LinkedList *childs;
@@ -61,7 +62,7 @@ struct Layout
 };
 
 void LayoutDestroy(void *view);
-int LayoutUpdate(void *view, int max_w, int max_h);
+int LayoutUpdate(void *view, int remaining_w, int remaining_h);
 void LayoutDraw(void *view, int x, int y);
 
 int LayoutSetOrientation(Layout *layout, int orientation);

@@ -21,7 +21,7 @@ typedef struct
 } TextView;
 
 void TextViewDestroy(void *view);
-int TextViewUpdate(void *view, int max_w, int max_h);
+int TextViewUpdate(void *view, int remaining_w, int remaining_h);
 void TextViewDraw(void *view, int x, int y);
 
 int TextViewSetText(TextView *textView, const char *text);

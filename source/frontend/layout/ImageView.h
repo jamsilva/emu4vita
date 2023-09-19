@@ -39,7 +39,7 @@ typedef struct
 } ImageView;
 
 void ImageViewDestroy(void *view);
-int ImageViewUpdate(void *view, int max_w, int max_h);
+int ImageViewUpdate(void *view, int remaining_w, int remaining_h);
 void ImageViewDraw(void *view, int x, int y);
 
 int ImageViewSetScaleType(ImageView *imageView, int type);

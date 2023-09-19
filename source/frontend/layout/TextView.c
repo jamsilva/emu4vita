@@ -23,7 +23,7 @@ void TextViewDestroy(void *view)
     free(textView);
 }
 
-int TextViewUpdate(void *view, int max_w, int max_h)
+int TextViewUpdate(void *view, int remaining_w, int remaining_h)
 {
     if (!view)
         return -1;
@@ -31,29 +31,31 @@ int TextViewUpdate(void *view, int max_w, int max_h)
     TextView *textView = (TextView *)view;
     LayoutParam *params = &textView->params;
 
-    max_w -= (params->margin_left + params->margin_right);
-    max_h -= (params->margin_top + params->margin_bottom);
+    int max_w = remaining_w - params->margin_left - params->margin_right;
+    int max_h = remaining_h - params->margin_top - params->margin_bottom;
+    int wrap_w = textView->text_w + params->padding_left + params->padding_right;
+    int wrap_h = textView->text_h + params->padding_top + params->padding_bottom;
 
-    params->render_w = params->layout_w;
-    params->render_h = params->layout_h;
+    params->measured_w = params->layout_w;
+    params->measured_h = params->layout_h;
 
     if (params->layout_w == TYPE_LAYOUT_MATH_PARENT)
-        params->render_w = max_w;
+        params->measured_w = max_w;
     else if (params->layout_w == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_w = textView->text_w + params->padding_left + params->padding_right;
-    if (params->render_w > max_w)
-        params->render_w = max_w;
-    if (params->render_w < 0)
-        params->render_w = 0;
+        params->measured_w = wrap_w;
+    if (params->measured_w > max_w)
+        params->measured_w = max_w;
+    if (params->measured_w < 0)
+        params->measured_w = 0;
 
     if (params->layout_h == TYPE_LAYOUT_MATH_PARENT)
-        params->render_h = max_h;
+        params->measured_h = max_h;
     else if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-        params->render_h = textView->text_h + params->padding_top + params->padding_bottom;
-    if (params->render_h > max_h)
-        params->render_h = max_h;
-    if (params->render_h < 0)
-        params->render_h = 0;
+        params->measured_h = wrap_h;
+    if (params->measured_h > max_h)
+        params->measured_h = max_h;
+    if (params->measured_h < 0)
+        params->measured_h = 0;
 
     if (textView->text_buf)
         free(textView->text_buf);
@@ -61,7 +63,7 @@ int TextViewUpdate(void *view, int max_w, int max_h)
 
     if (textView->text)
     {
-        int text_max_w = params->render_w - params->padding_left - params->padding_right;
+        int text_max_w = params->measured_w - params->padding_left - params->padding_right;
 
         if (textView->text_w > text_max_w)
         {
@@ -70,7 +72,7 @@ int TextViewUpdate(void *view, int max_w, int max_h)
             else
                 textView->text_buf = StringBreakLineByWidth(textView->text, text_max_w);
             if (params->layout_h == TYPE_LAYOUT_WRAP_CONTENT)
-                params->render_h = GUI_GetTextHeight(textView->text_buf) + 4 + params->padding_top + params->padding_bottom;
+                params->measured_h = GUI_GetTextHeight(textView->text_buf) + 4 + params->padding_top + params->padding_bottom;
         }
     }
 
@@ -85,22 +87,22 @@ void TextViewDraw(void *view, int x, int y)
     TextView *textView = (TextView *)view;
     LayoutParam *params = &textView->params;
 
-    if (params->render_w <= 0 || params->render_h <= 0)
+    if (params->measured_w <= 0 || params->measured_h <= 0)
         return;
 
     int view_x = x + params->margin_left;
     int view_y = y + params->margin_top;
 
     if (textView->bg_color)
-        GUI_DrawFillRectangle(view_x, view_y, params->render_w, params->render_h, textView->bg_color);
+        GUI_DrawFillRectangle(view_x, view_y, params->measured_w, params->measured_h, textView->bg_color);
 
     if (textView->text)
     {
         const char *text = textView->text_buf;
         int text_x = view_x + params->padding_left + textView->text_x;
         int text_y = view_y + params->padding_top + textView->text_y;
-        int text_max_w = params->render_w - params->padding_left - params->padding_right;
-        int text_max_h = params->render_h - params->padding_top - params->padding_bottom;
+        int text_max_w = params->measured_w - params->padding_left - params->padding_right;
+        int text_max_h = params->measured_h - params->padding_top - params->padding_bottom;
         uint32_t color = textView->text_color;
 
         GUI_EnableClipping(text_x, text_y, text_max_w, text_max_h);
