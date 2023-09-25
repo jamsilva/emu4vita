@@ -282,7 +282,6 @@ int ListViewSetTopPos(ListView *listView, int pos)
         return -1;
 
     listView->top_pos = pos;
-    ListViewRefreshPos(listView);
 
     return 0;
 }
@@ -301,7 +300,6 @@ int ListViewSetFocusPos(ListView *listView, int pos)
         return -1;
 
     listView->focus_pos = pos;
-    ListViewRefreshPos(listView);
 
     return 0;
 }
