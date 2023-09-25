@@ -59,6 +59,7 @@ int Retro_SetOptionListFromVariables(struct retro_variable *varialbes)
     Setting_SetCoreMenu(NULL);
     if (core_option_list)
         LinkedListDestroy(core_option_list);
+    core_option_list = NULL;
 
     if (!varialbes)
         return -1;
@@ -164,6 +165,7 @@ int Retro_SetOptionListFromOptions(void *options, int type)
     Setting_SetCoreMenu(NULL);
     if (core_option_list)
         LinkedListDestroy(core_option_list);
+    core_option_list = NULL;
 
     if (!options)
         return -1;

@@ -204,9 +204,8 @@ static void destroySettingMenuItemOption(void *option, int option_type)
             }
             free(m_option->names);
         }
+        free(option);
     }
-
-    free(option);
 }
 
 static void cleanSettingMenuItem(SettingMenuItem *item)

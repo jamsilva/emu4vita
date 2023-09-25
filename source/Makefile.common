@@ -200,7 +200,7 @@ LD      := $(CXX)
 all: clean_files create_dirs build-deps build-core build-app
 
 clean_files:
-	@rm -rf $(PKG_PATH) $(EBOOT_PATH) $(SFO_PATH) $(APP_BUILD_DIR)/$(TARGET).velf $(APP_BUILD_DIR)/$(TARGET).elf
+	@rm -rf $(EBOOT_PATH) $(SFO_PATH) $(APP_BUILD_DIR)/$(TARGET).velf $(APP_BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(APP_BUILD_DIR)
