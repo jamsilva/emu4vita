@@ -180,8 +180,8 @@ int Retro_SetOptionListFromOptions(void *options, int type)
         const char *key = NULL;
         const char *desc = NULL;
         const char *default_value = NULL;
-        struct retro_core_option_value *values = NULL;
-        struct retro_core_option_value *local_values = NULL;
+        const struct retro_core_option_value *values = NULL;
+        const struct retro_core_option_value *local_values = NULL;
 
         if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS)
         {
@@ -199,7 +199,7 @@ int Retro_SetOptionListFromOptions(void *options, int type)
             struct retro_core_options_intl *options_intl = (struct retro_core_options_intl *)options;
             struct retro_core_option_definition *us_definitions = options_intl->us;
             struct retro_core_option_definition *local_definitions = options_intl->local;
-            if (!us_definitions[i].key)
+            if (!us_definitions || !us_definitions[i].key)
                 break;
 
             key = us_definitions[i].key;
@@ -235,9 +235,9 @@ int Retro_SetOptionListFromOptions(void *options, int type)
         else if (type == RETRO_ENVIRONMENT_SET_CORE_OPTIONS_V2_INTL)
         {
             struct retro_core_options_v2_intl *options_v2_intl = (struct retro_core_options_v2_intl *)options;
-            struct retro_core_option_v2_definition *us_definitions = options_v2_intl->us->definitions;
-            struct retro_core_option_v2_definition *local_definitions = options_v2_intl->local->definitions;
-            if (!us_definitions[i].key)
+            struct retro_core_option_v2_definition *us_definitions = options_v2_intl->us ? options_v2_intl->us->definitions : NULL;
+            struct retro_core_option_v2_definition *local_definitions = options_v2_intl->local ? options_v2_intl->local->definitions : NULL;
+            if (!us_definitions || !us_definitions[i].key)
                 break;
 
             key = us_definitions[i].key;
