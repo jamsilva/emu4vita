@@ -447,7 +447,7 @@ void Setting_UpdateKeyMapperMenu(int idx)
     int i, j;
     for (i = 0; i < n_items; i++)
     {
-        if (items[i].option_type != TYPE_OPTION_CHECK_BOX)
+        if (!items[i].option || items[i].option_type != TYPE_OPTION_CHECK_BOX)
             continue;
 
         CheckBoxOptionMenu *option = (CheckBoxOptionMenu *)(items[i].option);
@@ -467,7 +467,7 @@ void Setting_UpdateKeyMapperMenu(int idx)
 
         option->name.lang = LANG_NULL;
 
-        int n_maped = 0;
+        int n_mapped = 0;
         for (j = 0; j < option->n_items; j++)
         {
             CheckBoxOptionMenuItem *option_item = &(option->items[j]);
@@ -479,14 +479,19 @@ void Setting_UpdateKeyMapperMenu(int idx)
                     char *name = GetLangString(&option_item->name);
                     if (name)
                     {
-                        if (n_maped > 0)
+                        if (n_mapped > 0)
                             strcat(option->name.string, "+");
                         strcat(option->name.string, name);
                     }
                 }
-                n_maped++;
+                n_mapped++;
             }
         }
+
+        if (n_mapped > 0)
+            option->name.lang = LANG_NULL;
+        else
+            option->name.lang = DISABLE;
     }
 }
 

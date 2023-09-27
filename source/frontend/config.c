@@ -142,11 +142,7 @@ int ResetControlConfig()
     control_config.button_l3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
     control_config.button_r3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
 #endif
-#if defined(WSC_BUILD)
-    control_config.button_select = 0;
-#else
     control_config.button_select = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT);
-#endif
     control_config.button_start = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START);
     control_config.left_analog_up = control_config.button_up;
     control_config.left_analog_down = control_config.button_down;
@@ -156,52 +152,14 @@ int ResetControlConfig()
     control_config.front_touch_pad = 1;
     control_config.back_touch_pad = 1;
 #else
-#if defined(ARC_BUILD)
-    control_config.front_touch_pad = 1;
-#else
     control_config.front_touch_pad = 0;
-#endif
     control_config.back_touch_pad = 0;
 #endif
 
     control_config.turbo_delay = 4;
-#if defined(WSC_BUILD)
-    graphics_config.display_rotate = 0;
-#endif
 
     return 0;
 }
-
-#if defined(WSC_BUILD)
-int ResetVControlConfig()
-{
-    memset(&control_config, 0, sizeof(ControlConfig));
-    control_config.version = CONTROL_CONFIG_VERSION;
-    control_config.ctrl_player = 0;
-    control_config.button_left = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-    control_config.button_up = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_right = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_down = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_UP);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_RIGHT);
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_DOWN);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_LEFT);
-    control_config.button_l = 0;
-    control_config.button_r = 0;
-    control_config.button_select = 0;
-    control_config.button_start = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START);
-    control_config.left_analog_up = control_config.button_up;
-    control_config.left_analog_down = control_config.button_down;
-    control_config.left_analog_left = control_config.button_left;
-    control_config.left_analog_right = control_config.button_right;
-    control_config.front_touch_pad = 0;
-    control_config.back_touch_pad = 0;
-    control_config.turbo_delay = 5;
-    graphics_config.display_rotate = 3;
-
-    return 0;
-}
-#endif
 
 int ResetHotkeyConfig()
 {

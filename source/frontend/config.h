@@ -211,9 +211,6 @@ void MakeConfigPath(char *path, char *config_name, int type);
 
 int ResetGraphicsConfig();
 int ResetControlConfig();
-#if defined(WSC_BUILD)
-int ResetVControlConfig();
-#endif
 int ResetHotkeyConfig();
 int ResetMiscConfig();
 int ResetAppConfig();

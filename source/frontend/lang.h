@@ -12,6 +12,7 @@ enum LanguageContainer
     CONFIRM,
     CANCEL,
     BACK,
+    EXIT,
 
     // Dialog
     TITLE_TIP,
@@ -19,9 +20,7 @@ enum LanguageContainer
     COLSE,
 
     // Safe mode
-    MESSAGE_SAFE_MODE_0,
-    MESSAGE_SAFE_MODE_1,
-    MESSAGE_SAFE_MODE_2,
+    MESSAGE_SAFE_MODE,
 
     // Button string
     BUTTON_ENTER,
@@ -175,8 +174,6 @@ enum LanguageContainer
     LABEL_FRONT_TOUCH_TO_BUTTON,
     LABEL_BACK_TOUCH_TO_BUTTON,
     LABEL_TURBO_DELAY,
-    LABEL_RESET_CONFIGS_H,
-    LABEL_RESET_CONFIGS_V,
 
     FOLLOW_DPAD,
 

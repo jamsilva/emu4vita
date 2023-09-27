@@ -197,12 +197,7 @@ SettingMenuItem control_menu_items[] = {
     {{LABEL_FRONT_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &front_touch_pad_option},
     {{LABEL_BACK_TOUCH_TO_BUTTON, NULL}, &touch_to_button_visibility, TYPE_OPTION_STR_ARRAY, &back_touch_pad_option},
     {{LABEL_TURBO_DELAY, NULL}, &visibility_visible, TYPE_OPTION_INT_RANGE, &turbo_delay_option},
-#if defined(WSC_BUILD)
-    {{LABEL_RESET_CONFIGS_H, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetControlConfigCallback},
-    {{LABEL_RESET_CONFIGS_V, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetVControlConfigCallback},
-#else
     {{LABEL_RESET_CONFIGS, NULL}, &visibility_visible, TYPE_OPTION_CALLBACK, resetControlConfigCallback},
-#endif
 };
 static SettingMenu control_menu = {{TAB_CONTROL, NULL}, &visibility_visible, control_menu_items, sizeof(control_menu_items) / sizeof(SettingMenuItem), NULL, controlMenuExitCallback};
 

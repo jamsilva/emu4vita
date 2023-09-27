@@ -378,7 +378,7 @@ static void onHomeButtonEvent()
 {
     if (released_pad[PAD_PSBUTTON])
     {
-        if (!Emu_IsGameLoading() && IsPSbuttonEventEnabled())
+        if (current_activity && !Emu_IsGameLoading() && IsPSbuttonEventEnabled())
         {
             if (!current_activity->parent)
             {

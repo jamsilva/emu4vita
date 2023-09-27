@@ -68,26 +68,18 @@ int checkVitatvModel()
     return is_vitatv_model;
 }
 
-static void displaySafeMode()
+static void safeModeDialogNegativeCallback(GUI_Dialog *dialog)
 {
-    while (1)
-    {
-        int x = 30, y = 30;
-        GUI_StartDrawing();
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_0]);
-        y += GUI_GetFontSize();
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_1]);
-        y += GUI_GetFontSize() * 2;
-        GUI_DrawText(x, y, COLOR_WHITE, cur_lang[MESSAGE_SAFE_MODE_2]);
-        GUI_EndDrawing();
+    AppExit();
+}
 
-        SceCtrlData pad;
-        memset(&pad, 0, sizeof(SceCtrlData));
-        sceCtrlPeekBufferPositiveExt2(0, &pad, 1);
-
-        if (pad.buttons & ~SCE_CTRL_INTERCEPTED)
-            break;
-    }
+static void showSafeModeDialog()
+{
+    GUI_Dialog *tip_dialog = AlertDialog_Create();
+    AlertDialog_SetTitle(tip_dialog, cur_lang[TITLE_TIP]);
+    AlertDialog_SetMessage(tip_dialog, cur_lang[MESSAGE_SAFE_MODE]);
+    AlertDialog_SetNegativeButton(tip_dialog, cur_lang[EXIT], safeModeDialogNegativeCallback);
+    AlertDialog_Show(tip_dialog);
 }
 
 static void initSceAppUtil()
@@ -159,17 +151,18 @@ int AppInit(int argc, char *const argv[])
     sceTouchSetSamplingState(SCE_TOUCH_PORT_BACK, SCE_TOUCH_SAMPLING_STATE_START);
 
     checkVitatvModel();
+    checkSafeMode();
+
+    GUI_Init();
+
+    if (is_safe_mode)
+    {
+        showSafeModeDialog();
+        goto END;
+    }
 
     Retro_InitLib();
-    GUI_Init();
     Setting_Init();
-
-    if (checkSafeMode())
-    {
-        displaySafeMode();
-        AppDeinit();
-        sceKernelExitProcess(0);
-    }
 
     LoadControlConfig(TYPE_CONFIG_MAIN);
     LoadHotkeyConfig(TYPE_CONFIG_MAIN);
@@ -187,6 +180,7 @@ int AppInit(int argc, char *const argv[])
     if (exec_boot_mode == BOOT_MODE_GAME)
         BootLoadGame();
 
+END:
     AppRunLoop();
 
     return 0;

@@ -18,6 +18,8 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "cancel",
     // BACK
     "back",
+    // EXIT
+    "exit",
 
     /**************  Alert dialog  *****************/
     // TITLE_TIP
@@ -28,12 +30,9 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "close",
 
     /**************  Safe mode  *****************/
-    // MESSAGE_SAFE_MODE_0
-    "Currently in safe mode, please enable unsafe homemade software in HENkaku settings first,",
-    // MESSAGE_SAFE_MODE_1
+    // MESSAGE_SAFE_MODE
+    "Currently in safe mode, please enable unsafe homemade software in HENkaku settings first, "
     "only then can this program be used normally.",
-    // MESSAGE_SAFE_MODE_2
-    "Press any key to exit!",
 
     /**************  Button string  *****************/
     // BUTTON_ENTER
@@ -309,10 +308,6 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Back touch to button",
     // LABEL_TURBO_DELAY
     "Turbo delay (frame)",
-    // LABEL_RESET_CONFIGS_H
-    "Reset configs (H)",
-    // LABEL_RESET_CONFIGS_V
-    "Reset configs (V)",
 
     // FOLLOW_DPAD
     "follow d-pad",
@@ -392,6 +387,8 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "取消",
     // BACK
     "返回",
+    // EXIT
+    "退出",
 
     /**************  Dialog  *****************/
     // TITLE_TIP
@@ -402,12 +399,9 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "关闭",
 
     /**************  Safe mode  *****************/
-    // MESSAGE_SAFE_MODE_0
-    "当前处于安全模式，请先在HENkaku设置里开启启用不安全自制软件，",
-    // MESSAGE_SAFE_MODE_1
+    // MESSAGE_SAFE_MODE
+    "当前处于安全模式，请先在HENkaku设置里开启启用不安全自制软件，"
     "然后才能正常使用本程序。",
-    // MESSAGE_SAFE_MODE_2
-    "按任意键退出！",
 
     /**************  Button string  *****************/
     // BUTTON_ENTER
@@ -683,10 +677,6 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "背触摸映射按键",
     // LABEL_TURBO_DELAY
     "连发间隔 (帧)",
-    // LABEL_RESET_CONFIGS_H
-    "恢复默认设置 (横屏)",
-    // LABEL_RESET_CONFIGS_V
-    "恢复默认设置 (竖屏)",
 
     // FOLLOW_DPAD
     "跟随十字键",

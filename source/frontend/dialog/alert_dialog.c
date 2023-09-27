@@ -587,8 +587,8 @@ static void ctrlDialogCallback(GUI_Dialog *dialog)
     }
     else if (released_pad[PAD_TRIANGLE])
     {
-        if (data->negativeCallback)
-            data->negativeCallback(dialog);
+        if (data->neutralCallback)
+            data->neutralCallback(dialog);
     }
 }
 

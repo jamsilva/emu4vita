@@ -155,22 +155,7 @@ static void resetControlConfigCallback()
     ResetControlConfig();
     control_option_changed = 1;
     Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
-#if defined(WSC_BUILD)
-    if (Emu_IsGameLoaded())
-        Emu_RequestUpdateVideoDisplay();
-#endif
 }
-
-#if defined(WSC_BUILD)
-static void resetVControlConfigCallback()
-{
-    ResetVControlConfig();
-    control_option_changed = 1;
-    Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
-    if (Emu_IsGameLoaded())
-        Emu_RequestUpdateVideoDisplay();
-}
-#endif
 
 //----------------- Hotkey menu -----------------//
 static void hotkeyMenuExitCallback(SettingMenu *menu)
