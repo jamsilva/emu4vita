@@ -85,6 +85,7 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
     while (entry)
     {
         OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
+        data->select = data->default_select;
 
         if (data->key)
         {
@@ -98,12 +99,10 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
                     if (data->values[i].value && strcmp(data->values[i].value, c_data->value) == 0)
                     {
                         data->select = i;
-                        // printf("Option get config value: %s\n", c_data->value);
+                        // printf("Option get config: key: %s, value: %s, select: %d\n", data->key, data->values[i].value, i);
                         break;
                     }
                 }
-
-                break;
             }
         }
 
