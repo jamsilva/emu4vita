@@ -76,9 +76,8 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
         return -1;
 
     LinkedList *config_list = NewConfigList();
-    if (!config_list)
-        return -1;
-    ConfigListGetEntries(config_list, path);
+    if (config_list)
+        ConfigListGetEntries(config_list, path);
 
     LinkedListEntry *entry = LinkedListHead(list);
 
@@ -87,7 +86,7 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
         OptionListEntryData *data = (OptionListEntryData *)LinkedListGetEntryData(entry);
         data->select = data->default_select;
 
-        if (data->key)
+        if (data->key && config_list)
         {
             LinkedListEntry *find = ConfigListFindEntryByKey(config_list, data->key);
             if (find)
@@ -109,7 +108,8 @@ int OptionListLoadConfig(LinkedList *list, const char *path)
         entry = LinkedListNext(entry);
     }
 
-    LinkedListDestroy(config_list);
+    if (config_list)
+        LinkedListDestroy(config_list);
 
     return 0;
 }

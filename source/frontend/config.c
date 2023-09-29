@@ -391,6 +391,13 @@ int LoadCoreConfig(int type)
     char path[MAX_PATH_LENGTH];
     MakeConfigPath(path, CORE_CONFIG_NAME, type);
 
+    if (!CheckFileExist(path))
+    {
+        if (type == TYPE_CONFIG_MAIN)
+            ResetCoreConfig();
+        return -1;
+    }
+
     return OptionListLoadConfig(core_option_list, path);
 }
 
