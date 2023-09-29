@@ -37,7 +37,7 @@ char *about_texts[] = {
     " * gb_bios.bin (Game Boy BIOS)",
     " * gbc_bios.bin (Game Boy Color BIOS)",
 #elif defined(GPSP_BUILD) || defined(VBA_NEXT_BUILD)
-    " * gba_bios.bin (Game Boy Advance BIOS)"
+    " * gba_bios.bin (Game Boy Advance BIOS)",
 #elif defined(MEDNAFEN_PCE_FAST_BUILD) || defined(MEDNAFEN_SUPERGRAFX_BUILD)
     " * syscard3.pce (PCE-CD BIOS)",
     " * syscard2.pce (PCE-CD BIOS)",
