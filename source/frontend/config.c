@@ -38,7 +38,7 @@ void MakeConfigPath(char *path, char *config_name, int type)
     }
     else
     {
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", (APP_DATA_DIR), config_name);
+        snprintf(path, MAX_PATH_LENGTH, "%s/%s", (CORE_CONFIGS_DIR), config_name);
     }
 }
 
