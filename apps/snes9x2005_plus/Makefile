@@ -25,6 +25,7 @@ CORE_ARGS := \
 	USE_BLARGG_APU=1
 
 CORE_DEFINES := \
+	-DSNES9X2005_PLUS_BUILD \
 	-DSFC_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

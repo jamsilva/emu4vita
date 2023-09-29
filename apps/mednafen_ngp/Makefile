@@ -24,6 +24,7 @@ WANT_DISPLAY_ROTATE :=
 CORE_ARGS := 
 
 CORE_DEFINES := \
+	-DMEDNAFEN_NGP_BUILD \
 	-DNGP_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

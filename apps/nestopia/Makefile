@@ -24,6 +24,7 @@ WANT_DISPLAY_ROTATE :=
 CORE_ARGS := 
 
 CORE_DEFINES := \
+	-DNESTOPIA_BUILD \
 	-DFC_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

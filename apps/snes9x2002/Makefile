@@ -24,6 +24,7 @@ WANT_DISPLAY_ROTATE :=
 CORE_ARGS := 
 
 CORE_DEFINES := \
+	-DSNES9X2002_BUILD \
 	-DSFC_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

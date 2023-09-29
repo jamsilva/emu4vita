@@ -25,6 +25,7 @@ CORE_ARGS := \
 	DYNAREC=ari64
 
 CORE_DEFINES := \
+	-DPCSX_REARMED_BUILD \
 	-DPS_BUILD
 	
 include $(SOURCE_DIR)/Makefile.common

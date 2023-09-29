@@ -5,7 +5,7 @@ APP_NAME_EXT     :=
 APP_DIR_NAME     := Gambatte
 CORE_FILE_NAME   := gambatte
 
-SFO_TITLE_NAME   :=Gambatte
+SFO_TITLE_NAME   := Gambatte
 SFO_TITLE_ID     := GAMEBATTE
 
 CORE_SOFTWARE    := Nintendo\ -\ Game\ Boy\ /\ Color
@@ -24,6 +24,7 @@ WANT_DISPLAY_ROTATE :=
 CORE_ARGS := 
 
 CORE_DEFINES := \
+	-DGAMEBATTE_BUILD \
 	-DGBC_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

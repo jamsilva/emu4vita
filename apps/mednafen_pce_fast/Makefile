@@ -25,6 +25,7 @@ CORE_ARGS := \
 	SYSTEM_ZLIB=1
 
 CORE_DEFINES := \
+	-DMEDNAFEN_PCE_FAST_BUILD \
 	-DPCE_BUILD
 
 include $(SOURCE_DIR)/Makefile.common

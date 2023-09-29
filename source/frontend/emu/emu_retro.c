@@ -43,38 +43,9 @@ static int makeCoreAssetsDirPath(char *path)
 
 static int makeCoreSystemDirPath(char *path)
 {
-#if defined(USE_INTE_SYSTEM_DIR)
-    if (private_assets_dir)
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, CORE_SYSTEM_DIR_NAME);
-    else
-        snprintf(path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, CORE_SYSTEM_DIR_NAME);
-#else
     snprintf(path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, CORE_SYSTEM_DIR_NAME);
-#endif
     return 0;
 }
-
-#if defined(COPY_INTE_SYSTEM_DIR)
-static int copyInternalSystemDir()
-{
-    char src_path[MAX_PATH_LENGTH];
-    if (private_assets_dir)
-        snprintf(src_path, MAX_PATH_LENGTH, "%s/%s", private_assets_dir, CORE_SYSTEM_DIR_NAME);
-    else
-        snprintf(src_path, MAX_PATH_LENGTH, "%s/%s", public_assets_dir, CORE_SYSTEM_DIR_NAME);
-
-    if (!CheckFileExist(src_path))
-        return -1;
-
-    char dst_path[MAX_PATH_LENGTH];
-    snprintf(dst_path, MAX_PATH_LENGTH, "%s/%s", APP_DATA_DIR, CORE_SYSTEM_DIR_NAME);
-
-    CreateFolder(dst_path);
-    CopyPath(src_path, dst_path);
-
-    return 0;
-}
-#endif
 
 static void freeValidFileExts()
 {
@@ -173,10 +144,6 @@ int Retro_InitLib()
     setRetroCallbacks();
     retro_get_system_info(&core_system_info);
     creatValidFileExts();
-
-#if defined(COPY_INTE_SYSTEM_DIR)
-    copyInternalSystemDir();
-#endif
 
     AppLog("[RETRO] Init retro lib OK!\n");
 
