@@ -49,8 +49,8 @@ char *about_texts[] = {
     " * scph5502.bin (PS1 EU BIOS)",
 #else
     " * 无需",
-    "",
 #endif
+    "",
     "感谢:",
     " * Team molecule (HENkaku)",
     " * xerpi (vita2dlib)",
