@@ -198,7 +198,7 @@ int ResetAppConfig()
 #else
     app_config.show_log = 0;
 #endif
-    app_config.language = 1;
+    app_config.language = 0;
 
     return 0;
 }
