@@ -1,7 +1,7 @@
 #ifndef __M_ALERT_DIALOG_H__
 #define __M_ALERT_DIALOG_H__
 
-#include "list/Linked_list.h"
+#include "list/linked_list.h"
 #include "gui/gui.h"
 
 enum TypeAlertDialog

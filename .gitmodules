@@ -62,3 +62,6 @@
 	url  = https://gitee.com/yizhigai/vba-next
 	path = cores/vba_next
 
+[submodule "cores/chimerasnes"]
+	path = cores/chimerasnes
+	url = https://github.com/jamsilva/chimerasnes
