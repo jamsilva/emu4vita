@@ -9,7 +9,7 @@
 #include "utils_string.h"
 #include "file.h"
 
-#define APP_CONFIG_VERSION 2      // v1.01
+#define APP_CONFIG_VERSION 3      // v1.01
 #define GRAPHICS_CONFIG_VERSION 2 // v1.01
 #define CONTROL_CONFIG_VERSION 2  // v1.01
 #define CORE_CONFIG_VERSION 1     // v1.00

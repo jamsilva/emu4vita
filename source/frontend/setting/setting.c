@@ -359,13 +359,14 @@ int Setting_SetOverlayOption(LinkedList *list)
     overlay_select_option.names = names;
     overlay_select_option.n_names = n_names;
 
+    if (graphics_config.overlay_select > n_names - 1)
+        graphics_config.overlay_select = 0;
+
     return 0;
 }
 
 int Setting_SetLangOption()
 {
-    SetCurrentLang(app_config.language);
-
     // Clean old options
     if (language_option.names)
     {
@@ -409,11 +410,20 @@ int Setting_SetLangOption()
     language_option.names = names;
     language_option.n_names = n_names;
 
+    config_app_language = ConvertLangValueRetroToConfig(app_config.language);
+    if (config_app_language > n_names - 1)
+    {
+        config_app_language = 0;
+        app_config.language = ConvertLangValueConfigToRetro(config_app_language);
+    }
+    SetCurrentLang(app_config.language);
+
     return 0;
 }
 
 void Setting_UpdataLangOption()
 {
+    app_config.language = ConvertLangValueConfigToRetro(config_app_language);
     SetCurrentLang(app_config.language);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_CONTROL);
     Setting_UpdateKeyMapperMenu(INDEX_MENU_HOTKEY);

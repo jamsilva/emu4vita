@@ -75,8 +75,11 @@ int StringGetLine(const char *buf, int size, char **pline)
     if (n > 0)
     {
         *pline = malloc(n + 1);
-        strncpy(*pline, buf, n);
-        (*pline)[n] = '\0';
+        if (*pline)
+        {
+            strncpy(*pline, buf, n);
+            (*pline)[n] = '\0';
+        }
     }
 
     return i;

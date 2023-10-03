@@ -132,7 +132,7 @@ StrArrayOption preview_style_option = {&app_config.preview_style, preview_style_
 StrArrayOption app_log_option = {&app_config.app_log, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), appOptionUpdateCallback, NULL};
 StrArrayOption core_log_option = {&app_config.core_log, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), appOptionUpdateCallback, NULL};
 StrArrayOption show_log_option = {&app_config.show_log, no_yes_values, sizeof(no_yes_values) / sizeof(LangString), appOptionUpdateCallback, NULL};
-StrArrayOption language_option = {&app_config.language, NULL, 0, langOptionUpdateCallback, NULL};
+StrArrayOption language_option = {&config_app_language, NULL, 0, langOptionUpdateCallback, NULL};
 
 // 主菜单
 static SettingMenuItem main_menu_items[] = {

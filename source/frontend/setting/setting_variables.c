@@ -71,6 +71,8 @@ static int misc_option_changed = 0;
 static int current_path_is_file = 0;
 static int game_is_loaded = 0;
 
+static uint32_t config_app_language = 0;
+
 static int visibility_visible = 1;
 // static int visibility_invisible = 0;
 static int core_menu_visibility = 0;

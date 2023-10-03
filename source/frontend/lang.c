@@ -43,7 +43,7 @@ int GetLangsLength()
     return N_LANGS;
 }
 
-int GetLangValue(int fake_id)
+int ConvertLangValueConfigToRetro(int config_value)
 {
     int index = 0;
     int length = N_LANGS;
@@ -53,7 +53,7 @@ int GetLangValue(int fake_id)
     {
         if (lang_entries[i].container)
         {
-            if (index == fake_id)
+            if (index == config_value)
                 break;
             else
                 index++;
@@ -62,10 +62,11 @@ int GetLangValue(int fake_id)
     if (i >= length) // No finded
         return 0;    // Use default us
 
+    // printf("config_value: %d ==> retro_value: %d\n", config_value, i);
     return i;
 }
 
-int SetCurrentLang(int fake_id)
+int ConvertLangValueRetroToConfig(int retro_value)
 {
     int index = 0;
     int length = N_LANGS;
@@ -73,18 +74,25 @@ int SetCurrentLang(int fake_id)
     int i;
     for (i = 0; i < length; i++)
     {
+        if (i == retro_value)
+            break;
+
         if (lang_entries[i].container)
-        {
-            if (index == fake_id)
-                break;
-            else
-                index++;
-        }
+            index++;
     }
     if (i >= length) // No finded
+        return 0;    // Use default us
+
+    // printf("retro_value: %d ==> config_value: %d\n", retro_value, index);
+    return index;
+}
+
+int SetCurrentLang(int retro_value)
+{
+    if (retro_value < 0 || retro_value >= N_LANGS)
         return -1;
 
-    cur_lang = lang_entries[i].container;
+    cur_lang = lang_entries[retro_value].container;
     return 0;
 }
 

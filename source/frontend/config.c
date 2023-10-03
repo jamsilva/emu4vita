@@ -199,7 +199,7 @@ int ResetAppConfig()
 #else
     app_config.show_log = 0;
 #endif
-    app_config.language = 1;
+    app_config.language = 12; // default set to chinese
 
     return 0;
 }
@@ -221,13 +221,6 @@ int LoadGraphicsConfig(int type)
     }
 
     memcpy(&graphics_config, &config, sizeof(GraphicsConfig));
-
-    if (graphics_overlay_list && graphics_config.overlay_select > 0)
-    {
-        int l_length = LinkedListGetLength(graphics_overlay_list);
-        if (graphics_config.overlay_select > l_length)
-            graphics_config.overlay_select = l_length;
-    }
 
     return 0;
 }

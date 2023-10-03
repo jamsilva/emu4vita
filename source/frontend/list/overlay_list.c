@@ -277,12 +277,17 @@ int OverlayListGetEntriesFromBuffer(LinkedList *list, void *buffer, int size)
     do
     {
         res = StringGetLine(p, size, &line);
-        // AppLog("StringGetLine: line = %s\n", line);
         if (res > 0)
         {
-            readLine(line, &key, &value);
-            setEntryData(list, &data, key, value);
-            free(line);
+            if (line)
+            {
+                // printf("readLine: %s\n", line);
+                readLine(line, &key, &value);
+                // printf("setEntryData: key: %s, value: %s\n", key ? key : "null", value ? value : "null");
+                setEntryData(list, &data, key, value);
+                free(line);
+                line = NULL;
+            }
             size -= res;
             p += res;
         }

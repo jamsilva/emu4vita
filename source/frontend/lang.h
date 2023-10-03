@@ -232,8 +232,9 @@ extern LangEntry lang_entries[];
 extern char **cur_lang;
 
 int GetLangsLength();
-int GetLangValue(int fake_id);
-int SetCurrentLang(int fake_id);
+int ConvertLangValueConfigToRetro(int config_value);
+int ConvertLangValueRetroToConfig(int retro_value);
+int SetCurrentLang(int retro_value);
 
 char *GetLangString(LangString *lang_s);
 
