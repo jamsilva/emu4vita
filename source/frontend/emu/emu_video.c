@@ -288,7 +288,7 @@ uint32_t *Emu_GetVideoScreenshotData(uint32_t *width, uint32_t *height, uint64_t
                                             video_width, video_height, x_scale, y_scale, rotate_rad);
     else
         GUI_DrawTexturePartScaleRotate(video_texture, conver_width / 2, conver_height / 2, 0, 0,
-                                      video_width, video_height, x_scale, y_scale, rotate_rad);
+                                       video_width, video_height, x_scale, y_scale, rotate_rad);
     GUI_EndDrawing();
     GUI_SetRendertarget(NULL);
     GUI_WaitRenderingDone();
@@ -629,6 +629,7 @@ int Emu_InitVideo()
     if (!video_texture && Emu_CreateVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height) == NULL)
         return -1;
 
+    Setting_WaitOverlayInitEnd();
     updateOverlayTexture();
 
     if (control_config.ctrl_player != 0)
