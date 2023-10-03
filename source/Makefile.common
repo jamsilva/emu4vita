@@ -1,5 +1,5 @@
 APP_VER      := 1.01
-SFO_APP_VER  := 01.01
+SFO_APP_VER  := 0$(APP_VER)
 
 DEBUG        := 1
 BUILD_DATE   := $(shell date +"%Y.%m.%d")
@@ -28,15 +28,15 @@ EBOOT_PATH         := $(PRIVATE_PKG_DIR)/eboot.bin
 SFO_PATH           := $(PRIVATE_PKG_DIR)/sce_sys/param.sfo
 
 ifeq ($(nightly), 1)
-	PKG_PATH    := $(NIGHTLY_DIR)/Emu4Vita_nightly/$(TARGET)_nightly_$(BUILD_DATE).vpk
+	TARGET_PATH    := $(NIGHTLY_DIR)/Emu4Vita_nightly/$(TARGET)_nightly_$(BUILD_DATE).vpk
 else
-	PKG_PATH    := $(RELEASES_DIR)/Emu4Vita_v$(APP_VER)/$(TARGET)_v$(APP_VER).vpk
+	TARGET_PATH    := $(RELEASES_DIR)/Emu4Vita_v$(APP_VER)/$(TARGET)_v$(APP_VER).vpk
 endif
 
 ifeq ($(arch_build), 1)
 	ARCH_CORES_DIR := $(APP_DIR)/../../arch/cores
 	EBOOT_PATH     := $(ARCH_CORES_DIR)/$(CORE_FILE_NAME).self
-	PKG_PATH       :=
+	TARGET_PATH    :=
 endif
 
 INCDIRS := \
@@ -192,7 +192,7 @@ LD      := $(CXX)
 all: clean_files create_dirs build-deps build-core build-app
 
 clean_files:
-	@rm -rf $(PKG_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
+	@rm -rf $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
@@ -206,10 +206,10 @@ build-core:
 build-self: clean_files create_dirs build-deps build-core $(EBOOT_PATH)
 
 build-app: $(EBOOT_PATH) $(SFO_PATH)
-	@rm -rf $(PKG_PATH)
-	@mkdir -p $(dir $(PKG_PATH))
-	cd $(PUBLIC_PKG_DIR) && zip -r $(PKG_PATH) ./*
-	cd $(PRIVATE_PKG_DIR) && zip -r $(PKG_PATH) ./*
+	@rm -rf $(TARGET_PATH)
+	@mkdir -p $(dir $(TARGET_PATH))
+	cd $(PUBLIC_PKG_DIR) && zip -r $(TARGET_PATH) ./*
+	cd $(PRIVATE_PKG_DIR) && zip -r $(TARGET_PATH) ./*
 
 $(SFO_PATH):
 	@mkdir -p $(dir $@)
@@ -244,7 +244,7 @@ clean-core:
 	cd $(CORE_MAKEFILE_DIR) && make -f $(CORE_MAKEFILE_NAME) clean $(CORE_ARGS)
 	
 clean-app:
-	rm -rf $(BUILD_DIR) $(PKG_PATH) $(EBOOT_PATH) $(SFO_PATH)
+	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)
 
 clean: clean-app
 

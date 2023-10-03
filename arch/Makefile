@@ -1,11 +1,12 @@
-TARGET := Emu4VitaArch
+TARGET     := Emu4VitaArch
+TARGET_VER := 1.05
 
 SFO_TITLE_ID      := EMUARCH01
 SFO_TITLE_NAME    := Emu4Vita Arch
-SFO_APP_VER       := 01.05
+SFO_APP_VER       := 0$(TARGET_VER)
 
 APP_NAME_STR      := Emu4Vita\ Arch
-APP_VER_STR       := 1.05
+APP_VER_STR       := $(TARGET_VER)
 APP_DIR_NAME      := Emu4VitaArch
 BUILD_DATE        := $(shell date +"%Y-%m-%d")
 
@@ -24,18 +25,18 @@ BUILD_DIR         := $(ROOT_DIR)/../build/arch
 BUBBLE_DIR        := $(ROOT_DIR)/../apps
 
 RELEASES_DIR      := $(ROOT_DIR)/../releases
+NIGHTLYS_DIR      := $(ROOT_DIR)/../nightlys
 
-VPK_NAME          := $(TARGET)_v$(APP_VER_STR).vpk
-VPK_PATH          := $(BUILD_DIR)/$(VPK_NAME)
 EBOOT_PATH        := $(PKG_DIR)/eboot.bin
 SFO_PATH          := $(PKG_DIR)/sce_sys/param.sfo
 
-ifeq ($(main_build), 1)
-	RELEASE_DIR   := $(RELEASES_DIR)/Emu4Vita_Arch
-	VPK_PATH      := $(RELEASE_DIR)/$(VPK_NAME)
+ifeq ($(nightly), 1)
+	TARGET_PATH   := $(NIGHTLYS_DIR)/Emu4VitaArch_nightly/$(TARGET)_nightly_$(BUILD_DATE).vpk
+else
+	TARGET_PATH   := $(RELEASES_DIR)/Emu4VitaArch/$(TARGET)_v$(TARGET_VER).vpk
 endif
 
-MAKE_ARGS         := arch_build=1
+MAKE_ARGS := arch_build=1
 
 INCDIRS := \
 	-ISRC_DIR \
@@ -110,16 +111,16 @@ LD      := $(CXX)
 all: clean_files create_dirs build-cores build-vita
 
 clean_files:
-	@rm -rf $(VPK_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
+	@rm -rf $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH) $(BUILD_DIR)/$(TARGET).velf $(BUILD_DIR)/$(TARGET).elf
 
 create_dirs:
 	@mkdir -p $(BUILD_DIR)
 
 build-vita: $(EBOOT_PATH) $(SFO_PATH)
-	@rm -rf $(VPK_PATH)
-	@mkdir -p $(dir $(VPK_PATH))
-	cd $(PKG_DIR) && zip -r $(VPK_PATH) ./*
-	cd $(CORES_DIR) && zip -r $(VPK_PATH) ./*
+	@rm -rf $(TARGET_PATH)
+	@mkdir -p $(dir $(TARGET_PATH))
+	cd $(PKG_DIR) && zip -r $(TARGET_PATH) ./*
+	cd $(CORES_DIR) && zip -r $(TARGET_PATH) ./*
 
 $(SFO_PATH):
 	@mkdir -p $(dir $@)
@@ -148,7 +149,7 @@ clean: clean-vita
 clean-all: clean-cores clean-vita
 
 clean-vita:
-	rm -rf $(BUILD_DIR) $(VPK_PATH) $(EBOOT_PATH) $(SFO_PATH)
+	rm -rf $(BUILD_DIR) $(TARGET_PATH) $(EBOOT_PATH) $(SFO_PATH)
 
 build-cores:
 	cd $(BUBBLE_DIR)/fba_lite && make build-self $(MAKE_ARGS)
