@@ -64,86 +64,90 @@ int ResetControlConfig()
     control_config.version = CONTROL_CONFIG_VERSION;
     control_config.ctrl_player = 0;
 
-    control_config.button_up = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_UP);
-    control_config.button_down = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_DOWN);
-    control_config.button_left = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_LEFT);
-    control_config.button_right = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_RIGHT);
+    control_config.button_up = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_UP);
+    control_config.button_down = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_DOWN);
+    control_config.button_left = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_LEFT);
+    control_config.button_right = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_RIGHT);
 #if defined(FC_BUILD) || defined(GBC_BUILD) || defined(NGP_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_l = 0;
-    control_config.button_r = 0;
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+#if defined(FC_BUILD)
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+#endif
 #elif defined(SFC_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
 #elif defined(GBA_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
 #elif defined(MD_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
 #elif defined(WSC_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_square = GET_RETRO_BITMASK_KEY_TURBO(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_square = ENABLE_TURBO_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
     control_config.button_l = 0;
     control_config.button_r = 0;
 #elif defined(PCE_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
 #elif defined(ARC_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-#elif defined(MRP_BUILD)
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-    control_config.button_l3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
-    control_config.button_r3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
+    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
+#elif defined(PS_BUILD)
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
+    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
+    control_config.button_l3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
+    control_config.button_r3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
 #else
-    control_config.button_circle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_A);
-    control_config.button_cross = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_B);
-    control_config.button_triangle = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_X);
-    control_config.button_square = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
-    control_config.button_l = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L);
-    control_config.button_r = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R);
-    control_config.button_l2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
-    control_config.button_r2 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
-    control_config.button_l3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
-    control_config.button_r3 = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
+    control_config.button_circle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_A);
+    control_config.button_cross = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_B);
+    control_config.button_triangle = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_X);
+    control_config.button_square = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_Y);
+    control_config.button_l = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L);
+    control_config.button_r = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R);
+    control_config.button_l2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L2);
+    control_config.button_r2 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R2);
+    control_config.button_l3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_L3);
+    control_config.button_r3 = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_R3);
 #endif
-    control_config.button_select = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT);
-    control_config.button_start = GET_RETRO_BITMASK_KEY(RETRO_DEVICE_ID_JOYPAD_START);
+#if !defined(WSC_BUILD)
+    control_config.button_select = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_SELECT);
+#endif
+    control_config.button_start = ENABLE_BITMASK_RETRO_KEY(RETRO_DEVICE_ID_JOYPAD_START);
     control_config.left_analog_up = control_config.button_up;
     control_config.left_analog_down = control_config.button_down;
     control_config.left_analog_left = control_config.button_left;
@@ -151,9 +155,6 @@ int ResetControlConfig()
 #if defined(PS_BUILD)
     control_config.front_touch_pad = 1;
     control_config.back_touch_pad = 1;
-#else
-    control_config.front_touch_pad = 0;
-    control_config.back_touch_pad = 0;
 #endif
 
     control_config.turbo_delay = 4;

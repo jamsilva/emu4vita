@@ -145,6 +145,10 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Start",
     // LABEL_TURBO
     "Turbo",
+    // LABEL_FDS_DISK_SIDE_CHANGE
+    "(FDS) Disk side change",
+    // LABEL_FDS_INSERT_EJECT_DISK
+    "(FDS) Insert/Eject disk",
 
     /**************  Browser  *****************/
     // APP_TITLE
@@ -514,6 +518,10 @@ char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {
     "开始",
     // LABEL_TURBO
     "连发",
+    // LABEL_FDS_DISK_SIDE_CHANGE
+    "(FDS) 更换磁盘面",
+    // LABEL_FDS_INSERT_EJECT_DISK
+    "(FDS) 插入/弹出磁盘",
 
     /**************  Browser  *****************/
     // APP_TITLE

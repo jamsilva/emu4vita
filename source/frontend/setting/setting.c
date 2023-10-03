@@ -37,24 +37,6 @@ GUI_Dialog setting_dialog = {
     NULL,                   // User data
 };
 
-static void refreshOptionLayout()
-{
-    option_listview_width = OPTION_LISTVIEW_WIDTH;
-    option_listview_dx = menu_listview_dx;
-    option_listview_sx = option_listview_dx - option_listview_width;
-    option_listview_sy = menu_listview_sy;
-    option_listview_dy = menu_listview_dy;
-    option_listview_scroll_sx = option_listview_dx;
-    option_listview_height = option_listview_dy - option_listview_sy;
-    option_itemview_width = option_listview_width - OPTION_LISTVIEW_PADDING_L * 2;
-    option_itemview_height = GUI_GetFontSize() + OPTION_ITEMVIEW_PADDING_T * 2;
-    option_listview_n_draw_items = (option_listview_height - OPTION_LISTVIEW_PADDING_T * 2) / option_itemview_height;
-
-    option_scrollbar_track_x = option_listview_dx - GUI_DEF_SCROLLBAR_SIZE - 2;
-    option_scrollbar_track_y = option_listview_sy + 2;
-    option_scrollbar_track_height = option_listview_height + 4;
-}
-
 static void refreshSettingLayout()
 {
     menu_tab_view_width = WINDOW_WIDTH - WINDOW_PADDING * 2;
@@ -84,8 +66,6 @@ static void refreshSettingLayout()
     menu_scrollbar_track_x = menu_listview_dx - GUI_DEF_SCROLLBAR_SIZE - 2;
     menu_scrollbar_track_y = menu_listview_sy + 2;
     menu_scrollbar_track_height = menu_listview_height - 4;
-
-    refreshOptionLayout();
 
     Setting_RefreshStateLayout();
 }
@@ -515,31 +495,28 @@ static void drawOption()
     if (!option_menu || option_listview_scroll_sx >= option_listview_dx)
         return;
 
+    int clip_width = option_listview_dx - option_listview_scroll_sx;
+    GUI_EnableClipping(option_listview_scroll_sx, option_listview_sy, clip_width, option_listview_height);
+
     GUI_DrawFillRectangle(option_listview_scroll_sx, option_listview_sy, option_listview_width, option_listview_height, COLOR_ALPHA(COLOR_BLACK, 0xBF));
 
     CheckBoxOptionMenuItem *items = option_menu->items;
     int n_items = option_menu->n_items;
 
     int item_sx = option_listview_scroll_sx + OPTION_LISTVIEW_PADDING_L;
-    int item_dx = option_listview_scroll_sx + option_itemview_width;
+    int item_dx = option_listview_scroll_sx + option_listview_width - OPTION_LISTVIEW_PADDING_L;
     int item_sy = option_listview_sy + OPTION_LISTVIEW_PADDING_T;
     int item_max_dy = option_listview_dy - OPTION_LISTVIEW_PADDING_T;
-    int clip_height = option_itemview_height;
-    int checkbox_width = GUI_GetFontSize();
-    int checkbox_height = checkbox_width;
-    int checkbox_sx = item_dx - OPTION_ITEMVIEW_PADDING_L - checkbox_width;
+    int checkbox_sx = item_dx - OPTION_ITEMVIEW_PADDING_L - option_itemview_checkbox_width;
+
+    int clip_height = option_listview_height - OPTION_LISTVIEW_PADDING_T * 2;
+    GUI_EnableClipping(option_listview_scroll_sx, option_listview_sy, clip_width, clip_height);
+
     int i;
     for (i = option_top_pos; i < n_items; i++)
     {
         if (item_sy >= item_max_dy)
             break;
-
-        if (item_sy + option_itemview_height > item_max_dy)
-            clip_height = item_max_dy - item_sy;
-        else
-            clip_height = option_itemview_height;
-
-        GUI_EnableClipping(item_sx, item_sy, option_itemview_width, clip_height);
 
         // Focus
         if (i == option_focus_pos)
@@ -549,16 +526,19 @@ static void drawOption()
         if (name)
             GUI_DrawText(item_sx + OPTION_ITEMVIEW_PADDING_L, item_sy + OPTION_ITEMVIEW_PADDING_T, COLOR_GREEN, name);
 
-        GUI_DrawEmptyRectangle(checkbox_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, checkbox_width, checkbox_height, 1.0f, COLOR_GREEN);
+        GUI_DrawEmptyRectangle(checkbox_sx, item_sy + OPTION_ITEMVIEW_PADDING_T, option_itemview_checkbox_width, option_itemview_checkbox_height, 1.0f, COLOR_GREEN);
         if (items[i].selected)
-            GUI_DrawFillRectangle(checkbox_sx + 1, item_sy + OPTION_ITEMVIEW_PADDING_T + 1, checkbox_width - 2, checkbox_height - 2, COLOR_ALPHA(COLOR_ORANGE, 0xBF));
+            GUI_DrawFillRectangle(checkbox_sx + 1, item_sy + OPTION_ITEMVIEW_PADDING_T + 1, option_itemview_checkbox_width - 2, option_itemview_checkbox_height - 2, COLOR_ALPHA(COLOR_ORANGE, 0xBF));
 
-        GUI_DisableClipping();
         item_sy += option_itemview_height;
     }
 
+    GUI_DisableClipping();
+
     int scrollbar_track_x = option_listview_scroll_sx + option_listview_width - GUI_DEF_SCROLLBAR_SIZE - 2;
     GUI_DrawVerticalScrollbar(scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height, n_items, option_listview_n_draw_items, option_top_pos, 0);
+
+    GUI_DisableClipping();
 }
 
 static void drawMenu()

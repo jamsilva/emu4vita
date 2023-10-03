@@ -24,7 +24,7 @@
 #define MENU_ITEMVIEW_PADDING_T 6.0f
 
 // Checkbox dialog
-#define OPTION_LISTVIEW_WIDTH 230.0f
+#define DEFAULT_OPTION_LISTVIEW_WIDTH 230.0f
 #define OPTION_LISTVIEW_PADDING_L 2.0f
 #define OPTION_LISTVIEW_PADDING_T 2.0f
 #define OPTION_ITEMVIEW_PADDING_L 10.0f
@@ -101,5 +101,6 @@ static int option_listview_width, option_listview_height;
 static int option_listview_sx, option_listview_sy, option_listview_dx, option_listview_dy;
 static int option_listview_scroll_sx;
 static int option_itemview_width, option_itemview_height;
+static int option_itemview_checkbox_width, option_itemview_checkbox_height;
 static int option_listview_n_draw_items;
 static int option_scrollbar_track_x, option_scrollbar_track_y, option_scrollbar_track_height;

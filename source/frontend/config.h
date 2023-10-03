@@ -53,10 +53,10 @@
 
 #define ENABLE_KEY_BITMASK (1 << 31)
 #define TURBO_KEY_BITMASK (1 << 30)
-#define RETRO_KEY_TO_BITMASK(id) (1 << id)
+#define BITMASK_RETRO_KEY(id) (1 << id)
 
-#define GET_RETRO_BITMASK_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
-#define GET_RETRO_BITMASK_KEY_TURBO(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
+#define ENABLE_BITMASK_RETRO_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK)
+#define ENABLE_TURBO_BITMASK_RETRO_KEY(id) ((1 << id) | ENABLE_KEY_BITMASK | TURBO_KEY_BITMASK)
 
 enum TypeDisplaySize
 {

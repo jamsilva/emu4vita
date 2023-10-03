@@ -410,7 +410,7 @@ int16_t Retro_InputStateCallback(unsigned port, unsigned device, unsigned index,
         if (core_input_supports_bitmasks)
             res = emu_mapping_keys[port] & 0xFFFF;
         else
-            res = emu_mapping_keys[port] & RETRO_KEY_TO_BITMASK(id);
+            res = emu_mapping_keys[port] & BITMASK_RETRO_KEY(id);
     }
 
     return res;

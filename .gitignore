@@ -1,8 +1,9 @@
 **/.vscode
 build
 releases
+nightly
 cores/*
 arch/cores
-vita/deps/lib/libretro_comm.a
+source/deps/lib/libretro_comm.a
 **/param.sfo
 **/eboot.bin

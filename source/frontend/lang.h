@@ -81,7 +81,9 @@ enum LanguageContainer
     LABEL_SELECT,
     LABEL_START,
     LABEL_TURBO,
-
+    LABEL_FDS_DISK_SIDE_CHANGE,
+    LABEL_FDS_INSERT_EJECT_DISK,
+    
     // Browser
     APP_TITLE,
 
