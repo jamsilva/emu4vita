@@ -1,5 +1,5 @@
 TARGET     := Emu4VitaArch
-TARGET_VER := 1.05
+TARGET_VER := 1.06
 
 SFO_TITLE_ID      := EMUARCH01
 SFO_TITLE_NAME    := Emu4Vita Arch

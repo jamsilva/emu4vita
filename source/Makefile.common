@@ -1,4 +1,4 @@
-APP_VER      := 1.01
+APP_VER      := 1.02
 SFO_APP_VER  := 0$(APP_VER)
 
 DEBUG        := 1
