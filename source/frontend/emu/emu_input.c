@@ -283,7 +283,7 @@ static int onHotKeyEvent(int port, uint32_t buttons)
             if (callback)
             {
                 callback();
-                if (buttons & SCE_CTRL_PSBUTTON)
+                if (config_key & SCE_CTRL_PSBUTTON)
                     SetPSbuttonEventEnabled(0);
                 return 1;
             }
