@@ -167,7 +167,7 @@ static void openKeyMapperOptionCallback(CheckBoxOptionMenu *option)
 {
     option_itemview_checkbox_width = GUI_GetFontSize();
     option_itemview_checkbox_height = option_itemview_checkbox_width;
-    int name_w = DEFAULT_OPTION_LISTVIEW_WIDTH - OPTION_LISTVIEW_PADDING_L * 2 - OPTION_ITEMVIEW_PADDING_L * 2 - option_itemview_checkbox_width - 4;
+    int name_w = DEFAULT_OPTION_LISTVIEW_WIDTH - OPTION_LISTVIEW_PADDING_L * 2 - OPTION_ITEMVIEW_PADDING_L * 2 - option_itemview_checkbox_width - 8;
 
     uint32_t config_key = *(uint32_t *)(option->userdata);
     int enabled = config_key & ENABLE_KEY_BITMASK;
@@ -197,7 +197,7 @@ static void openKeyMapperOptionCallback(CheckBoxOptionMenu *option)
             option_item->selected = 1;
     }
 
-    option_itemview_width = name_w + 4 + option_itemview_checkbox_width + OPTION_ITEMVIEW_PADDING_L * 2;
+    option_itemview_width = name_w + 8 + option_itemview_checkbox_width + OPTION_ITEMVIEW_PADDING_L * 2;
     option_itemview_height = GUI_GetFontSize() + OPTION_ITEMVIEW_PADDING_T * 2;
     refreshOptionLayout();
 }

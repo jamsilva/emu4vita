@@ -1,8 +1,11 @@
-MAKE_ARGS = main_build=1
+APPS_DIR    := ./apps
+SOURCE_DIR  := ./source
+ARCH_DIR    := ./arch
 
-APPS_DIR    = ./apps
-SOURCE_DIR  = ./source
-ARCH_DIR    = ./arch
+MAKE_ARGS   := 
+ifeq ($(nightly), 1)
+	MAKE_ARGS := nightly=1
+endif
 
 all: build-app build-arch
 

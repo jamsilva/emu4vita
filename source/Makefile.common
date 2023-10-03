@@ -24,20 +24,12 @@ LIBRETRO_COMM_DIR          := $(LIBRETRO_DIR)/libretro-common
 LIBRETRO_COMM_INCLUDE_DIR  := $(LIBRETRO_COMM_DIR)/include
 LIBRETRO_DEPS_DIR          := $(LIBRETRO_DIR)/deps
 
-ifeq ($(main_build), 1)
-
-	PKG_DIR        := $(RELEASES_DIR)/Emu4Vita_v$(APP_VER)
-endif
-
 EBOOT_PATH         := $(PRIVATE_PKG_DIR)/eboot.bin
 SFO_PATH           := $(PRIVATE_PKG_DIR)/sce_sys/param.sfo
-PKG_PATH           := 
 
 ifeq ($(nightly), 1)
-	APP_VER_STR := $(BUILD_DATE)
 	PKG_PATH    := $(NIGHTLY_DIR)/Emu4Vita_nightly/$(TARGET)_nightly_$(BUILD_DATE).vpk
 else
-	APP_VER_STR := $(APP_VER)
 	PKG_PATH    := $(RELEASES_DIR)/Emu4Vita_v$(APP_VER)/$(TARGET)_v$(APP_VER).vpk
 endif
 
