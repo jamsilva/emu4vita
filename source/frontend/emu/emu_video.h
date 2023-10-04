@@ -17,6 +17,7 @@ int Emu_DeinitVideo();
 
 GUI_Texture *Emu_GetVideoTexture();
 GUI_Texture *Emu_CreateVideoTexture(int width, int height);
+void Emu_DestroyVideoTexture();
 
 void Emu_ShowCtrlPlayerToast();
 

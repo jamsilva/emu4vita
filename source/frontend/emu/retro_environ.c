@@ -111,7 +111,7 @@ static bool setSystemAvInfo(struct retro_system_av_info *info)
 
     return true;
 }
-
+#if 0
 static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
 {
     if (!fb)
@@ -129,7 +129,7 @@ static bool getCurrentSoftwareFramebuffer(struct retro_framebuffer *fb)
 
     return true;
 }
-
+#endif
 static bool setCoreOptionsUpdateDisplayCallback(struct retro_core_options_update_display_callback *cb)
 {
     if (core_options_update_display_callback)
@@ -229,6 +229,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
             *(bool *)data = true;
     }
     break;
+
     case RETRO_ENVIRONMENT_GET_CAN_DUPE:
     {
         AppLog("[RETRO] RETRO_ENVIRONMENT_GET_CAN_DUPE\n");
@@ -372,7 +373,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         return setSystemAvInfo(info);
     }
     break;
-
+#if 0
     case RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER:
     {
         // AppLog("[RETRO] RETRO_ENVIRONMENT_GET_CURRENT_SOFTWARE_FRAMEBUFFER\n");
@@ -380,7 +381,7 @@ bool Retro_EnvironmentCallback(unsigned int cmd, void *data)
         return getCurrentSoftwareFramebuffer(fb);
     }
     break;
-
+#endif
     case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
     {
         // AppLog("[RETRO] RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE\n");

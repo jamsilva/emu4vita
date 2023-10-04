@@ -18,6 +18,8 @@
 static int video_okay = 0, video_pause = 1;
 static int video_display_need_update = 1;
 
+static int video_texture_index = 0;
+static GUI_Texture *video_texture_bufs[2] = {0};
 static GUI_Texture *video_texture = NULL;
 static GUI_Texture *overlay_texture = NULL;
 static GUI_Shader *video_shader = NULL;
@@ -357,34 +359,63 @@ int Emu_SaveVideoScreenshot(char *path)
     return ret;
 }
 
+void Emu_DestroyVideoTexture()
+{
+    GUI_WaitRenderingDone();
+
+    int i;
+    for (i = 0; i < 2; i++)
+    {
+        if (video_texture_bufs[i])
+        {
+            GUI_DestroyTexture(video_texture_bufs[i]);
+            video_texture_bufs[i] = NULL;
+        }
+    }
+
+    video_texture = NULL;
+}
+
 GUI_Texture *Emu_CreateVideoTexture(int width, int height)
 {
-    if (video_texture) // Free old
-    {
-        GUI_WaitRenderingDone();
-        GUI_DestroyTexture(video_texture);
-        video_texture = NULL;
-    }
+    Emu_DestroyVideoTexture();
 
     video_width = width;
     video_height = height;
     video_display_need_update = 1;
-    video_texture = GUI_CreateTextureFormat(width, height, core_video_pixel_format);
+
+    int i;
+    for (i = 0; i < 2; i++)
+    {
+        video_texture_bufs[i] = GUI_CreateTextureFormat(width, height, core_video_pixel_format);
+    }
+
+    video_texture_index = 0;
+    video_texture = video_texture_bufs[video_texture_index];
 
     if (!video_texture)
+    {
         AppLog("[VIDEO] create video texture failed\n");
+        return NULL;
+    }
 
     return video_texture;
 }
 
-static int updateOverlayTexture()
+static void destroyOverlayTexture()
 {
-    if (overlay_texture) // Free old
+    if (overlay_texture)
     {
         GUI_WaitRenderingDone();
         GUI_DestroyTexture(overlay_texture);
         overlay_texture = NULL;
     }
+}
+
+static GUI_Texture *createOverlayTexture()
+{
+    Setting_WaitOverlayInitEnd();
+    destroyOverlayTexture();
 
     OverlayListEntryData *overlay_data = NULL;
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
@@ -394,7 +425,7 @@ static int updateOverlayTexture()
     }
 
     if (!overlay_data || !overlay_data->image_name) // No find
-        return -1;
+        return NULL;
 
     char path[MAX_PATH_LENGTH];
     if (private_assets_dir) // Try load image from private assets dir
@@ -407,12 +438,14 @@ static int updateOverlayTexture()
         snprintf(path, MAX_PATH_LENGTH, "%s/%s/%s", public_assets_dir, OVERLAYS_DIR_NAME, overlay_data->image_name);
         overlay_texture = GUI_LoadPNGFile(path);
     }
+
     if (!overlay_texture)
     {
         AppLog("[VIDEO] create overlay texture failed\n");
-        return -1;
+        return NULL;
     }
-    return 0;
+
+    return overlay_texture;
 }
 
 static int updateVideoDisplay()
@@ -426,7 +459,7 @@ static int updateVideoDisplay()
 
     // Overlay texture
     if (video_overlay_select != graphics_config.overlay_select)
-        updateOverlayTexture();
+        createOverlayTexture();
 
     // Overlay config
     if (graphics_overlay_list && graphics_config.overlay_select > 0)
@@ -599,6 +632,9 @@ void Retro_VideoRefreshCallback(const void *data, unsigned width, unsigned heigh
         Emu_CreateVideoTexture(width, height);
     }
 
+    video_texture_index = (video_texture_index + 1) % 2;
+    video_texture = video_texture_bufs[video_texture_index];
+
     if (video_texture)
     {
         const uint8_t *in_data = (const uint8_t *)data;
@@ -629,8 +665,7 @@ int Emu_InitVideo()
     if (!video_texture && Emu_CreateVideoTexture(core_system_av_info.geometry.base_width, core_system_av_info.geometry.base_height) == NULL)
         return -1;
 
-    Setting_WaitOverlayInitEnd();
-    updateOverlayTexture();
+    createOverlayTexture();
 
     if (control_config.ctrl_player != 0)
         Emu_ShowCtrlPlayerToast();
@@ -652,17 +687,8 @@ int Emu_DeinitVideo()
     video_okay = 0;
     video_pause = 1;
 
-    GUI_WaitRenderingDone();
-    if (video_texture)
-    {
-        GUI_DestroyTexture(video_texture);
-        video_texture = NULL;
-    }
-    if (overlay_texture)
-    {
-        GUI_DestroyTexture(overlay_texture);
-        overlay_texture = NULL;
-    }
+    Emu_DestroyVideoTexture();
+    destroyOverlayTexture();
 
     GUI_SetVblankWait(1);
 
