@@ -33,6 +33,7 @@ typedef struct
 
 typedef struct
 {
+    SpeexResamplerState *resampler_state;
     int quality;
     uint32_t in_rate;
     uint32_t out_rate;
@@ -40,7 +41,6 @@ typedef struct
     uint32_t in_data_len;
     int16_t *out_data;
     uint32_t out_data_len;
-    SpeexResamplerState *resampler_state;
 } AudioResampler;
 
 typedef struct
@@ -91,12 +91,17 @@ static int AudioResamplerInit(AudioResampler *resampler)
         goto FAILED;
 
     if (resampler->resampler_state)
-        AudioResamplerDestroy(resampler);
-
-    resampler->resampler_state = speex_resampler_init(1, resampler->in_rate, resampler->out_rate, resampler->quality, NULL);
+    {
+        speex_resampler_set_rate(resampler->resampler_state, resampler->in_rate, resampler->out_rate);
+        speex_resampler_set_quality(resampler->resampler_state, resampler->quality);
+    }
+    else
+    {
+        resampler->resampler_state = speex_resampler_init(1, resampler->in_rate, resampler->out_rate, resampler->quality, NULL);
+    }
     if (!resampler->resampler_state)
         goto FAILED;
-    speex_resampler_skip_zeros(resampler->resampler_state);
+    // speex_resampler_skip_zeros(resampler->resampler_state);
 
     AppLog("[AUDIO] Audio resampler init OK!\n");
     return 0;
@@ -204,12 +209,13 @@ static void AudioSetSampleRate(uint16_t sample_rate)
         resampler->out_rate = game_audio_state.sample_rate;
         AppLog("[AUDIO] Audio need resample %u to %u\n", resampler->in_rate, resampler->out_rate);
         AudioResamplerInit(resampler);
-        return;
     }
-
-    game_audio_state.need_resample = 0;
-    game_audio_state.sample_rate = sample_rates[i];
-    AppLog("[AUDIO] Audio sample rate: %d\n", game_audio_state.sample_rate);
+    else
+    {
+        game_audio_state.need_resample = 0;
+        game_audio_state.sample_rate = sample_rates[i];
+        AppLog("[AUDIO] Audio sample rate: %d\n", game_audio_state.sample_rate);
+    }
 }
 
 int Emu_UpdateAudioSampleRate(uint32_t sample_rate)
@@ -459,8 +465,7 @@ int Emu_InitAudio()
     game_audio_state.right_volume = AUDIO_MAX_VOLUME;
     game_audio_state.userdata = NULL;
 
-    game_audio_state.sample_rate = (uint32_t)core_system_av_info.timing.sample_rate;
-    AudioSetSampleRate(game_audio_state.sample_rate);
+    AudioSetSampleRate(core_system_av_info.timing.sample_rate);
 
     if (AudioOutputInit() < 0)
         goto FAILED;
@@ -504,7 +509,7 @@ size_t Retro_AudioSampleBatchCallback(const int16_t *data, size_t frames)
 
     AudioResampler *resampler = &(game_audio_state.resampler);
     AudioSoundBuffer *sound_buffer = &(game_audio_state.sound_buffer);
-    
+
     const int16_t *in_data = data;
     uint32_t in_data_len = frames * 2;
     int16_t *out_data = sound_buffer->data;
@@ -517,9 +522,12 @@ size_t Retro_AudioSampleBatchCallback(const int16_t *data, size_t frames)
         resampler->in_data_len = in_data_len;
         resampler->out_data_len = in_data_len * (double)game_audio_state.sample_rate / core_system_av_info.timing.sample_rate;
         resampler->out_data = (int16_t *)malloc(resampler->out_data_len * sizeof(int16_t));
-        AudioResamplerProcessInt(resampler);
-        in_data = resampler->out_data;
-        in_data_len = resampler->out_data_len;
+        if (resampler->out_data)
+        {
+            AudioResamplerProcessInt(resampler);
+            in_data = resampler->out_data;
+            in_data_len = resampler->out_data_len;
+        }
     }
 
     int i;
