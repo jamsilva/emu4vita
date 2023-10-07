@@ -1,64 +1,64 @@
 [submodule "cores/fba_lite"]
-	url  = https://gitee.com/yizhigai/libretro-fba-lite
+	url  = https://github.com/jamsilva/libretro-fba-lite
 	path = cores/fba_lite
 
 [submodule "cores/fceumm"]
-	url  = https://gitee.com/yizhigai/libretro-fceumm
+	url  = https://github.com/libretro/libretro-fceumm
 	path = cores/fceumm
 
 [submodule "cores/gambatte"]
-	url  = https://gitee.com/yizhigai/gambatte-libretro
+	url  = https://github.com/libretro/gambatte-libretro
 	path = cores/gambatte
 
 [submodule "cores/genesis_plus_gx"]
-	url  = https://gitee.com/yizhigai/Genesis-Plus-GX
+	url  = https://github.com/libretro/Genesis-Plus-GX
 	path = cores/genesis_plus_gx
 
 [submodule "cores/gpsp"]
-	url  = https://gitee.com/yizhigai/gpsp
+	url  = https://github.com/libretro/gpsp
 	path = cores/gpsp
 
 [submodule "cores/mednafen_ngp"]
-	url  = https://gitee.com/yizhigai/beetle-ngp-libretro
+	url  = https://github.com/libretro/beetle-ngp-libretro
 	path = cores/mednafen_ngp
 
 [submodule "cores/mednafen_pce_fast"]
-	url  = https://gitee.com/yizhigai/beetle-pce-fast-libretro
+	url  = https://github.com/libretro/beetle-pce-fast-libretro
 	path = cores/mednafen_pce_fast
 
 [submodule "cores/mednafen_supergrafx"]
-	url  = https://gitee.com/yizhigai/beetle-supergrafx-libretro
+	url  = https://github.com/libretro/beetle-supergrafx-libretro
 	path = cores/mednafen_supergrafx
 
 [submodule "cores/mednafen_wswan"]
-	url  = https://gitee.com/yizhigai/beetle-wswan-libretro
+	url  = https://github.com/libretro/beetle-wswan-libretro
 	path = cores/mednafen_wswan
 
 [submodule "cores/nestopia"]
-	url  = https://gitee.com/yizhigai/nestopia
+	url  = https://github.com/libretro/nestopia
 	path = cores/nestopia
 
 [submodule "cores/pcsx_rearmed"]
-	url  = https://gitee.com/yizhigai/pcsx_rearmed
+	url  = https://github.com/libretro/pcsx_rearmed
 	path = cores/pcsx_rearmed
 
 [submodule "cores/picodrive"]
-	url  = https://gitee.com/yizhigai/picodrive
+	url  = https://github.com/libretro/picodrive
 	path = cores/picodrive
 
 [submodule "cores/snes9x2002"]
-	url  = https://gitee.com/yizhigai/snes9x2002
+	url  = https://github.com/libretro/snes9x2002
 	path = cores/snes9x2002
 
 [submodule "cores/snes9x2005"]
-	url  = https://gitee.com/yizhigai/snes9x2005
+	url  = https://github.com/libretro/snes9x2005
 	path = cores/snes9x2005
 
 [submodule "cores/snes9x2005_plus"]
-	url  = https://gitee.com/yizhigai/snes9x2005
+	url  = https://github.com/libretro/snes9x2005
 	path = cores/snes9x2005_plus
 
 [submodule "cores/vba_next"]
-	url  = https://gitee.com/yizhigai/vba-next
+	url  = https://github.com/libretro/vba-next
 	path = cores/vba_next
 
