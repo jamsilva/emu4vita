@@ -36,7 +36,7 @@ LangEntry lang_entries[] = {
 
 #define N_LANGS (sizeof(lang_entries) / sizeof(LangEntry))
 
-char **cur_lang = lang_chs;
+char **cur_lang = lang_us;
 
 int GetLangsLength()
 {

@@ -9,17 +9,17 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  General  *****************/
     // YES
-    "yes",
+    "Yes",
     // NO
-    "no",
+    "No",
     // CONFIRM
-    "confirm",
+    "Confirm",
     // CANCEL
-    "cancel",
+    "Cancel",
     // BACK
-    "back",
+    "Back",
     // EXIT
-    "exit",
+    "Exit",
 
     /**************  Alert dialog  *****************/
     // TITLE_TIP
@@ -27,12 +27,11 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // TITLE_MENU
     "Menu",
     // COLSE
-    "close",
+    "Close",
 
     /**************  Safe mode  *****************/
     // MESSAGE_SAFE_MODE
-    "Currently in safe mode, please enable unsafe homemade software in HENkaku settings first, "
-    "only then can this program be used normally.",
+    "To run this app, go to the Settings app > HENkaku Settings and enable unsafe applications.",
 
     /**************  Button string  *****************/
     // BUTTON_ENTER
@@ -155,37 +154,37 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     APP_NAME_STR " v" APP_VER_STR,
 
     // PARENT_DIRECTORY
-    "parent dir",
+    "Go up a folder",
     // OPEN_DIR
-    "open dir",
+    "Open current folder",
     // START_GAME
-    "start game",
+    "Run game",
     // OPTION_MENU
-    "option menu",
+    "Options",
     // SETTING_MENU
-    "setting menu",
+    "Settings",
     // ABOUT
-    "about",
+    "Info",
     // CHANGE_DIR
-    "change dir",
+    "Go to last played game",
 
     // LABEL_START_GAME
-    "Start game",
+    "Run game",
     // LABEL_DELETE_GAME
     "Delete game",
     // LABEL_DELETE_AUTO_STATE
-    "Delete auto state",
+    "Delete save state",
     // LABEL_DELETE_SAVEFILE
     "Delete savefile",
 
     // MESSAGE_ASK_DELETE_GAME
-    "Are you sure you want to delete this game?",
+    "Do you really want to delete this game?",
     // MESSAGE_ASK_DELETE_AUTO_STATE
-    "Are you sure you want to delete the auto state of this game?",
+    "Do you really want to delete this game's save state?",
     // MESSAGE_ASK_DELETE_SAVEFILE
-    "Are you sure you want to delete the save file of this game?",
+    "Do you really want to delete this game's save file?",
     // MESSAGE_START_GAME_FAILED
-    "Failed to start this game!",
+    "Failure when trying to run the game!",
 
     /**************  About  *****************/
     // ABOUT_TITLE
@@ -195,15 +194,15 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // TAB_MAIN
     "Main",
     // TAB_STATE
-    "State",
+    "Save states",
     // TAB_GRAPHICS
-    "Graphics",
+    "Video",
     // TAB_CONTROL
-    "Control",
+    "Input",
     // TAB_HOTKEY
-    "HotKey",
+    "Shortcuts",
     // TAB_CORE
-    "Core",
+    "Core options",
     // TAB_MISC
     "Misc",
     // TAB_APP
@@ -211,13 +210,13 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
 
     /**************  Menu general  *****************/
     // DISABLE
-    "disable",
+    "Disable",
     // DEFAULT
-    "default",
+    "Default",
     // AUTO
-    "auto",
+    "Auto",
     // NONE
-    "none",
+    "None",
     // LABEL_RESET_CONFIGS
     "Reset configs",
 
@@ -227,52 +226,52 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_RESET_GAME
     "Reset game",
     // LABEL_EXIT_GAME
-    "Exit game",
+    "Close game",
     // LABEL_DISK_CONTROL
     "Disk control",
     // LABEL_EXIT_TO_ARCH
-    "Eixt to arch",
+    "Exit to arch",
     // LABEL_EXIT_APP
     "Exit app",
 
     // TITLE_SWITCH_DISK
-    "Switch disk",
+    "Swap disk",
     // LABEL_DISK
     "Disk",
     // CURRENT
-    "current",
+    "Current",
 
-    /**************  Menu grahics  *****************/
+    /**************  Menu graphics  *****************/
     // LABEL_DISPLAY_SIZE
-    "Display size",
+    "Display scaling",
     // LABEL_ASPECT_RATIO
     "Aspect ratio",
     // LABEL_DISPLAY_ROTATE
     "Display rotate",
     // LABEL_GRAHICS_SHADER
-    "Grahics shader",
+    "Graphics shader",
     // LABEL_GRAHICS_SMOOTH
-    "Grahics smooth",
+    "Graphics smoothing",
     // LABEL_OVERLAY_SELECT
-    "Overlay select",
+    "Overlay image",
     // LABEL_OVERLAY_MODE
     "Overlay mode",
     // LABEL_SHOW_FPS
     "Show FPS",
 
     // DISPLAY_SIZE_1X
-    "1X",
+    "1x",
     // DISPLAY_SIZE_2X
-    "2X",
+    "2x",
     // DISPLAY_SIZE_3X
-    "3X",
+    "3x",
     // DISPLAY_SIZE_FULL
-    "full",
+    "Full screen",
 
     // ASPECT_RATIO_BY_GAME_RESOLUTION
-    "by game resolution",
+    "By game resolution",
     // ASPECT_RATIO_BY_DEV_SCREEN
-    "by device screen",
+    "By device screen",
     // ASPECT_RATIO_8_7
     "8:7",
     // ASPECT_RATIO_4_3
@@ -283,25 +282,25 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "16:9",
 
     // DISPLAY_ROTATE_CW_90
-    "rotate 90°CW",
+    "Rotate 90° clockwise",
     // DISPLAY_ROTATE_CW_180
-    "rotate 180°CW",
+    "Rotate 180° clockwise",
     // DISPLAY_ROTATE_CW_270
-    "rotate 270°CW",
+    "Rotate 270° clockwise",
 
     // SHADER_LCD3X
     "LCD3x",
     // SHADER_SHARP_BILINEAR_SIMPLE
-    "sharp bilinear simple",
+    "Simple sharp bilinear",
     // SHADER_SHARP_BILINEAR
-    "sharp bilinear",
+    "Sharp bilinear",
     // SHADER_ADVANCED_AA
-    "advanced AA",
+    "Advanced anti-aliasing",
 
     // OVERLAY_MODE_OVERLAY
-    "overlay",
+    "Foreground",
     // OVERLAY_MODE_BACKGROUND
-    "background",
+    "Background",
 
     /**************  Menu control  *****************/
     // LABEL_CTRL_PLAYER
@@ -311,32 +310,32 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     // LABEL_BACK_TOUCH_TO_BUTTON
     "Back touch to button",
     // LABEL_TURBO_DELAY
-    "Turbo delay (frame)",
+    "Turbo delay (frames)",
 
     // FOLLOW_DPAD
-    "follow d-pad",
+    "Follow D-Pad",
 
     /**************  Menu misc  *****************/
     // LABEL_AUTO_SAVE_LOAD_STATE
     "Auto save/load state",
     // LABEL_SAVE_SCREENSHOT
-    "Save screenshot",
+    "Take screenshot",
     // LABEL_SAVE_PREVIEW
-    "Save screenshot for preview",
+    "Preview screenshot",
     // LABEL_HK_SAVESTATE
-    "Save state (hot key)",
+    "Save state shortcut",
     // LABEL_HK_LOADSTATE
-    "Load state (hot key)",
+    "Load state shortcut",
     // LABEL_HK_SPEED_UP
-    "Speed up (hot key)",
+    "Speed up shortcut",
     // LABEL_HK_SPEED_DOWN
-    "Speed down (hot key)",
+    "Speed down shortcut",
     // LABEL_HK_PLAYER_UP
-    "Control player+ (hot key)",
+    "Control player+ shortcut",
     // LABEL_HK_PLAYER_DOWN
-    "Control player- (hot key)",
+    "Control player- shortcut",
     // LABEL_HK_EXIT_GAME
-    "Exit game (hot key)",
+    "Close game shortcut",
 
     /**************  Menu app  *****************/
     // LABEL_PREVIEW_PATH
@@ -353,27 +352,27 @@ char *lang_us[LANGUAGE_CONTAINER_SIZE] = {
     "Language",
 
     // FROM_AUTO_STATE
-    "from auto state",
+    "From save state",
 
     // FULL_PRESERVE
-    "preserve full",
+    "Fit screen",
     // FULL_STRETCH
-    "stretch full",
+    "Stretch",
     // FULL_CROP,
-    "crop full",
+    "Fill screen and crop",
 
     /**************  Menu state  *****************/
     // LABEL_EXISTENT_STATE
-    "State",
+    "Save state",
     // LABEL_NON_EXISTENT_STATE
-    "None",
+    "Empty",
 
     // LOAD
-    "load",
+    "Load",
     // SAVE
-    "save",
+    "Save",
     // DELETE
-    "delete",
+    "Delete",
 };
 
 char *lang_chs[LANGUAGE_CONTAINER_SIZE] = {

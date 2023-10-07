@@ -1,9 +1,10 @@
 char *about_texts[] = {
     APP_NAME_STR " " APP_NAME_EXT_STR,
-    " * 作者: 一直改 (百度psvita破解吧)",
-    " * 版本: " APP_VER_STR "    日期: " BUILD_DATE,
+    " * Frontend author: yizhigai",
+	" * Core authors: libretro team",
+    " * Version: " APP_VER_STR "    Date: " BUILD_DATE,
     "",
-    "平台:",
+    "Platform:",
     " * " CORE_SOFTWARE,
     "",
     "BIOS / Firmware:",
@@ -48,17 +49,16 @@ char *about_texts[] = {
     " * scph5501.bin (PS1 US BIOS)",
     " * scph5502.bin (PS1 EU BIOS)",
 #else
-    " * 无需",
+    " * None required",
 #endif
     "",
-    "感谢:",
-    " * Team molecule (HENkaku)",
-    " * xerpi (vita2dlib)",
-    " * TheFlow (vitaShell)",
-    " * libretro (core)",
+    "Thanks to:",
+    " * Team Molecule (HENkaku)",
+    " * xerpi (libvita2d)",
+    " * TheFlow (VitaShell)",
     " * frangarcj (vita shader)",
-    " * 永爱水原ありさ (图标及素材)",
-    " * ......",
+	" * Arisa Mizuhara (icons and overlays)",
+    " * ...",
 };
 
 #define N_ABOUT_TEXTS (sizeof(about_texts) / sizeof(char *))

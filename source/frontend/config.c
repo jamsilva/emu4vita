@@ -199,7 +199,7 @@ int ResetAppConfig()
 #else
     app_config.show_log = 0;
 #endif
-    app_config.language = 12; // default set to chinese
+    app_config.language = 0; // default set to english
 
     return 0;
 }
