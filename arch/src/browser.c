@@ -50,6 +50,7 @@ CoreEntry nes_entries[] = {
 };
 
 CoreEntry snes_entries[] = {
+    {"ChimeraSNES", "chimerasnes"},
     {"Snes9x 2002", "snes9x2002"},
     {"Snes9x 2005", "snes9x2005"},
     {"Snes9x 2005 Plus", "snes9x2005_plus"},

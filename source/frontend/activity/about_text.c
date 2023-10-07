@@ -1,7 +1,11 @@
 char *about_texts[] = {
     APP_NAME_STR " " APP_NAME_EXT_STR,
     " * Frontend author: yizhigai",
+#if defined(CHIMERASNES_BUILD)
+    " * Core author: jamsilva",
+#else
 	" * Core authors: libretro team",
+#endif
     " * Version: " APP_VER_STR "    Date: " BUILD_DATE,
     "",
     "Platform:",
@@ -48,6 +52,9 @@ char *about_texts[] = {
     " * scph5500.bin (PS1 JP BIOS)",
     " * scph5501.bin (PS1 US BIOS)",
     " * scph5502.bin (PS1 EU BIOS)",
+#elif defined(SFC_BUILD)
+    " * BS-X.bin (BSX/Satellaview BIOS)",
+	" * STBIOS.bin (SuFami Turbo BIOS)",
 #else
     " * None required",
 #endif

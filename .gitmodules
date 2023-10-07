@@ -62,3 +62,6 @@
 	url  = https://github.com/libretro/vba-next
 	path = cores/vba_next
 
+[submodule "cores/chimerasnes"]
+	url  = https://github.com/jamsilva/chimerasnes
+	path = cores/chimerasnes

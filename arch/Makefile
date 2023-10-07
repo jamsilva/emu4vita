@@ -168,6 +168,7 @@ build-cores:
 	cd $(BUBBLE_DIR)/snes9x2005 && make build-self $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/snes9x2005_plus && make build-self $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/vba_next && make build-self $(MAKE_ARGS)
+	cd $(BUBBLE_DIR)/chimerasnes && make build-self $(MAKE_ARGS)
 	
 clean-cores:
 	cd $(BUBBLE_DIR)/fba_lite && make clean $(MAKE_ARGS)
@@ -186,3 +187,4 @@ clean-cores:
 	cd $(BUBBLE_DIR)/snes9x2005 && make clean $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/snes9x2005_plus && make clean $(MAKE_ARGS)
 	cd $(BUBBLE_DIR)/vba_next && make clean $(MAKE_ARGS)
+	cd $(BUBBLE_DIR)/chimerasnes && make clean $(MAKE_ARGS)

@@ -34,6 +34,7 @@ build-app:
 	cd $(APPS_DIR)/snes9x2005 && make $(MAKE_ARGS)
 	cd $(APPS_DIR)/snes9x2005_plus && make $(MAKE_ARGS)
 	cd $(APPS_DIR)/vba_next && make $(MAKE_ARGS)
+	cd $(APPS_DIR)/chimerasnes && make $(MAKE_ARGS)
 
 clean-app:
 	cd $(APPS_DIR)/fba_lite && make clean $(MAKE_ARGS)
@@ -52,6 +53,7 @@ clean-app:
 	cd $(APPS_DIR)/snes9x2005 && make clean $(MAKE_ARGS)
 	cd $(APPS_DIR)/snes9x2005_plus && make clean $(MAKE_ARGS)
 	cd $(APPS_DIR)/vba_next && make clean $(MAKE_ARGS)
+	cd $(APPS_DIR)/chimerasnes && make clean $(MAKE_ARGS)
 
 clean-all:
 	cd $(APPS_DIR)/fba_lite && make clean-all $(MAKE_ARGS)
@@ -70,6 +72,7 @@ clean-all:
 	cd $(APPS_DIR)/snes9x2005 && make clean-all $(MAKE_ARGS)
 	cd $(APPS_DIR)/snes9x2005_plus && make clean-all $(MAKE_ARGS)
 	cd $(APPS_DIR)/vba_next && make clean-all $(MAKE_ARGS)
+	cd $(APPS_DIR)/chimerasnes && make clean-all $(MAKE_ARGS)
 
 build-arch:
 	cd $(ARCH_DIR) && make $(MAKE_ARGS)
